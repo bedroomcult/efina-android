@@ -21,12 +21,14 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.efina.app.ui.accounts.AccountsScreen
 import com.efina.app.ui.accounts.CreateAccountScreen
+import com.efina.app.ui.accounts.EditAccountScreen
 import com.efina.app.ui.auth.LoginScreen
 import com.efina.app.ui.auth.AuthViewModel
 import com.efina.app.ui.budgets.BudgetsScreen
 import com.efina.app.ui.budgets.GoalsScreen
 import com.efina.app.ui.home.HomeScreen
 import com.efina.app.ui.transactions.CreateTransactionScreen
+import com.efina.app.ui.transactions.EditTransactionScreen
 import com.efina.app.ui.transactions.TransactionsScreen
 
 sealed class Screen(val route: String) {
@@ -35,8 +37,14 @@ sealed class Screen(val route: String) {
     data object Home : Screen("home")
     data object Accounts : Screen("accounts")
     data object CreateAccount : Screen("create_account")
+    data object EditAccount : Screen("edit_account/{accountId}") {
+        fun createRoute(id: Long) = "edit_account/$id"
+    }
     data object Transactions : Screen("transactions")
     data object CreateTransaction : Screen("create_transaction")
+    data object EditTransaction : Screen("edit_transaction/{transactionId}") {
+        fun createRoute(id: Long) = "edit_transaction/$id"
+    }
     data object Transfer : Screen("transfer")
     data object Budgets : Screen("budgets")
     data object Goals : Screen("goals")
@@ -152,7 +160,7 @@ fun EfinaAppRoot(
             composable(Screen.Accounts.route) {
                 AccountsScreen(
                     onNavigateToCreate = { navController.navigate(Screen.CreateAccount.route) },
-                    onNavigateToEdit = { }
+                    onNavigateToEdit = { id -> navController.navigate(Screen.EditAccount.createRoute(id)) }
                 )
             }
             
@@ -162,16 +170,38 @@ fun EfinaAppRoot(
                 )
             }
             
+            composable(
+                route = Screen.EditAccount.route,
+                arguments = listOf(navArgument("accountId") { type = NavType.LongType })
+            ) { backStackEntry ->
+                val accountId = backStackEntry.arguments?.getLong("accountId") ?: return@composable
+                EditAccountScreen(
+                    accountId = accountId,
+                    onNavigateBack = { navController.popBackStack() }
+                )
+            }
+            
             // Transactions
             composable(Screen.Transactions.route) {
                 TransactionsScreen(
                     onNavigateToCreate = { navController.navigate(Screen.CreateTransaction.route) },
-                    onNavigateToEdit = { }
+                    onNavigateToEdit = { id -> navController.navigate(Screen.EditTransaction.createRoute(id)) }
                 )
             }
             
             composable(Screen.CreateTransaction.route) {
                 CreateTransactionScreen(
+                    onNavigateBack = { navController.popBackStack() }
+                )
+            }
+            
+            composable(
+                route = Screen.EditTransaction.route,
+                arguments = listOf(navArgument("transactionId") { type = NavType.LongType })
+            ) { backStackEntry ->
+                val transactionId = backStackEntry.arguments?.getLong("transactionId") ?: return@composable
+                EditTransactionScreen(
+                    transactionId = transactionId,
                     onNavigateBack = { navController.popBackStack() }
                 )
             }

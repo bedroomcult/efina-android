@@ -117,6 +117,20 @@ class TransactionsViewModel @Inject constructor(
         updateFilter(_uiState.value.filter.copy(categoryId = categoryId))
     }
     
+    fun updateTransaction(id: Long, request: UpdateTransactionRequest) {
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isLoading = true, error = null)
+            transactionRepository.updateTransaction(id, request)
+                .onSuccess { loadTransactions() }
+                .onFailure { error ->
+                    _uiState.value = _uiState.value.copy(
+                        isLoading = false,
+                        error = error.message ?: "Failed to update transaction"
+                    )
+                }
+        }
+    }
+    
     fun createTransaction(request: CreateTransactionRequest) {
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true, error = null)
