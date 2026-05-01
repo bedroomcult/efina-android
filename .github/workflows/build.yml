@@ -1,4 +1,4 @@
-name: Build Debug APK
+name: Build & Release APK
 
 on:
   workflow_dispatch:
@@ -11,10 +11,16 @@ on:
         options:
           - debug
           - release
+      tag:
+        description: 'Release tag (e.g. v1.0.0)'
+        required: true
+        default: 'snapshot'
 
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     
     steps:
       - name: Checkout
@@ -29,15 +35,25 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v3
       
-      - name: Build ${{ inputs.variant || 'debug' }} APK
-        run: ./gradlew assemble${{ inputs.variant || 'debug' }} --no-daemon --no-configuration-cache
+      - name: Build ${{ inputs.variant }} APK
+        run: ./gradlew assemble${{ inputs.variant }} --no-daemon --no-configuration-cache
       
-      - name: List APK files
-        run: find app/build -name "*.apk" 2>/dev/null || echo "No APK files found"
+      - name: Find APK
+        id: apk
+        run: |
+          APK=$(find app/build -name "*.apk" | head -1)
+          echo "apk=$APK" >> $GITHUB_OUTPUT
+          echo "APK: $APK"
       
-      - name: Upload APK
-        uses: actions/upload-artifact@v4
+      - name: Create Release and Upload APK
+        uses: ncipollo/release-action@v1
         with:
-          name: efina-${{ inputs.variant || 'debug' }}-apk
-          path: app/build/outputs/apk/${{ inputs.variant || 'debug' }}/*.apk
-          retention-days: 7
+          artifacts: ${{ steps.apk.outputs.apk }}
+          tag: ${{ inputs.tag }}
+          name: ${{ inputs.tag }}
+          body: |
+            Efina Android APK (${{ inputs.variant }})
+            
+            Built from `${{ github.ref_name }}` on ${{ github.event.repository.updated_at }}
+          allowUpdates: true
+          makeLatest: true
