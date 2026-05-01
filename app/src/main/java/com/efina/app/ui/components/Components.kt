@@ -335,8 +335,7 @@ fun TransactionItem(
                 ) {
                     Surface(
                         shape = RoundedCornerShape(8.dp),
-                        color = categoryColor?.let { Color(android.graphics.Color.parseColor(it)) }
-                            ?: MaterialTheme.colorScheme.surfaceVariant
+                        color = categoryColor ?: MaterialTheme.colorScheme.surfaceVariant
                     ) {
                         Box(
                             modifier = Modifier

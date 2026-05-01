@@ -125,7 +125,7 @@ class AccountRepositoryImpl @Inject constructor(
     
     override suspend fun createAccount(request: CreateAccountRequest): Result<Account> {
         return try {
-            val response = api.createAccount(request.toCreateRequest())
+            val response = api.createAccount(request.toDto())
             if (response.isSuccessful) {
                 Result.success(response.body()!!.toDomain())
             } else {

@@ -40,7 +40,7 @@ fun AccountDto.toDomain() = Account(
     createdAt = createdAt
 )
 
-fun Account.toCreateRequest() = CreateAccountRequestDto(
+fun CreateAccountRequest.toDto() = CreateAccountRequestDto(
     name = name,
     type = type.value,
     balance = balance,

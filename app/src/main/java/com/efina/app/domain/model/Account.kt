@@ -12,12 +12,12 @@ data class Account(
     val createdAt: String? = null
 )
 
-enum class AccountType(val displayName: String) {
-    BANK("Bank"),
-    EWALLET("E-Wallet"),
-    CASH("Cash"),
-    CREDIT("Credit Card"),
-    INVESTMENT("Investment")
+enum class AccountType(val displayName: String, val value: String) {
+    BANK("Bank", "bank"),
+    EWALLET("E-Wallet", "ewallet"),
+    CASH("Cash", "cash"),
+    CREDIT("Credit Card", "credit"),
+    INVESTMENT("Investment", "investment")
 }
 
 data class CreateAccountRequest(

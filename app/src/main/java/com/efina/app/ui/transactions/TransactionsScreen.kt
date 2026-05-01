@@ -13,6 +13,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.efina.app.domain.model.TransactionFilter
 import com.efina.app.domain.model.TransactionType
 import com.efina.app.ui.components.*
 import com.efina.app.ui.theme.Error

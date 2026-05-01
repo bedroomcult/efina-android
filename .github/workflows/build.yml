@@ -46,7 +46,7 @@ jobs:
       
       - name: Build ${{ inputs.variant || 'debug' }} APK
         run: |
-          ./gradlew assemble${{ inputs.variant || 'debug' }} --no-daemon
+          ./gradlew assemble${{ inputs.variant || 'debug' }} --no-daemon --stacktrace --info 2>&1 | tail -500
         env:
           ANDROID_HOME: /opt/android-sdk
       
