@@ -153,3 +153,7 @@ dependencies {
     androidTestImplementation("com.google.dagger:hilt-android-testing:2.50")
     kspAndroidTest("com.google.dagger:hilt-compiler:2.50")
 }
+
+kotlin {
+    jvmToolchain(17)
+}
