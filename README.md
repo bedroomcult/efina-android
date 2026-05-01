@@ -2,84 +2,109 @@
 
 Native Android application for Efina personal finance management.
 
+## Quick Start
+
+1. **Install Gradle wrapper JAR:**
+   ```bash
+   # Download from https://github.com/gradle/gradle/raw/v8.4.0/gradle/wrapper/gradle-wrapper.jar
+   # Or clone from official Android project template
+   
+   # After download:
+   curl -L -o gradle/wrapper/gradle-wrapper.jar \
+     "https://github.com/gradle/gradle/raw/v8.4.0/gradle/wrapper/gradle-wrapper.jar"
+   ```
+
+2. **Open in Android Studio** (Hedgehog or later)
+
+3. **Sync Gradle** and wait for dependencies
+
+4. **Run:**
+   ```bash
+   ./gradlew assembleDebug
+   ```
+
 ## Features
 
-- **Account Management**: Track bank accounts, e-wallets, cash, credit cards
-- **Transaction Tracking**: Record income, expenses, and transfers
-- **Budgeting**: Set monthly, weekly, or yearly budgets per category
-- **Savings Goals**: Track progress toward financial goals
-- **Gamification**: Earn XP, unlock achievements, compete on leaderboards
-- **AI Assistant**: Get personalized insights and recommendations
-- **Receipt OCR**: Scan receipts to auto-categorize transactions
-- **Offline Support**: Work without internet with background sync
+- Account Management (bank, e-wallet, cash, credit, investment)
+- Transaction Tracking (income, expense, transfer)
+- Budgeting (weekly, monthly, yearly)
+- Savings Goals with progress tracking
+- Gamification (XP, achievements, leaderboard)
+- AI Assistant with chat
+- Receipt OCR scanning
+- Offline support with Room database
 
 ## Tech Stack
 
-| Category | Library |
-|----------|---------|
+| Component | Library |
+|-----------|---------|
 | UI | Jetpack Compose + Material 3 |
-| DI | Hilt |
-| Networking | Retrofit + OkHttp |
-| Local DB | Room |
+| DI | Hilt 2.50 |
+| Networking | Retrofit 2.9 + OkHttp 4.12 |
+| Local DB | Room 2.6.1 |
 | Preferences | DataStore |
-| Navigation | Navigation Compose |
-| Background | WorkManager |
+| Navigation | Navigation Compose 2.7.7 |
+| Background | WorkManager 2.9 |
 | Auth | EncryptedSharedPreferences |
 
-## API
-
-The app connects to the Efina backend API. See [API Documentation](../docs/mobile-api-spec.md) for details.
-
-## Getting Started
-
-### Prerequisites
-
-- Android Studio Hedgehog or later
-- Kotlin 1.9+
-- JDK 17
-
-### Setup
-
-1. Clone the repository:
-```bash
-git clone https://github.com/YOUR_USERNAME/efina-android.git
-```
-
-2. Open in Android Studio and sync Gradle
-
-3. Create `keystore.properties` for release signing:
-```properties
-storePassword=your_store_password
-keyPassword=your_key_password
-keyAlias=your_key_alias
-storeFile=your_keystore.jks
-```
-
-4. Build and run:
-```bash
-./gradlew assembleDebug
-```
-
-## Architecture
-
-Clean Architecture with MVVM:
+## Project Structure
 
 ```
 app/src/main/java/com/efina/app/
-├── di/                 # Hilt dependency injection modules
 ├── data/
-│   ├── remote/         # Retrofit API, DTOs, interceptors
-│   └── repository/    # Repository implementations
+│   ├── remote/
+│   │   ├── api/         # Retrofit interfaces
+│   │   ├── dto/         # API response models
+│   │   └── interceptor/  # Auth interceptors
+│   └── repository/      # Repository implementations
 ├── domain/
-│   ├── model/         # Domain models
-│   └── repository/     # Repository interfaces
-├── ui/                 # Compose screens and ViewModels
-└── util/               # Utilities and constants
+│   ├── model/          # Domain models
+│   └── repository/      # Repository interfaces
+├── di/                 # Hilt modules
+├── ui/                  # Compose screens + ViewModels
+│   ├── auth/
+│   ├── accounts/
+│   ├── transactions/
+│   ├── budgets/
+│   ├── goals/
+│   ├── stats/
+│   ├── chat/
+│   ├── settings/
+│   ├── components/
+│   └── theme/
+└── util/               # Utilities, constants
 ```
 
-## Implementation Plan
+## API Connection
 
-See [Implementation Plan](../docs/android-implementation-plan.md) for full task breakdown.
+The app connects to the Efina backend. Configure the API URL in `app/build.gradle.kts`:
+
+```kotlin
+buildConfigField("String", "API_BASE_URL", "\"https://your-api-url.com/\"")
+```
+
+See [docs/mobile-api-spec.md](docs/mobile-api-spec.md) for full API documentation.
+
+## Setup Requirements
+
+- Android Studio Hedgehog+
+- Kotlin 1.9+
+- JDK 17
+- Gradle 8.4 (wrapper included)
+
+## Implementation Status
+
+| Phase | Status |
+|-------|--------|
+| 1. Project Foundation | ✅ |
+| 2. Authentication | 🔄 |
+| 3-6. Core Features | ⏳ |
+| 7. AI Features | ⏳ |
+| 8. Settings/Polish | ⏳ |
+| 9. Offline/Sync | ⏳ |
+| 10. Release | ⏳ |
+
+Full plan: [docs/android-implementation-plan.md](docs/android-implementation-plan.md)
 
 ## License
 
