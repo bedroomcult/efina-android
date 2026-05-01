@@ -83,8 +83,7 @@ class AccountRepositoryImpl @Inject constructor(
         return try {
             val response = api.getAccounts()
             if (response.isSuccessful) {
-                val body = response.body()!!
-                Result.success(body.accounts.map { it.toDomain() })
+                Result.success(response.body()!!.map { it.toDomain() })
             } else {
                 Result.failure(parseError(response))
             }
@@ -97,7 +96,7 @@ class AccountRepositoryImpl @Inject constructor(
         return try {
             val response = api.createAccount(request.toDto())
             if (response.isSuccessful) {
-                Result.success(response.body()!!.account.toDomain())
+                Result.success(response.body()!!.toDomain())
             } else {
                 Result.failure(parseError(response))
             }
@@ -118,7 +117,7 @@ class AccountRepositoryImpl @Inject constructor(
             request.showInDashboard?.let { map["show_in_dashboard"] = it }
             val response = api.updateAccount(id, map)
             if (response.isSuccessful) {
-                Result.success(response.body()!!.account.toDomain())
+                Result.success(response.body()!!.toDomain())
             } else {
                 Result.failure(parseError(response))
             }
@@ -162,8 +161,8 @@ class TransactionRepositoryImpl @Inject constructor(
             if (response.isSuccessful) {
                 val body = response.body()!!
                 Result.success(TransactionListResponse(
-                    transactions = body.transactions.map { it.toDomain() },
-                    total = body.totalCount,
+                    transactions = body.map { it.toDomain() },
+                    total = body.size,
                     limit = filter.limit,
                     offset = filter.offset
                 ))
@@ -179,7 +178,7 @@ class TransactionRepositoryImpl @Inject constructor(
         return try {
             val response = api.createTransaction(request.toDto())
             if (response.isSuccessful) {
-                Result.success(response.body()!!.transaction.toDomain())
+                Result.success(response.body()!!.toDomain())
             } else {
                 Result.failure(parseError(response))
             }
@@ -198,7 +197,7 @@ class TransactionRepositoryImpl @Inject constructor(
             request.mood?.let { map["mood"] = it }
             val response = api.updateTransaction(id, map)
             if (response.isSuccessful) {
-                Result.success(response.body()!!.transaction.toDomain())
+                Result.success(response.body()!!.toDomain())
             } else {
                 Result.failure(parseError(response))
             }
@@ -231,7 +230,7 @@ class TransactionRepositoryImpl @Inject constructor(
             )
             val response = api.createTransfer(dto)
             if (response.isSuccessful) {
-                Result.success(response.body()!!.transaction.toDomain())
+                Result.success(response.body()!!.toDomain())
             } else {
                 Result.failure(parseError(response))
             }
@@ -250,7 +249,7 @@ class CategoryRepositoryImpl @Inject constructor(
         return try {
             val response = api.getCategories(type?.value)
             if (response.isSuccessful) {
-                Result.success(response.body()!!.categories.map { it.toDomain() })
+                Result.success(response.body()!!.map { it.toDomain() })
             } else {
                 Result.failure(parseError(response))
             }
@@ -312,7 +311,7 @@ class BudgetRepositoryImpl @Inject constructor(
         return try {
             val response = api.getBudgets()
             if (response.isSuccessful) {
-                Result.success(response.body()!!.budgets.map { it.toDomain() })
+                Result.success(response.body()!!.map { it.toDomain() })
             } else {
                 Result.failure(parseError(response))
             }
@@ -373,7 +372,7 @@ class GoalRepositoryImpl @Inject constructor(
         return try {
             val response = api.getGoals()
             if (response.isSuccessful) {
-                Result.success(response.body()!!.goals.map { it.toDomain() })
+                Result.success(response.body()!!.map { it.toDomain() })
             } else {
                 Result.failure(parseError(response))
             }

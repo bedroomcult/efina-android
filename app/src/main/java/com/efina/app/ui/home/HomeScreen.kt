@@ -57,6 +57,7 @@ fun HomeScreen(
                         containerColor = MaterialTheme.colorScheme.primaryContainer
                     )
                 ) {
+                    val score = uiState.healthScore
                     Column(modifier = Modifier.padding(20.dp)) {
                         Text("Total Balance", style = MaterialTheme.typography.labelLarge)
                         Spacer(modifier = Modifier.height(4.dp))
@@ -65,29 +66,29 @@ fun HomeScreen(
                             style = MaterialTheme.typography.headlineLarge,
                             color = Success
                         )
-                        if (uiState.healthScore != null) {
+                        if (score != null) {
                             Spacer(modifier = Modifier.height(12.dp))
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 Text("Health Score: ", style = MaterialTheme.typography.labelMedium)
                                 Text(
-                                    text = "${uiState.healthScore}/100",
+                                    text = "$score/100",
                                     style = MaterialTheme.typography.titleMedium,
                                     color = when {
-                                        uiState.healthScore >= 80 -> Success
-                                        uiState.healthScore >= 60 -> Warning
+                                        score >= 80 -> Success
+                                        score >= 60 -> Warning
                                         else -> Error
                                     }
                                 )
                             }
                             LinearProgressIndicator(
-                                progress = { uiState.healthScore / 100f },
+                                progress = { score / 100f },
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .height(6.dp)
                                     .padding(top = 4.dp),
                                 color = when {
-                                    uiState.healthScore >= 80 -> Success
-                                    uiState.healthScore >= 60 -> Warning
+                                    score >= 80 -> Success
+                                    score >= 60 -> Warning
                                     else -> Error
                                 },
                                 trackColor = MaterialTheme.colorScheme.surfaceVariant

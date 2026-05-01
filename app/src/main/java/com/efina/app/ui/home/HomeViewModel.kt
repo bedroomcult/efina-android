@@ -17,10 +17,8 @@ data class HomeUiState(
     val error: String? = null,
     val accounts: List<Account> = emptyList(),
     val recentTransactions: List<Transaction> = emptyList(),
-    val budgets: List<Budget> = emptyList(),
-    val goals: List<Goal> = emptyList(),
-    val healthScore: Int? = null,
     val totalBalance: Double = 0.0,
+    val healthScore: Int? = null,
     val currency: String = "IDR"
 )
 
@@ -40,25 +38,26 @@ class HomeViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true, error = null)
             try {
-                val response = api.getDashboard()
-                if (response.isSuccessful) {
-                    val body = response.body()!!
-                    val accounts = body.accounts?.map { it.toDomain() } ?: emptyList()
-                    val totalBalance = accounts.sumOf { it.balance }
+                val accountsResponse = api.getAccounts()
+                val healthResponse = api.getHealthScore()
+                val txResponse = api.getTransactions(limit = 5)
+
+                if (accountsResponse.isSuccessful) {
+                    val accounts = accountsResponse.body()!!.map { it.toDomain() }
+                    val healthScore = if (healthResponse.isSuccessful) healthResponse.body()?.get("score") as? Int else null
+                    val recentTx = if (txResponse.isSuccessful) txResponse.body()!!.map { it.toDomain() } else emptyList()
 
                     _uiState.value = _uiState.value.copy(
                         isLoading = false,
                         accounts = accounts,
-                        totalBalance = totalBalance,
-                        recentTransactions = body.recentTransactions?.map { it.toDomain() }?.take(5) ?: emptyList(),
-                        budgets = body.budgets?.map { it.toDomain() } ?: emptyList(),
-                        goals = body.goals?.map { it.toDomain() } ?: emptyList(),
-                        healthScore = body.healthScore?.score
+                        totalBalance = accounts.sumOf { it.balance },
+                        healthScore = healthScore,
+                        recentTransactions = recentTx
                     )
                 } else {
                     _uiState.value = _uiState.value.copy(
                         isLoading = false,
-                        error = "Failed to load dashboard"
+                        error = "Failed to load accounts"
                     )
                 }
             } catch (e: Exception) {

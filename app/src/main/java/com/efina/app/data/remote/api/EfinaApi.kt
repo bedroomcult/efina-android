@@ -23,16 +23,16 @@ interface EfinaApi {
     // ============ Accounts ============
     
     @GET("accounts")
-    suspend fun getAccounts(): Response<AccountsListDto>
+    suspend fun getAccounts(): Response<List<AccountDto>>
     
     @POST("accounts")
-    suspend fun createAccount(@Body request: CreateAccountRequestDto): Response<AccountCreatedDto>
+    suspend fun createAccount(@Body request: CreateAccountRequestDto): Response<AccountDto>
     
     @PATCH("accounts/{id}")
     suspend fun updateAccount(
         @Path("id") id: Long,
         @Body request: Map<String, @JvmSuppressWildcards Any?>
-    ): Response<AccountCreatedDto>
+    ): Response<AccountDto>
     
     @DELETE("accounts/{id}")
     suspend fun deleteAccount(@Path("id") id: Long): Response<Unit>
@@ -50,16 +50,16 @@ interface EfinaApi {
         @Query("end_date") endDate: String? = null,
         @Query("search") search: String? = null,
         @Query("include_subcategories") includeSubcategories: Boolean? = null
-    ): Response<TransactionsListDto>
+    ): Response<List<TransactionDto>>
     
     @POST("transactions")
-    suspend fun createTransaction(@Body request: CreateTransactionRequestDto): Response<TransactionCreatedDto>
+    suspend fun createTransaction(@Body request: CreateTransactionRequestDto): Response<TransactionDto>
     
     @PATCH("transactions/{id}")
     suspend fun updateTransaction(
         @Path("id") id: Long,
         @Body request: Map<String, @JvmSuppressWildcards Any?>
-    ): Response<TransactionCreatedDto>
+    ): Response<TransactionDto>
     
     @DELETE("transactions/{id}")
     suspend fun deleteTransaction(@Path("id") id: Long): Response<Unit>
@@ -67,14 +67,14 @@ interface EfinaApi {
     // ============ Transfers ============
     
     @POST("transfers")
-    suspend fun createTransfer(@Body request: CreateTransferRequestDto): Response<TransactionCreatedDto>
+    suspend fun createTransfer(@Body request: CreateTransferRequestDto): Response<TransactionDto>
 
     // ============ Categories ============
     
     @GET("categories")
     suspend fun getCategories(
         @Query("type") type: String? = null
-    ): Response<CategoriesListDto>
+    ): Response<List<CategoryDto>>
     
     @POST("categories")
     suspend fun createCategory(@Body request: CreateCategoryRequestDto): Response<CategoryDto>
@@ -91,7 +91,7 @@ interface EfinaApi {
     // ============ Budgets ============
     
     @GET("budgets")
-    suspend fun getBudgets(): Response<BudgetsListDto>
+    suspend fun getBudgets(): Response<List<BudgetDto>>
     
     @POST("budgets")
     suspend fun createBudget(@Body request: CreateBudgetRequestDto): Response<BudgetDto>
@@ -108,7 +108,7 @@ interface EfinaApi {
     // ============ Goals ============
     
     @GET("goals")
-    suspend fun getGoals(): Response<GoalsListDto>
+    suspend fun getGoals(): Response<List<GoalDto>>
     
     @POST("goals")
     suspend fun createGoal(@Body request: CreateGoalRequestDto): Response<GoalDto>
@@ -125,7 +125,7 @@ interface EfinaApi {
     // ============ Dashboard ============
     
     @GET("dashboard")
-    suspend fun getDashboard(): Response<DashboardDto>
+    suspend fun getDashboard(): Response<Map<String, Any>>
 
     // ============ Settings ============
     
