@@ -20,7 +20,7 @@ android {
         testInstrumentationRunner = "com.efina.app.HiltTestRunner"
 
         // API Configuration
-        buildConfigField("String", "API_BASE_URL", "\"https://api.efina.app/\"")
+        buildConfigField("String", "API_BASE_URL", "\"https://efina.11112021.xyz/api/\"")
         
         // Room schema export
         ksp {
@@ -36,11 +36,11 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
-            buildConfigField("String", "API_BASE_URL", "\"https://api.efina.app/\"")
+            buildConfigField("String", "API_BASE_URL", "\"https://efina.11112021.xyz/api/\"")
         }
         debug {
             isMinifyEnabled = false
-            buildConfigField("String", "API_BASE_URL", "\"https://api.efina.app/\"")
+            buildConfigField("String", "API_BASE_URL", "\"https://efina.11112021.xyz/api/\"")
         }
     }
 
