@@ -24,7 +24,7 @@ fun CreateAccountScreen(
     val uiState by viewModel.uiState.collectAsState()
     
     var name by remember { mutableStateOf("") }
-    var selectedType by remember { mutableStateOf(AccountType.BANK) }
+    var selectedType by remember { mutableStateOf(AccountType.CHECKING) }
     var balance by remember { mutableStateOf("") }
     var currency by remember { mutableStateOf("IDR") }
     var description by remember { mutableStateOf("") }
