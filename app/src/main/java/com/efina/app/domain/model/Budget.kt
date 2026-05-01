@@ -4,14 +4,12 @@ data class Budget(
     val id: Long,
     val categoryId: Long,
     val categoryName: String?,
-    val categoryColor: String?,
-    val categoryIcon: String?,
     val amount: Double,
+    val spent: Double,
+    val remaining: Double,
     val periodType: PeriodType,
     val periodStart: String,
-    val periodEnd: String?,
-    val spent: Double,
-    val percentage: Int
+    val periodEnd: String?
 )
 
 enum class PeriodType(val value: String) {

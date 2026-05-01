@@ -65,18 +65,11 @@ fun BudgetsScreen(
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 items(uiState.budgets, key = { it.id }) { budget ->
-                    val color = try {
-                        Color(android.graphics.Color.parseColor(budget.categoryColor ?: "#3B82F6"))
-                    } catch (e: Exception) {
-                        MaterialTheme.colorScheme.primary
-                    }
-                    
                     BudgetProgressCard(
                         categoryName = budget.categoryName ?: "Category",
-                        categoryColor = color,
                         amount = budget.amount,
                         spent = budget.spent,
-                        percentage = budget.percentage,
+                        remaining = budget.remaining,
                         currency = "IDR",
                         onClick = { }
                     )
@@ -164,8 +157,8 @@ fun GoalsScreen(
                         name = goal.name,
                         currentAmount = goal.currentAmount,
                         targetAmount = goal.targetAmount,
+                        progressPercentage = goal.progressPercentage,
                         currency = "IDR",
-                        remainingAmount = goal.remainingAmount,
                         onClick = { }
                     )
                 }

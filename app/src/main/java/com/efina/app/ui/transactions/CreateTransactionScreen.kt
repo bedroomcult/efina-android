@@ -179,7 +179,7 @@ fun CreateTransactionScreen(
                         amount = amount.toDoubleOrNull() ?: return@Button,
                         type = selectedType,
                         description = description.ifBlank { null },
-                        date = selectedDate.atStartOfDay().toString(),
+                        date = selectedDate.format(dateFormatter),
                         mood = selectedMood
                     )
                     viewModel.createTransaction(request)

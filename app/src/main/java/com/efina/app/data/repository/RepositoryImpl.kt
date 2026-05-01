@@ -24,12 +24,11 @@ class AuthRepositoryImpl @Inject constructor(
             if (response.isSuccessful) {
                 val body = response.body()!!
                 tokenManager.saveToken(body.token)
-                tokenManager.saveCsrfToken(body.csrfToken ?: "")
                 tokenManager.saveUserId(body.user.id)
                 tokenManager.saveUserEmail(body.user.email)
                 Result.success(body.toDomain())
             } else {
-                Result.failure(Exception(response.errorBody()?.string() ?: "Login failed"))
+                Result.failure(parseError(response))
             }
         } catch (e: Exception) {
             Result.failure(e)
@@ -42,41 +41,11 @@ class AuthRepositoryImpl @Inject constructor(
             if (response.isSuccessful) {
                 val body = response.body()!!
                 tokenManager.saveToken(body.token)
-                tokenManager.saveCsrfToken(body.csrfToken ?: "")
                 tokenManager.saveUserId(body.user.id)
                 tokenManager.saveUserEmail(body.user.email)
                 Result.success(body.toDomain())
             } else {
-                Result.failure(Exception(response.errorBody()?.string() ?: "Registration failed"))
-            }
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
-    }
-    
-    override suspend fun setPin(pin: String): Result<Unit> {
-        return try {
-            val response = api.setPin(PinRequestDto(pin))
-            if (response.isSuccessful) {
-                tokenManager.savePin(pin)
-                Result.success(Unit)
-            } else {
-                Result.failure(Exception("Failed to set PIN"))
-            }
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
-    }
-    
-    override suspend fun verifyPin(pin: String): Result<AuthToken> {
-        return try {
-            val response = api.verifyPin(PinRequestDto(pin))
-            if (response.isSuccessful) {
-                val body = response.body()!!
-                tokenManager.saveToken(body.token)
-                Result.success(body.toDomain())
-            } else {
-                Result.failure(Exception("Invalid PIN"))
+                Result.failure(parseError(response))
             }
         } catch (e: Exception) {
             Result.failure(e)
@@ -84,16 +53,7 @@ class AuthRepositoryImpl @Inject constructor(
     }
     
     override suspend fun getSessions(): Result<List<Session>> {
-        return try {
-            val response = api.getSessions()
-            if (response.isSuccessful) {
-                Result.success(response.body()!!.sessions.map { it.toDomain() })
-            } else {
-                Result.failure(Exception("Failed to get sessions"))
-            }
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
+        return Result.success(emptyList())
     }
     
     override fun isLoggedIn(): Flow<Boolean> {
@@ -101,7 +61,16 @@ class AuthRepositoryImpl @Inject constructor(
     }
     
     override suspend fun logout() {
+        try { api.logout() } catch (_: Exception) {}
         tokenManager.clearAll()
+    }
+
+    override suspend fun setPin(pin: String): Result<Unit> {
+        return Result.failure(Exception("Not implemented"))
+    }
+
+    override suspend fun verifyPin(pin: String): Result<AuthToken> {
+        return Result.failure(Exception("Not implemented"))
     }
 }
 
@@ -114,9 +83,10 @@ class AccountRepositoryImpl @Inject constructor(
         return try {
             val response = api.getAccounts()
             if (response.isSuccessful) {
-                Result.success(response.body()!!.map { it.toDomain() })
+                val body = response.body()!!
+                Result.success(body.accounts.map { it.toDomain() })
             } else {
-                Result.failure(Exception(response.errorBody()?.string() ?: "Failed to get accounts"))
+                Result.failure(parseError(response))
             }
         } catch (e: Exception) {
             Result.failure(e)
@@ -127,9 +97,9 @@ class AccountRepositoryImpl @Inject constructor(
         return try {
             val response = api.createAccount(request.toDto())
             if (response.isSuccessful) {
-                Result.success(response.body()!!.toDomain())
+                Result.success(response.body()!!.account.toDomain())
             } else {
-                Result.failure(Exception(response.errorBody()?.string() ?: "Failed to create account"))
+                Result.failure(parseError(response))
             }
         } catch (e: Exception) {
             Result.failure(e)
@@ -142,11 +112,15 @@ class AccountRepositoryImpl @Inject constructor(
             request.name?.let { map["name"] = it }
             request.balance?.let { map["balance"] = it }
             request.description?.let { map["description"] = it }
+            request.color?.let { map["color"] = it }
+            request.icon?.let { map["icon"] = it }
+            request.includeInTotal?.let { map["include_in_total"] = it }
+            request.showInDashboard?.let { map["show_in_dashboard"] = it }
             val response = api.updateAccount(id, map)
             if (response.isSuccessful) {
-                Result.success(response.body()!!.toDomain())
+                Result.success(response.body()!!.account.toDomain())
             } else {
-                Result.failure(Exception(response.errorBody()?.string() ?: "Failed to update account"))
+                Result.failure(parseError(response))
             }
         } catch (e: Exception) {
             Result.failure(e)
@@ -159,7 +133,7 @@ class AccountRepositoryImpl @Inject constructor(
             if (response.isSuccessful) {
                 Result.success(Unit)
             } else {
-                Result.failure(Exception(response.errorBody()?.string() ?: "Failed to delete account"))
+                Result.failure(parseError(response))
             }
         } catch (e: Exception) {
             Result.failure(e)
@@ -186,9 +160,15 @@ class TransactionRepositoryImpl @Inject constructor(
                 includeSubcategories = if (filter.includeSubcategories) true else null
             )
             if (response.isSuccessful) {
-                Result.success(response.body()!!.toDomain())
+                val body = response.body()!!
+                Result.success(TransactionListResponse(
+                    transactions = body.transactions.map { it.toDomain() },
+                    total = body.totalCount,
+                    limit = filter.limit,
+                    offset = filter.offset
+                ))
             } else {
-                Result.failure(Exception(response.errorBody()?.string() ?: "Failed to get transactions"))
+                Result.failure(parseError(response))
             }
         } catch (e: Exception) {
             Result.failure(e)
@@ -199,9 +179,9 @@ class TransactionRepositoryImpl @Inject constructor(
         return try {
             val response = api.createTransaction(request.toDto())
             if (response.isSuccessful) {
-                Result.success(response.body()!!.toDomain())
+                Result.success(response.body()!!.transaction.toDomain())
             } else {
-                Result.failure(Exception(response.errorBody()?.string() ?: "Failed to create transaction"))
+                Result.failure(parseError(response))
             }
         } catch (e: Exception) {
             Result.failure(e)
@@ -218,9 +198,9 @@ class TransactionRepositoryImpl @Inject constructor(
             request.mood?.let { map["mood"] = it }
             val response = api.updateTransaction(id, map)
             if (response.isSuccessful) {
-                Result.success(response.body()!!.toDomain())
+                Result.success(response.body()!!.transaction.toDomain())
             } else {
-                Result.failure(Exception(response.errorBody()?.string() ?: "Failed to update transaction"))
+                Result.failure(parseError(response))
             }
         } catch (e: Exception) {
             Result.failure(e)
@@ -233,7 +213,7 @@ class TransactionRepositoryImpl @Inject constructor(
             if (response.isSuccessful) {
                 Result.success(Unit)
             } else {
-                Result.failure(Exception(response.errorBody()?.string() ?: "Failed to delete transaction"))
+                Result.failure(parseError(response))
             }
         } catch (e: Exception) {
             Result.failure(e)
@@ -251,9 +231,9 @@ class TransactionRepositoryImpl @Inject constructor(
             )
             val response = api.createTransfer(dto)
             if (response.isSuccessful) {
-                Result.success(response.body()!!.toDomain())
+                Result.success(response.body()!!.transaction.toDomain())
             } else {
-                Result.failure(Exception(response.errorBody()?.string() ?: "Failed to create transfer"))
+                Result.failure(parseError(response))
             }
         } catch (e: Exception) {
             Result.failure(e)
@@ -270,9 +250,9 @@ class CategoryRepositoryImpl @Inject constructor(
         return try {
             val response = api.getCategories(type?.value)
             if (response.isSuccessful) {
-                Result.success(response.body()!!.map { it.toDomain() })
+                Result.success(response.body()!!.categories.map { it.toDomain() })
             } else {
-                Result.failure(Exception(response.errorBody()?.string() ?: "Failed to get categories"))
+                Result.failure(parseError(response))
             }
         } catch (e: Exception) {
             Result.failure(e)
@@ -285,7 +265,7 @@ class CategoryRepositoryImpl @Inject constructor(
             if (response.isSuccessful) {
                 Result.success(response.body()!!.toDomain())
             } else {
-                Result.failure(Exception(response.errorBody()?.string() ?: "Failed to create category"))
+                Result.failure(parseError(response))
             }
         } catch (e: Exception) {
             Result.failure(e)
@@ -302,7 +282,7 @@ class CategoryRepositoryImpl @Inject constructor(
             if (response.isSuccessful) {
                 Result.success(response.body()!!.toDomain())
             } else {
-                Result.failure(Exception(response.errorBody()?.string() ?: "Failed to update category"))
+                Result.failure(parseError(response))
             }
         } catch (e: Exception) {
             Result.failure(e)
@@ -315,7 +295,7 @@ class CategoryRepositoryImpl @Inject constructor(
             if (response.isSuccessful) {
                 Result.success(Unit)
             } else {
-                Result.failure(Exception(response.errorBody()?.string() ?: "Failed to delete category"))
+                Result.failure(parseError(response))
             }
         } catch (e: Exception) {
             Result.failure(e)
@@ -332,9 +312,9 @@ class BudgetRepositoryImpl @Inject constructor(
         return try {
             val response = api.getBudgets()
             if (response.isSuccessful) {
-                Result.success(response.body()!!.map { it.toDomain() })
+                Result.success(response.body()!!.budgets.map { it.toDomain() })
             } else {
-                Result.failure(Exception(response.errorBody()?.string() ?: "Failed to get budgets"))
+                Result.failure(parseError(response))
             }
         } catch (e: Exception) {
             Result.failure(e)
@@ -347,7 +327,7 @@ class BudgetRepositoryImpl @Inject constructor(
             if (response.isSuccessful) {
                 Result.success(response.body()!!.toDomain())
             } else {
-                Result.failure(Exception(response.errorBody()?.string() ?: "Failed to create budget"))
+                Result.failure(parseError(response))
             }
         } catch (e: Exception) {
             Result.failure(e)
@@ -363,7 +343,7 @@ class BudgetRepositoryImpl @Inject constructor(
             if (response.isSuccessful) {
                 Result.success(response.body()!!.toDomain())
             } else {
-                Result.failure(Exception(response.errorBody()?.string() ?: "Failed to update budget"))
+                Result.failure(parseError(response))
             }
         } catch (e: Exception) {
             Result.failure(e)
@@ -376,7 +356,7 @@ class BudgetRepositoryImpl @Inject constructor(
             if (response.isSuccessful) {
                 Result.success(Unit)
             } else {
-                Result.failure(Exception(response.errorBody()?.string() ?: "Failed to delete budget"))
+                Result.failure(parseError(response))
             }
         } catch (e: Exception) {
             Result.failure(e)
@@ -393,9 +373,9 @@ class GoalRepositoryImpl @Inject constructor(
         return try {
             val response = api.getGoals()
             if (response.isSuccessful) {
-                Result.success(response.body()!!.map { it.toDomain() })
+                Result.success(response.body()!!.goals.map { it.toDomain() })
             } else {
-                Result.failure(Exception(response.errorBody()?.string() ?: "Failed to get goals"))
+                Result.failure(parseError(response))
             }
         } catch (e: Exception) {
             Result.failure(e)
@@ -408,7 +388,7 @@ class GoalRepositoryImpl @Inject constructor(
             if (response.isSuccessful) {
                 Result.success(response.body()!!.toDomain())
             } else {
-                Result.failure(Exception(response.errorBody()?.string() ?: "Failed to create goal"))
+                Result.failure(parseError(response))
             }
         } catch (e: Exception) {
             Result.failure(e)
@@ -426,7 +406,7 @@ class GoalRepositoryImpl @Inject constructor(
             if (response.isSuccessful) {
                 Result.success(response.body()!!.toDomain())
             } else {
-                Result.failure(Exception(response.errorBody()?.string() ?: "Failed to update goal"))
+                Result.failure(parseError(response))
             }
         } catch (e: Exception) {
             Result.failure(e)
@@ -439,7 +419,7 @@ class GoalRepositoryImpl @Inject constructor(
             if (response.isSuccessful) {
                 Result.success(Unit)
             } else {
-                Result.failure(Exception(response.errorBody()?.string() ?: "Failed to delete goal"))
+                Result.failure(parseError(response))
             }
         } catch (e: Exception) {
             Result.failure(e)
@@ -454,11 +434,15 @@ class UserRepositoryImpl @Inject constructor(
     
     override suspend fun getUserProfile(): Result<UserProfile> {
         return try {
-            val response = api.getUserStats()
-            if (response.isSuccessful) {
-                Result.success(response.body()!!.toDomain())
+            val xpResponse = api.getXpSummary()
+            val achievementsResponse = api.getAchievements()
+            if (xpResponse.isSuccessful && achievementsResponse.isSuccessful) {
+                Result.success(UserProfile(
+                    stats = xpResponse.body()!!.toDomain(),
+                    achievements = achievementsResponse.body()!!.achievements.map { it.toDomain() }
+                ))
             } else {
-                Result.failure(Exception(response.errorBody()?.string() ?: "Failed to get profile"))
+                Result.failure(parseError(xpResponse))
             }
         } catch (e: Exception) {
             Result.failure(e)
@@ -471,7 +455,7 @@ class UserRepositoryImpl @Inject constructor(
             if (response.isSuccessful) {
                 Result.success(response.body()!!.toDomain())
             } else {
-                Result.failure(Exception(response.errorBody()?.string() ?: "Failed to get settings"))
+                Result.failure(parseError(response))
             }
         } catch (e: Exception) {
             Result.failure(e)
@@ -484,7 +468,7 @@ class UserRepositoryImpl @Inject constructor(
             if (response.isSuccessful) {
                 Result.success(response.body()!!.toDomain())
             } else {
-                Result.failure(Exception(response.errorBody()?.string() ?: "Failed to update settings"))
+                Result.failure(parseError(response))
             }
         } catch (e: Exception) {
             Result.failure(e)
@@ -503,13 +487,11 @@ class ChatRepositoryImpl @Inject constructor(
             if (response.isSuccessful) {
                 val body = response.body()!!
                 Result.success(ChatResponse(
-                    response = body.response,
-                    suggestedActions = body.suggestedActions?.map { 
-                        SuggestedAction(it.type, it.data)
-                    }
+                    response = body.reply,
+                    suggestedActions = emptyList()
                 ))
             } else {
-                Result.failure(Exception(response.errorBody()?.string() ?: "Failed to send message"))
+                Result.failure(parseError(response))
             }
         } catch (e: Exception) {
             Result.failure(e)
@@ -517,3 +499,13 @@ class ChatRepositoryImpl @Inject constructor(
     }
 }
 
+private fun parseError(response: retrofit2.Response<*>): Exception {
+    val errorBody = response.errorBody()?.string()
+    val message = try {
+        val json = org.json.JSONObject(errorBody ?: "")
+        json.optString("error", "Request failed")
+    } catch (e: Exception) {
+        "Request failed (${response.code()})"
+    }
+    return Exception(message)
+}

@@ -3,7 +3,6 @@ package com.efina.app.util
 object Constants {
     // Secure Storage Keys
     const val KEY_AUTH_TOKEN = "auth_token"
-    const val KEY_CSRF_TOKEN = "csrf_token"
     const val KEY_USER_ID = "user_id"
     const val KEY_USER_EMAIL = "user_email"
     const val KEY_USER_PIN = "user_pin"

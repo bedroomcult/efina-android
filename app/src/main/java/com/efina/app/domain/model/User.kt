@@ -3,15 +3,11 @@ package com.efina.app.domain.model
 data class User(
     val id: Long,
     val email: String,
-    val name: String,
-    val role: String,
-    val planId: String,
-    val forceOnboarding: Boolean = false
+    val name: String
 )
 
 data class AuthToken(
     val token: String,
-    val csrfToken: String,
     val user: User
 )
 
@@ -26,19 +22,15 @@ data class UserSettings(
     val theme: String,
     val language: String,
     val currency: String,
-    val timezone: String,
-    val hasSeenTutorial: Boolean
+    val timezone: String
 )
 
 data class UserStats(
     val activeStreak: Int,
     val totalTransactions: Int,
-    val lastTransactionDate: String?,
     val xp: Int,
     val level: Int,
-    val tier: String,
-    val xpToNextLevel: Int,
-    val xpProgressPercent: Int
+    val tier: String
 )
 
 data class Achievement(

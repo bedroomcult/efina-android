@@ -14,28 +14,25 @@ interface EfinaApi {
     @POST("auth/register")
     suspend fun register(@Body request: RegisterRequestDto): Response<AuthResponseDto>
     
-    @POST("auth/pin")
-    suspend fun setPin(@Body request: PinRequestDto): Response<Unit>
+    @POST("auth/logout")
+    suspend fun logout(): Response<Unit>
     
-    @POST("auth/verify-pin")
-    suspend fun verifyPin(@Body request: PinRequestDto): Response<AuthResponseDto>
-    
-    @GET("auth/sessions")
-    suspend fun getSessions(): Response<SessionsResponseDto>
+    @GET("auth/me")
+    suspend fun getMe(): Response<UserDto>
 
     // ============ Accounts ============
     
     @GET("accounts")
-    suspend fun getAccounts(): Response<List<AccountDto>>
+    suspend fun getAccounts(): Response<AccountsListDto>
     
     @POST("accounts")
-    suspend fun createAccount(@Body request: CreateAccountRequestDto): Response<AccountDto>
+    suspend fun createAccount(@Body request: CreateAccountRequestDto): Response<AccountCreatedDto>
     
-    @PUT("accounts/{id}")
+    @PATCH("accounts/{id}")
     suspend fun updateAccount(
         @Path("id") id: Long,
-        @Body request: Map<String, Any?>
-    ): Response<AccountDto>
+        @Body request: Map<String, @JvmSuppressWildcards Any?>
+    ): Response<AccountCreatedDto>
     
     @DELETE("accounts/{id}")
     suspend fun deleteAccount(@Path("id") id: Long): Response<Unit>
@@ -53,45 +50,39 @@ interface EfinaApi {
         @Query("end_date") endDate: String? = null,
         @Query("search") search: String? = null,
         @Query("include_subcategories") includeSubcategories: Boolean? = null
-    ): Response<TransactionListResponseDto>
+    ): Response<TransactionsListDto>
     
     @POST("transactions")
-    suspend fun createTransaction(@Body request: CreateTransactionRequestDto): Response<TransactionDto>
+    suspend fun createTransaction(@Body request: CreateTransactionRequestDto): Response<TransactionCreatedDto>
     
-    @GET("transactions/{id}")
-    suspend fun getTransaction(@Path("id") id: Long): Response<TransactionDto>
-    
-    @PUT("transactions/{id}")
+    @PATCH("transactions/{id}")
     suspend fun updateTransaction(
         @Path("id") id: Long,
-        @Body request: Map<String, Any?>
-    ): Response<TransactionDto>
+        @Body request: Map<String, @JvmSuppressWildcards Any?>
+    ): Response<TransactionCreatedDto>
     
     @DELETE("transactions/{id}")
     suspend fun deleteTransaction(@Path("id") id: Long): Response<Unit>
 
     // ============ Transfers ============
     
-    @GET("transfers")
-    suspend fun getTransfers(): Response<List<TransactionDto>>
-    
     @POST("transfers")
-    suspend fun createTransfer(@Body request: CreateTransferRequestDto): Response<TransactionDto>
+    suspend fun createTransfer(@Body request: CreateTransferRequestDto): Response<TransactionCreatedDto>
 
     // ============ Categories ============
     
     @GET("categories")
     suspend fun getCategories(
         @Query("type") type: String? = null
-    ): Response<List<CategoryDto>>
+    ): Response<CategoriesListDto>
     
     @POST("categories")
     suspend fun createCategory(@Body request: CreateCategoryRequestDto): Response<CategoryDto>
     
-    @PUT("categories/{id}")
+    @PATCH("categories/{id}")
     suspend fun updateCategory(
         @Path("id") id: Long,
-        @Body request: Map<String, Any?>
+        @Body request: Map<String, @JvmSuppressWildcards Any?>
     ): Response<CategoryDto>
     
     @DELETE("categories/{id}")
@@ -100,15 +91,15 @@ interface EfinaApi {
     // ============ Budgets ============
     
     @GET("budgets")
-    suspend fun getBudgets(): Response<List<BudgetDto>>
+    suspend fun getBudgets(): Response<BudgetsListDto>
     
     @POST("budgets")
     suspend fun createBudget(@Body request: CreateBudgetRequestDto): Response<BudgetDto>
     
-    @PUT("budgets/{id}")
+    @PATCH("budgets/{id}")
     suspend fun updateBudget(
         @Path("id") id: Long,
-        @Body request: Map<String, Any?>
+        @Body request: Map<String, @JvmSuppressWildcards Any?>
     ): Response<BudgetDto>
     
     @DELETE("budgets/{id}")
@@ -117,45 +108,55 @@ interface EfinaApi {
     // ============ Goals ============
     
     @GET("goals")
-    suspend fun getGoals(): Response<List<GoalDto>>
+    suspend fun getGoals(): Response<GoalsListDto>
     
     @POST("goals")
     suspend fun createGoal(@Body request: CreateGoalRequestDto): Response<GoalDto>
     
-    @PUT("goals/{id}")
+    @PATCH("goals/{id}")
     suspend fun updateGoal(
         @Path("id") id: Long,
-        @Body request: Map<String, Any?>
+        @Body request: Map<String, @JvmSuppressWildcards Any?>
     ): Response<GoalDto>
     
     @DELETE("goals/{id}")
     suspend fun deleteGoal(@Path("id") id: Long): Response<Unit>
 
-    // ============ User Stats ============
+    // ============ Dashboard ============
     
-    @GET("user/stats")
-    suspend fun getUserStats(): Response<UserProfileResponseDto>
+    @GET("dashboard")
+    suspend fun getDashboard(): Response<DashboardDto>
+
+    // ============ Settings ============
     
-    @GET("user/settings")
+    @GET("settings")
     suspend fun getSettings(): Response<UserSettingsDto>
     
-    @PUT("user/settings")
+    @PATCH("settings")
     suspend fun updateSettings(@Body request: UpdateSettingsRequestDto): Response<UserSettingsDto>
 
     // ============ AI ============
     
     @POST("ai/chat")
     suspend fun chat(@Body request: ChatRequestDto): Response<ChatResponseDto>
-
-    // ============ Health Score ============
     
-    @GET("health-score")
-    suspend fun getHealthScore(): Response<Map<String, Any>>
+    @GET("ai/xp-summary")
+    suspend fun getXpSummary(): Response<XpSummaryDto>
+
+    // ============ Achievements ============
+    
+    @GET("achievements")
+    suspend fun getAchievements(): Response<AchievementsListDto>
 
     // ============ Forecast ============
     
     @GET("forecast")
-    suspend fun getForecast(): Response<Map<String, Any>>
+    suspend fun getForecast(): Response<ForecastDto>
+
+    // ============ Health Score ============
+    
+    @GET("health-score")
+    suspend fun getHealthScore(): Response<HealthScoreDto>
 
     // ============ Leaderboard ============
     

@@ -6,24 +6,13 @@ import com.efina.app.domain.model.*
 
 fun AuthResponseDto.toDomain() = AuthToken(
     token = token,
-    csrfToken = csrfToken ?: "",
     user = user.toDomain()
 )
 
 fun UserDto.toDomain() = User(
     id = id,
     email = email,
-    name = name,
-    role = role,
-    planId = planId ?: "free",
-    forceOnboarding = forceOnboarding ?: false
-)
-
-fun SessionDto.toDomain() = Session(
-    id = id,
-    deviceInfo = deviceInfo,
-    ipAddress = ipAddress,
-    createdAt = createdAt
+    name = name
 )
 
 // ============ Account Mappers ============
@@ -31,12 +20,15 @@ fun SessionDto.toDomain() = Session(
 fun AccountDto.toDomain() = Account(
     id = id,
     name = name,
-    type = AccountType.entries.find { it.value == type } ?: AccountType.BANK,
+    type = AccountType.entries.find { it.value == type } ?: AccountType.CHECKING,
     balance = balance,
     currency = currency ?: "IDR",
     description = description,
+    color = color,
+    icon = icon,
     displayOrder = displayOrder ?: 0,
-    initialBalance = initialBalance ?: 0.0,
+    includeInTotal = includeInTotal ?: true,
+    showInDashboard = showInDashboard ?: true,
     createdAt = createdAt
 )
 
@@ -45,14 +37,18 @@ fun CreateAccountRequest.toDto() = CreateAccountRequestDto(
     type = type.value,
     balance = balance,
     currency = currency,
-    description = description
+    description = description,
+    color = color,
+    icon = icon,
+    includeInTotal = includeInTotal,
+    showInDashboard = showInDashboard
 )
 
 // ============ Transaction Mappers ============
 
 fun TransactionDto.toDomain() = Transaction(
     id = id,
-    userId = userId,
+    userId = 0,
     accountId = accountId,
     accountName = accountName,
     categoryId = categoryId,
@@ -68,13 +64,6 @@ fun TransactionDto.toDomain() = Transaction(
     mood = mood,
     transferPairId = transferPairId,
     createdAt = createdAt
-)
-
-fun TransactionListResponseDto.toDomain() = TransactionListResponse(
-    transactions = transactions.map { it.toDomain() },
-    total = total,
-    limit = limit,
-    offset = offset
 )
 
 fun CreateTransactionRequest.toDto() = CreateTransactionRequestDto(
@@ -112,14 +101,12 @@ fun BudgetDto.toDomain() = Budget(
     id = id,
     categoryId = categoryId,
     categoryName = categoryName,
-    categoryColor = categoryColor,
-    categoryIcon = categoryIcon,
     amount = amount,
+    spent = spent,
+    remaining = remaining,
     periodType = PeriodType.entries.find { it.value == periodType } ?: PeriodType.MONTHLY,
     periodStart = periodStart,
-    periodEnd = periodEnd,
-    spent = spent,
-    percentage = percentage
+    periodEnd = periodEnd
 )
 
 fun CreateBudgetRequest.toDto() = CreateBudgetRequestDto(
@@ -137,13 +124,11 @@ fun GoalDto.toDomain() = Goal(
     currentAmount = currentAmount,
     startDate = startDate,
     targetDate = targetDate,
-    periodType = GoalPeriodType.entries.find { it.value == periodType } ?: GoalPeriodType.MONTHLY,
+    periodType = periodType?.let { GoalPeriodType.entries.find { p -> p.value == it } },
     linkedAccountId = linkedAccountId,
     accountName = accountName,
-    totalPeriods = totalPeriods,
-    remainingPeriods = remainingPeriods,
-    remainingAmount = remainingAmount,
-    suggestedSaving = suggestedSaving
+    progressPercentage = progressPercentage,
+    status = status
 )
 
 fun CreateGoalRequest.toDto() = CreateGoalRequestDto(
@@ -155,17 +140,30 @@ fun CreateGoalRequest.toDto() = CreateGoalRequestDto(
     linkedAccountId = linkedAccountId
 )
 
+// ============ Settings Mappers ============
+
+fun UserSettingsDto.toDomain() = UserSettings(
+    theme = theme ?: "dark",
+    language = language ?: "en",
+    currency = currency ?: "IDR",
+    timezone = timezone ?: "Asia/Jakarta"
+)
+
+fun UserSettings.toUpdateRequest() = UpdateSettingsRequestDto(
+    theme = theme,
+    language = language,
+    currency = currency,
+    timezone = timezone
+)
+
 // ============ User Stats Mappers ============
 
-fun UserStatsDto.toDomain() = UserStats(
+fun XpSummaryDto.toDomain() = UserStats(
     activeStreak = activeStreak ?: 0,
     totalTransactions = totalTransactions ?: 0,
-    lastTransactionDate = lastTransactionDate,
     xp = xp ?: 0,
     level = level ?: 1,
-    tier = tier ?: "Bronze",
-    xpToNextLevel = xpToNextLevel ?: 100,
-    xpProgressPercent = xpProgressPercent ?: 0
+    tier = tier ?: "Bronze"
 )
 
 fun AchievementDto.toDomain() = Achievement(
@@ -176,26 +174,4 @@ fun AchievementDto.toDomain() = Achievement(
     xpReward = xpReward ?: 0,
     achievedAt = achievedAt,
     progress = progress
-)
-
-fun UserProfileResponseDto.toDomain() = UserProfile(
-    stats = stats.toDomain(),
-    achievements = achievements.map { it.toDomain() }
-)
-
-// ============ Settings Mappers ============
-
-fun UserSettingsDto.toDomain() = UserSettings(
-    theme = theme ?: "dark",
-    language = language ?: "en",
-    currency = currency ?: "IDR",
-    timezone = timezone ?: "Asia/Jakarta",
-    hasSeenTutorial = hasSeenTutorial ?: false
-)
-
-fun UserSettings.toUpdateRequest() = UpdateSettingsRequestDto(
-    theme = theme,
-    language = language,
-    currency = currency,
-    timezone = timezone
 )

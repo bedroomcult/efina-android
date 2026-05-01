@@ -30,9 +30,8 @@ class AuthInterceptor @Inject constructor(
     override fun intercept(chain: Interceptor.Chain): Response {
         val originalRequest = chain.request()
         
-        // Skip auth for login/register endpoints
         val path = originalRequest.url.encodedPath
-        if (path.contains("auth/login") || path.contains("auth/register") || path.contains("auth/verify-pin")) {
+        if (path.contains("auth/login") || path.contains("auth/register")) {
             return chain.proceed(originalRequest)
         }
         
@@ -78,14 +77,6 @@ class TokenManager @Inject constructor(
         return securePrefs.getString(Constants.KEY_AUTH_TOKEN, null)
     }
     
-    fun saveCsrfToken(token: String) {
-        securePrefs.edit().putString(Constants.KEY_CSRF_TOKEN, token).apply()
-    }
-    
-    fun getCsrfToken(): String? {
-        return securePrefs.getString(Constants.KEY_CSRF_TOKEN, null)
-    }
-    
     fun saveUserId(userId: Long) {
         securePrefs.edit().putLong(Constants.KEY_USER_ID, userId).apply()
     }
@@ -100,10 +91,6 @@ class TokenManager @Inject constructor(
     
     fun getUserEmail(): String? {
         return securePrefs.getString(Constants.KEY_USER_EMAIL, null)
-    }
-    
-    fun savePin(pin: String) {
-        securePrefs.edit().putString(Constants.KEY_USER_PIN, pin).apply()
     }
     
     fun hasPin(): Boolean {

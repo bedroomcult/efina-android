@@ -165,14 +165,14 @@ fun AccountCard(
 @Composable
 fun BudgetProgressCard(
     categoryName: String,
-    categoryColor: Color,
     amount: Double,
     spent: Double,
-    percentage: Int,
+    remaining: Double,
     currency: String,
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val percentage = if (amount > 0) ((spent / amount) * 100).toInt() else 0
     Card(
         onClick = onClick,
         modifier = modifier.fillMaxWidth(),
@@ -212,7 +212,7 @@ fun BudgetProgressCard(
                 color = when {
                     percentage >= 100 -> Error
                     percentage >= 80 -> Warning
-                    else -> categoryColor
+                    else -> MaterialTheme.colorScheme.primary
                 },
                 trackColor = MaterialTheme.colorScheme.surfaceVariant
             )
@@ -245,12 +245,12 @@ fun GoalCard(
     name: String,
     currentAmount: Double,
     targetAmount: Double,
+    progressPercentage: Int,
     currency: String,
-    remainingAmount: Double,
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val progress = (currentAmount / targetAmount).toFloat().coerceIn(0f, 1f)
+    val progress = (progressPercentage / 100f).coerceIn(0f, 1f)
     
     Card(
         onClick = onClick,
@@ -285,7 +285,7 @@ fun GoalCard(
             )
             
             Text(
-                text = "${formatCurrency(remainingAmount, currency)} remaining",
+                text = "${formatCurrency(targetAmount - currentAmount, currency)} remaining",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )

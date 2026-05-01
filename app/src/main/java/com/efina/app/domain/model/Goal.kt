@@ -5,15 +5,13 @@ data class Goal(
     val name: String,
     val targetAmount: Double,
     val currentAmount: Double,
-    val startDate: String,
+    val startDate: String?,
     val targetDate: String,
-    val periodType: GoalPeriodType,
+    val periodType: GoalPeriodType?,
     val linkedAccountId: Long?,
     val accountName: String?,
-    val totalPeriods: Int,
-    val remainingPeriods: Int,
-    val remainingAmount: Double,
-    val suggestedSaving: Double
+    val progressPercentage: Int,
+    val status: String?
 )
 
 enum class GoalPeriodType(val value: String) {
