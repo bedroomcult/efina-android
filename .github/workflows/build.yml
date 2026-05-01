@@ -27,28 +27,13 @@ jobs:
           java-version: '17'
       
       - name: Setup Gradle
-        uses: gradle/gradle-build-action@v2
-        with:
-          gradle-version: 8.4
-      
-      - name: Create local.properties
-        run: |
-          echo "sdk.dir=$ANDROID_HOME" > local.properties
-      
-      - name: Download Gradle wrapper JAR
-        run: |
-          mkdir -p gradle/wrapper
-          curl -sL -o gradle/wrapper/gradle-wrapper.jar \
-            "https://github.com/gradle/gradle/raw/v8.4.0/gradle/wrapper/gradle-wrapper.jar"
-      
-      - name: Make gradlew executable
-        run: chmod +x gradlew
+        uses: gradle/actions/setup-gradle@v3
       
       - name: Build ${{ inputs.variant || 'debug' }} APK
-        run: |
-          ./gradlew assemble${{ inputs.variant || 'debug' }} --no-daemon --stacktrace
-        env:
-          ANDROID_HOME: /opt/android-sdk
+        run: ./gradlew assemble${{ inputs.variant || 'debug' }} --no-daemon --no-configuration-cache
+      
+      - name: List APK files
+        run: find app/build -name "*.apk" 2>/dev/null || echo "No APK files found"
       
       - name: Upload APK
         uses: actions/upload-artifact@v4
