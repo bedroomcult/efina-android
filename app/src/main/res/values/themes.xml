@@ -8,7 +8,7 @@
     
     <style name="Theme.Efina.Splash" parent="Theme.SplashScreen">
         <item name="windowSplashScreenBackground">#0A0A0A</item>
-        <item name="windowSplashScreenAnimatedIcon">@mipmap/ic_launcher</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/ic_launcher</item>
         <item name="postSplashScreenTheme">@style/Theme.Efina</item>
     </style>
 </resources>
