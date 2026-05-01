@@ -80,9 +80,17 @@ fun EfinaAppRoot(
                 Screen.Stats.route
             )
             
+            val bottomNavItems = listOf(
+                BottomNavItem.Home,
+                BottomNavItem.Accounts,
+                BottomNavItem.Transactions,
+                BottomNavItem.Budgets,
+                BottomNavItem.Stats
+            )
+            
             if (showBottomNav) {
                 NavigationBar {
-                    BottomNavItem.entries.forEach { item ->
+                    bottomNavItems.forEach { item ->
                         NavigationBarItem(
                             icon = { Icon(item.icon, contentDescription = item.label) },
                             label = { Text(item.label) },

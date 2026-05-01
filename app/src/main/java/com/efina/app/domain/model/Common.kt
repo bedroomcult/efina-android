@@ -71,3 +71,13 @@ data class Notification(
     val createdAt: String,
     val data: Map<String, String>?
 )
+
+data class ChatResponse(
+    val response: String,
+    val suggestedActions: List<SuggestedAction>?
+)
+
+data class SuggestedAction(
+    val type: String,
+    val data: Map<String, Any>
+)
