@@ -47,12 +47,10 @@ google-services.json
 
 # ProGuard folder
 proguard/
-proguard-rules.pro
 mapping.txt
 
 # Version control
 vcs.xml
-*.xml
 
 # lint
 lint/
