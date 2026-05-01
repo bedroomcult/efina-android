@@ -36,7 +36,7 @@ class AuthViewModel @Inject constructor(
     
     private fun checkAuthState() {
         viewModelScope.launch {
-            authRepository.isLoggedIn.collect { loggedIn ->
+            authRepository.isLoggedIn().collect { loggedIn ->
                 _isLoggedIn.value = loggedIn
             }
         }

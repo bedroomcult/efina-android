@@ -1,10 +1,14 @@
 package com.efina.app.ui
 
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -208,9 +212,9 @@ fun EfinaAppRoot(
 
 @Composable
 fun StatsPlaceholder() {
-    androidx.compose.foundation.layout.Box(
-        modifier = androidx.compose.ui.Modifier.fillMaxSize(),
-        contentAlignment = androidx.compose.ui.Alignment.Center
+    Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center
     ) {
         Text("Stats Screen - Coming Soon")
     }
@@ -218,13 +222,13 @@ fun StatsPlaceholder() {
 
 @Composable
 fun SettingsPlaceholder(onNavigateBack: () -> Unit) {
-    androidx.compose.foundation.layout.Box(
-        modifier = androidx.compose.ui.Modifier.fillMaxSize(),
-        contentAlignment = androidx.compose.ui.Alignment.Center
+    Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center
     ) {
-        Column(horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally) {
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Text("Settings - Coming Soon")
-            androidx.compose.material3.TextButton(onClick = onNavigateBack) {
+            TextButton(onClick = onNavigateBack) {
                 Text("Go Back")
             }
         }
@@ -233,9 +237,9 @@ fun SettingsPlaceholder(onNavigateBack: () -> Unit) {
 
 @Composable
 fun ChatPlaceholder() {
-    androidx.compose.foundation.layout.Box(
-        modifier = androidx.compose.ui.Modifier.fillMaxSize(),
-        contentAlignment = androidx.compose.ui.Alignment.Center
+    Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center
     ) {
         Text("AI Chat - Coming Soon")
     }
