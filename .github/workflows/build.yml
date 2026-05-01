@@ -1,0 +1,55 @@
+name: Build Debug APK
+
+on:
+  workflow_dispatch:
+    inputs:
+      variant:
+        description: 'Build variant'
+        required: true
+        default: 'debug'
+        type: choice
+        options:
+          - debug
+          - release
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+      
+      - name: Setup Gradle
+        uses: gradle/gradle-build-action@v2
+        with:
+          gradle-version: 8.4
+      
+      - name: Create local.properties
+        run: |
+          echo "sdk.dir=$ANDROID_HOME" > local.properties
+      
+      - name: Download Gradle wrapper JAR
+        run: |
+          mkdir -p gradle/wrapper
+          curl -sL -o gradle/wrapper/gradle-wrapper.jar \
+            "https://github.com/gradle/gradle/raw/v8.4.0/gradle/wrapper/gradle-wrapper.jar"
+      
+      - name: Build ${{ inputs.variant || 'debug' }} APK
+        run: |
+          ./gradlew assemble${{ inputs.variant || 'debug' }} --no-daemon
+        env:
+          ANDROID_HOME: /opt/android-sdk
+      
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: efina-${{ inputs.variant || 'debug' }}-apk
+          path: app/build/outputs/apk/${{ inputs.variant || 'debug' }}/*.apk
+          retention-days: 7
