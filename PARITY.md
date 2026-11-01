@@ -116,7 +116,7 @@ Each row names the reason so nothing is silently missing.
 |---|---|---|
 | API contract | `node tools/check-api-contract.mjs --strict` | exit 0 |
 | Kotlin static | `node tools/check-kotlin.mjs --strict` | exit 0 |
-| Compile | CI `./gradlew assembleDebug` | **success** — 22.1 MB debug APK |
+| Compile | CI `./gradlew assembleDebug` | **success** — 22.1 MB debug APK, twice (also after debts/scheduled) |
 
 The static checks cover bracket balance, project-import resolution, and absence of
 placeholder markers. They do **not** type-check. Only Gradle does that.
