@@ -1,110 +1,101 @@
 # Efina Android
 
-Native Android application for Efina personal finance management.
+Native Android client for the Efina personal finance app.
 
-## Quick Start
+Jetpack Compose, Kotlin 2.0, Hilt, Retrofit. Talks to the existing Efina
+Cloudflare Pages API — no separate backend.
 
-1. **Install Gradle wrapper JAR:**
-   ```bash
-   # Download from https://github.com/gradle/gradle/raw/v8.4.0/gradle/wrapper/gradle-wrapper.jar
-   # Or clone from official Android project template
-   
-   # After download:
-   curl -L -o gradle/wrapper/gradle-wrapper.jar \
-     "https://github.com/gradle/gradle/raw/v8.4.0/gradle/wrapper/gradle-wrapper.jar"
-   ```
+---
 
-2. **Open in Android Studio** (Hedgehog or later)
+## Status
 
-3. **Sync Gradle** and wait for dependencies
+| | |
+|---|---|
+| CI | [![Build](https://github.com/bedroomcult/efina-android/actions/workflows/build.yml/badge.svg)](https://github.com/bedroomcult/efina-android/actions/workflows/build.yml) |
+| Compiles | yes — debug and signed release both build in CI |
+| Has it been run? | **no** — verified by compiler only, never executed on a device |
 
-4. **Run:**
-   ```bash
-   ./gradlew assembleDebug
-   ```
+That last row matters more than the others. Everything below is proven by
+compilation and by static checks against the real backend; nothing is proven by
+runtime behaviour. Read `PARITY.md` before assuming a feature works.
 
-## Features
+## What is implemented
 
-- Account Management (bank, e-wallet, cash, credit, investment)
-- Transaction Tracking (income, expense, transfer)
-- Budgeting (weekly, monthly, yearly)
-- Savings Goals with progress tracking
-- Gamification (XP, achievements, leaderboard)
-- AI Assistant with chat
-- Receipt OCR scanning
-- Offline support with Room database
+Sign-in and register, session restore, dashboard, accounts (create/edit/delete
+and sharing with family members), transactions (create/edit/delete plus
+transfers), categories, budgets, goals, statistics, settings, family, debts and
+scheduled transactions.
 
-## Tech Stack
+`PARITY.md` lists every web feature that is **not** implemented, with a reason.
+`DESIGN-PARITY.md` maps each section of `design.md` to the Kotlin file that
+implements it, and names what was deliberately skipped.
 
-| Component | Library |
-|-----------|---------|
-| UI | Jetpack Compose + Material 3 |
-| DI | Hilt 2.50 |
-| Networking | Retrofit 2.9 + OkHttp 4.12 |
-| Local DB | Room 2.6.1 |
-| Preferences | DataStore |
-| Navigation | Navigation Compose 2.7.7 |
-| Background | WorkManager 2.9 |
-| Auth | EncryptedSharedPreferences |
+## API
 
-## Project Structure
+The client is matched to the real backend, not to an assumed one.
+`API_CONTRACT.md` records all 138 routes with method, path, body and response,
+and the ten defects in the previous API layer that made most screens fail.
+
+```
+https://efina.himz.my.id/api/
+```
+
+Base URL is a `buildConfigField` in `app/build.gradle.kts`, set per build type.
+
+## Build
+
+Requires JDK 17 and the Android SDK (compileSdk 36).
+
+```bash
+./gradlew assembleDebug          # debug APK
+./gradlew assembleRelease        # unsigned unless keystore.properties exists
+```
+
+Signed releases come from `.github/workflows/release.yml` on a `v*` tag, which
+reads `ANDROID_KEYSTORE_CONTENT`, `ANDROID_KEYSTORE_PASSWORD`, `ANDROID_KEY_ALIAS`
+and `ANDROID_KEY_PASSWORD` from repository secrets.
+
+## Verification
+
+Neither check needs Gradle, so both run anywhere:
+
+```bash
+node tools/check-api-contract.mjs --strict   # every route exists on the backend
+node tools/check-kotlin.mjs --strict         # bracket balance, imports, no stubs
+```
+
+Both gate CI. The first also regenerates the route snapshot:
+
+```bash
+node tools/check-api-contract.mjs --emit-manifest   # rewrites tools/backend-routes.json
+```
+
+That snapshot exists because the Efina backend repository is private and CI
+cannot clone it.
+
+## Crash reports
+
+Uncaught exceptions are posted to `POST /api/public/debug`, the endpoint the web
+client already uses, and are readable at `GET /api/public/debug` with a 7-day
+retention. Each report carries the thread, device model, Android version, app
+version and full stack.
+
+## Project layout
 
 ```
 app/src/main/java/com/efina/app/
 ├── data/
-│   ├── remote/
-│   │   ├── api/         # Retrofit interfaces
-│   │   ├── dto/         # API response models
-│   │   └── interceptor/  # Auth interceptors
-│   └── repository/      # Repository implementations
-├── domain/
-│   ├── model/          # Domain models
-│   └── repository/      # Repository interfaces
-├── di/                 # Hilt modules
-├── ui/                  # Compose screens + ViewModels
-│   ├── auth/
-│   ├── accounts/
-│   ├── transactions/
-│   ├── budgets/
-│   ├── goals/
-│   ├── stats/
-│   ├── chat/
-│   ├── settings/
-│   ├── components/
-│   └── theme/
-└── util/               # Utilities, constants
+│   ├── remote/api/         Retrofit interface, one method per real route
+│   ├── remote/dto/         wire models + mappers (faithful to D1 column names)
+│   ├── remote/interceptor/ auth + CSRF, encrypted token storage
+│   └── repository/         one repository per feature
+├── domain/model/           UI-facing models
+├── domain/repository/      contracts
+├── di/                     Hilt modules
+├── ui/                     feature packages (screens + viewmodels)
+│   └── theme/              palette, type, shape, motion
+└── util/                   constants, preferences, crash reporter
 ```
-
-## API Connection
-
-The app connects to the Efina backend. Configure the API URL in `app/build.gradle.kts`:
-
-```kotlin
-buildConfigField("String", "API_BASE_URL", "\"https://your-api-url.com/\"")
-```
-
-See [docs/mobile-api-spec.md](docs/mobile-api-spec.md) for full API documentation.
-
-## Setup Requirements
-
-- Android Studio Hedgehog+
-- Kotlin 1.9+
-- JDK 17
-- Gradle 8.4 (wrapper included)
-
-## Implementation Status
-
-| Phase | Status |
-|-------|--------|
-| 1. Project Foundation | ✅ |
-| 2. Authentication | 🔄 |
-| 3-6. Core Features | ⏳ |
-| 7. AI Features | ⏳ |
-| 8. Settings/Polish | ⏳ |
-| 9. Offline/Sync | ⏳ |
-| 10. Release | ⏳ |
-
-Full plan: [docs/android-implementation-plan.md](docs/android-implementation-plan.md)
 
 ## License
 
