@@ -4,13 +4,8 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
-import androidx.compose.ui.Modifier
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import com.efina.app.ui.EfinaAppRoot
-import com.efina.app.ui.theme.EfinaTheme
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
@@ -20,15 +15,11 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         
+        // EfinaAppRoot owns the theme, because the palette is driven by the
+        // server-side settings row (GET /settings). Nothing here may read
+        // MaterialTheme.colorScheme: there is no theme above this point.
         setContent {
-            EfinaTheme {
-                Surface(
-                    modifier = Modifier.fillMaxSize(),
-                    color = MaterialTheme.colorScheme.background
-                ) {
-                    EfinaAppRoot()
-                }
-            }
+            EfinaAppRoot()
         }
     }
 }

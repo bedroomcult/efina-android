@@ -3,7 +3,8 @@ package com.efina.app.ui.accounts
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.efina.app.domain.model.*
-import com.efina.app.domain.repository.*
+import com.efina.app.domain.repository.AccountMembers
+import com.efina.app.domain.repository.AccountRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -12,99 +13,106 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 data class AccountsUiState(
-    val isLoading: Boolean = false,
-    val error: String? = null,
+    val loading: Boolean = true,
+    val saving: Boolean = false,
     val accounts: List<Account> = emptyList(),
-    val totalBalance: Double = 0.0,
-    val currency: String = "IDR"
-)
+    val error: String? = null,
+    val members: AccountMembers? = null,
+    val membersLoading: Boolean = false
+) {
+    val totalBalance: Double get() = accounts.sumOf { it.balance }
+    val sharedCount: Int get() = accounts.count { it.isShared }
+}
 
 @HiltViewModel
 class AccountsViewModel @Inject constructor(
-    private val accountRepository: AccountRepository
+    private val repository: AccountRepository
 ) : ViewModel() {
-    
-    private val _uiState = MutableStateFlow(AccountsUiState())
-    val uiState: StateFlow<AccountsUiState> = _uiState.asStateFlow()
-    
-    init {
-        loadAccounts()
-    }
-    
-    fun loadAccounts() {
+
+    private val _state = MutableStateFlow(AccountsUiState())
+    val state: StateFlow<AccountsUiState> = _state.asStateFlow()
+
+    init { load() }
+
+    fun load() {
+        _state.value = _state.value.copy(loading = true, error = null)
         viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(isLoading = true, error = null)
-            
-            accountRepository.getAccounts()
-                .onSuccess { accounts ->
-                    val total = accounts.sumOf { it.balance }
-                    _uiState.value = _uiState.value.copy(
-                        isLoading = false,
-                        accounts = accounts,
-                        totalBalance = total
-                    )
-                }
-                .onFailure { error ->
-                    _uiState.value = _uiState.value.copy(
-                        isLoading = false,
-                        error = error.message ?: "Failed to load accounts"
-                    )
-                }
+            repository.getAccounts()
+                .onSuccess { _state.value = _state.value.copy(loading = false, accounts = it) }
+                .onFailure { _state.value = _state.value.copy(loading = false, error = it.message) }
         }
     }
-    
-    fun createAccount(request: CreateAccountRequest) {
+
+    fun create(request: CreateAccountRequest, onDone: () -> Unit) {
+        _state.value = _state.value.copy(saving = true, error = null)
         viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(isLoading = true, error = null)
-            
-            accountRepository.createAccount(request)
+            repository.createAccount(request)
                 .onSuccess {
-                    loadAccounts()
+                    _state.value = _state.value.copy(saving = false)
+                    load()
+                    onDone()
                 }
-                .onFailure { error ->
-                    _uiState.value = _uiState.value.copy(
-                        isLoading = false,
-                        error = error.message ?: "Failed to create account"
-                    )
-                }
+                .onFailure { _state.value = _state.value.copy(saving = false, error = it.message) }
         }
     }
-    
-    fun updateAccount(id: Long, request: UpdateAccountRequest) {
+
+    fun update(id: Long, request: UpdateAccountRequest, onDone: () -> Unit) {
+        _state.value = _state.value.copy(saving = true, error = null)
         viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(isLoading = true, error = null)
-            
-            accountRepository.updateAccount(id, request)
+            repository.updateAccount(id, request)
                 .onSuccess {
-                    loadAccounts()
+                    _state.value = _state.value.copy(saving = false)
+                    load()
+                    onDone()
                 }
-                .onFailure { error ->
-                    _uiState.value = _uiState.value.copy(
-                        isLoading = false,
-                        error = error.message ?: "Failed to update account"
-                    )
-                }
+                .onFailure { _state.value = _state.value.copy(saving = false, error = it.message) }
         }
     }
-    
-    fun deleteAccount(id: Long) {
+
+    fun delete(id: Long) {
         viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(isLoading = true, error = null)
-            
-            accountRepository.deleteAccount(id)
-                .onSuccess {
-                    loadAccounts()
-                }
-                .onFailure { error ->
-                    _uiState.value = _uiState.value.copy(
-                        isLoading = false,
-                        error = error.message ?: "Failed to delete account"
-                    )
+            repository.deleteAccount(id)
+                .onSuccess { load() }
+                .onFailure { _state.value = _state.value.copy(error = it.message) }
+        }
+    }
+
+    fun setShared(id: Long, familyId: Long?) {
+        viewModelScope.launch {
+            repository.setShared(id, familyId)
+                .onSuccess { load() }
+                .onFailure { _state.value = _state.value.copy(error = it.message) }
+        }
+    }
+
+    fun loadMembers(id: Long) {
+        _state.value = _state.value.copy(membersLoading = true, members = null)
+        viewModelScope.launch {
+            repository.getMembers(id)
+                .onSuccess { _state.value = _state.value.copy(membersLoading = false, members = it) }
+                .onFailure {
+                    _state.value = _state.value.copy(membersLoading = false, error = it.message)
                 }
         }
     }
-    
+
+    fun shareWith(id: Long, userId: Long, role: AccountShareRole) {
+        viewModelScope.launch {
+            repository.shareWith(id, userId, role)
+                .onSuccess { loadMembers(id) }
+                .onFailure { _state.value = _state.value.copy(error = it.message) }
+        }
+    }
+
+    fun removeMember(id: Long, userId: Long) {
+        viewModelScope.launch {
+            repository.removeMember(id, userId)
+                .onSuccess { loadMembers(id) }
+                .onFailure { _state.value = _state.value.copy(error = it.message) }
+        }
+    }
+
     fun clearError() {
-        _uiState.value = _uiState.value.copy(error = null)
+        _state.value = _state.value.copy(error = null)
     }
 }

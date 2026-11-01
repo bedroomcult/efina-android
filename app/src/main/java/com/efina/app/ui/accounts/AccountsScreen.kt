@@ -1,140 +1,222 @@
 package com.efina.app.ui.accounts
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.efina.app.domain.model.AccountType
+import com.efina.app.domain.model.Account
 import com.efina.app.ui.components.*
-import com.efina.app.ui.theme.Success
+import com.efina.app.ui.theme.EfinaCorners
+import com.efina.app.ui.theme.EfinaType
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AccountsScreen(
-    viewModel: AccountsViewModel = hiltViewModel(),
     onNavigateToCreate: () -> Unit,
-    onNavigateToEdit: (Long) -> Unit
+    onNavigateToEdit: (Long) -> Unit,
+    onNavigateToShare: (Long) -> Unit = {},
+    viewModel: AccountsViewModel = hiltViewModel()
 ) {
-    val uiState by viewModel.uiState.collectAsState()
-    var showDeleteDialog by remember { mutableStateOf<Long?>(null) }
-    
-    LaunchedEffect(Unit) {
-        viewModel.loadAccounts()
+    val state by viewModel.state.collectAsState()
+    val snackbar = remember { SnackbarHostState() }
+    var pendingDelete by remember { mutableStateOf<Account?>(null) }
+
+    LaunchedEffect(state.error) {
+        state.error?.let {
+            snackbar.showSnackbar(it)
+            viewModel.clearError()
+        }
     }
-    
+
     Scaffold(
+        snackbarHost = { SnackbarHost(snackbar) },
         topBar = {
             TopAppBar(
-                title = { Text("Accounts") },
+                title = { Text("Accounts", style = EfinaType.titleLargeEmphasized) },
                 actions = {
-                    IconButton(onClick = { viewModel.loadAccounts() }) {
-                        Icon(Icons.Default.Refresh, "Refresh")
+                    IconButton(onClick = onNavigateToCreate) {
+                        Icon(Icons.Default.Add, contentDescription = "Add account")
                     }
                 }
             )
         },
         floatingActionButton = {
-            FloatingActionButton(
+            ExtendedFloatingActionButton(
                 onClick = onNavigateToCreate,
-                containerColor = MaterialTheme.colorScheme.primary
-            ) {
-                Icon(Icons.Default.Add, "Add Account")
-            }
+                icon = { Icon(Icons.Default.Add, contentDescription = null) },
+                text = { Text("Account") },
+                shape = EfinaCorners.menu
+            )
         }
     ) { padding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
-        ) {
-            // Total Balance Card
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer
+        when {
+            state.loading -> Box(Modifier.fillMaxSize().padding(padding)) {
+                LoadingList(rows = 4, modifier = Modifier.padding(16.dp))
+            }
+            state.accounts.isEmpty() -> Box(Modifier.fillMaxSize().padding(padding)) {
+                EmptyState(
+                    title = "No accounts yet",
+                    message = "Add a bank account, e-wallet or cash balance to start tracking.",
+                    action = {
+                        Button(onClick = onNavigateToCreate, shape = EfinaCorners.menu) {
+                            Text("Create account")
+                        }
+                    }
                 )
+            }
+            else -> LazyColumn(
+                modifier = Modifier.fillMaxSize().padding(padding),
+                contentPadding = PaddingValues(16.dp, 8.dp, 16.dp, 96.dp),
+                verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(20.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Text(
-                        text = "Total Balance",
-                        style = MaterialTheme.typography.labelLarge,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text(
-                        text = formatCurrency(uiState.totalBalance, uiState.currency),
-                        style = MaterialTheme.typography.headlineLarge,
-                        color = Success
+                item {
+                    TotalCard(state.totalBalance, state.accounts.firstOrNull()?.currency ?: "IDR")
+                }
+                itemsIndexed(state.accounts, key = { _, a -> a.id }) { index, account ->
+                    val (alpha, offsetY) = revealState(index)
+                    AccountRow(
+                        account = account,
+                        modifier = Modifier
+                            .graphicsLayerCompat(alpha, offsetY),
+                        onClick = { onNavigateToEdit(account.id) },
+                        onShare = { onNavigateToShare(account.id) },
+                        onDelete = { pendingDelete = account }
                     )
                 }
             }
-            
-            // Accounts List
-            when {
-                uiState.isLoading -> LoadingIndicator()
-                uiState.error != null -> ErrorState(
-                    message = uiState.error!!,
-                    onRetry = { viewModel.loadAccounts() }
+        }
+    }
+
+    pendingDelete?.let { account ->
+        AlertDialog(
+            onDismissRequest = { pendingDelete = null },
+            title = { Text("Delete ${account.name}?") },
+            text = {
+                Text("This removes the account and every transaction on it. It cannot be undone.")
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    viewModel.delete(account.id)
+                    pendingDelete = null
+                }) { Text("Delete", color = MaterialTheme.colorScheme.error) }
+            },
+            dismissButton = {
+                TextButton(onClick = { pendingDelete = null }) { Text("Cancel") }
+            }
+        )
+    }
+}
+
+private fun Modifier.graphicsLayerCompat(alpha: Float, offsetY: Float): Modifier =
+    this.then(
+        Modifier.graphicsLayer {
+            this.alpha = alpha
+            translationY = offsetY
+        }
+    )
+
+@Composable
+private fun TotalCard(total: Double, currency: String) {
+    Column(
+        Modifier
+            .fillMaxWidth()
+            .background(MaterialTheme.colorScheme.primaryContainer, EfinaCorners.hero)
+            .padding(20.dp)
+    ) {
+        Text(
+            "Total balance",
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.75f)
+        )
+        Spacer(Modifier.height(4.dp))
+        Text(
+            formatMoney(total, currency),
+            style = EfinaType.amountLarge,
+            color = MaterialTheme.colorScheme.onPrimaryContainer
+        )
+    }
+}
+
+@Composable
+private fun AccountRow(
+    account: Account,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit,
+    onShare: () -> Unit,
+    onDelete: () -> Unit
+) {
+    var menuOpen by remember { mutableStateOf(false) }
+
+    Surface(
+        modifier = modifier.fillMaxWidth(),
+        shape = EfinaCorners.menu,
+        color = MaterialTheme.colorScheme.surfaceContainerLow,
+        onClick = onClick
+    ) {
+        Row(
+            Modifier.padding(14.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            AccountIconTile(account)
+            Spacer(Modifier.width(12.dp))
+            Column(Modifier.weight(1f)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        account.name,
+                        style = EfinaType.titleMediumEmphasized,
+                        maxLines = 1,
+                        modifier = Modifier.weight(1f, fill = false)
+                    )
+                    if (account.isShared || account.role != null) {
+                        Spacer(Modifier.width(6.dp))
+                        SharedAccountBadge(account)
+                    }
+                }
+                Text(
+                    account.type.displayName,
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
-                uiState.accounts.isEmpty() -> EmptyState(
-                    title = "No accounts yet",
-                    description = "Add your first account to start tracking your finances.",
-                    icon = Icons.Default.AccountBalanceWallet
-                )
-                else -> LazyColumn(
-                    modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    items(uiState.accounts, key = { it.id }) { account ->
-                        AccountCard(
-                            name = account.name,
-                            balance = account.balance,
-                            currency = account.currency,
-                            type = account.type.displayName,
-                            onClick = { onNavigateToEdit(account.id) }
+            }
+            Spacer(Modifier.width(8.dp))
+            Text(
+                formatMoney(account.balance, account.currency),
+                style = EfinaType.amountSmall,
+                color = if (account.balance < 0) MaterialTheme.colorScheme.error
+                else MaterialTheme.colorScheme.onSurface
+            )
+            if (account.canAdmin) {
+                Box {
+                    IconButton(onClick = { menuOpen = true }, modifier = Modifier.size(32.dp)) {
+                        Icon(Icons.Default.MoreVert, contentDescription = "Account actions")
+                    }
+                    DropdownMenu(
+                        expanded = menuOpen,
+                        onDismissRequest = { menuOpen = false },
+                        shape = EfinaCorners.menu
+                    ) {
+                        DropdownMenuItem(
+                            text = { Text(if (account.isShared) "Manage sharing" else "Share with family") },
+                            onClick = { menuOpen = false; onShare() }
+                        )
+                        DropdownMenuItem(
+                            text = { Text("Delete", color = MaterialTheme.colorScheme.error) },
+                            onClick = { menuOpen = false; onDelete() }
                         )
                     }
                 }
             }
         }
-    }
-    
-    // Delete Confirmation Dialog
-    showDeleteDialog?.let { accountId ->
-        AlertDialog(
-            onDismissRequest = { showDeleteDialog = null },
-            title = { Text("Delete Account") },
-            text = { Text("Are you sure? This will also delete all transactions in this account.") },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        viewModel.deleteAccount(accountId)
-                        showDeleteDialog = null
-                    }
-                ) {
-                    Text("Delete", color = MaterialTheme.colorScheme.error)
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { showDeleteDialog = null }) {
-                    Text("Cancel")
-                }
-            }
-        )
     }
 }

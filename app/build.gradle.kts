@@ -20,7 +20,7 @@ android {
         testInstrumentationRunner = "com.efina.app.HiltTestRunner"
 
         // API Configuration
-        buildConfigField("String", "API_BASE_URL", "\"https://efina.11112021.xyz/api/\"")
+        buildConfigField("String", "API_BASE_URL", "\"https://efina.himz.my.id/api/\"")
         
         // Room schema export
         ksp {
@@ -36,11 +36,11 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
-            buildConfigField("String", "API_BASE_URL", "\"https://efina.11112021.xyz/api/\"")
+            buildConfigField("String", "API_BASE_URL", "\"https://efina.himz.my.id/api/\"")
         }
         debug {
             isMinifyEnabled = false
-            buildConfigField("String", "API_BASE_URL", "\"https://efina.11112021.xyz/api/\"")
+            buildConfigField("String", "API_BASE_URL", "\"https://efina.himz.my.id/api/\"")
         }
     }
 
@@ -98,8 +98,8 @@ dependencies {
     ksp("com.google.dagger:hilt-compiler:2.50")
     
     // Retrofit + OkHttp
-    implementation("com.squareup.retrofit2:retrofit:2.9.0")
-    implementation("com.squareup.retrofit2:converter-gson:2.9.0")
+    implementation("com.squareup.retrofit2:retrofit:2.11.0")
+    implementation("com.squareup.retrofit2:converter-kotlinx-serialization:2.11.0")
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
     implementation("com.squareup.okhttp3:logging-interceptor:4.12.0")
     

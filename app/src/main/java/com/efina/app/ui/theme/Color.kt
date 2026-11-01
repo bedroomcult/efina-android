@@ -2,45 +2,144 @@ package com.efina.app.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-// Primary - Vegas Gold
-val VegasGold = Color(0xFFD4AF37)
-val VegasGoldLight = Color(0xFFE8C95A)
-val VegasGoldDark = Color(0xFFB8962E)
+/**
+ * Palettes and semantic colours, following design.md sections 2.3 and 2.4.
+ *
+ * The reference app ships 14 palettes. Efina ships two — Orion (the default, per
+ * design.md) and Mono — plus Material You on Android 12+. DESIGN-PARITY.md
+ * records that reduction; the token names are identical so adding a palette is
+ * one more object here.
+ *
+ * Money semantics are Efina-specific and don't exist in the design doc: income
+ * and expense must be instantly distinguishable, so they get dedicated tokens
+ * rather than borrowing the app-store "Ready to install" colours.
+ */
 
-// Secondary - Jet Black
-val JetBlack = Color(0xFF0A0A0A)
-val JetBlackLight = Color(0xFF1A1A1A)
-val JetBlackDark = Color(0xFF000000)
+// ── Orion (design.md 2.3) ───────────────────────────────────────────
 
-// Accent - Onyx
-val Onyx = Color(0xFF353935)
-val OnyxLight = Color(0xFF4A4A4A)
-val OnyxDark = Color(0xFF1F1F1F)
+object OrionLight {
+    val primary = Color(0xFF4C4ECD)
+    val onPrimary = Color(0xFFFFFFFF)
+    val primaryContainer = Color(0xFF7478F8)
+    val onPrimaryContainer = Color(0xFF0B0B36)
+    val secondary = Color(0xFF5B5D72)
+    val onSecondary = Color(0xFFFFFFFF)
+    val secondaryContainer = Color(0xFFE1E0FF)
+    val onSecondaryContainer = Color(0xFF181A2C)
+    val tertiary = Color(0xFF456900)
+    val onTertiary = Color(0xFFFFFFFF)
+    val tertiaryContainer = Color(0xFFCCFE82)   // acid lime
+    val onTertiaryContainer = Color(0xFF121F00)
+    val background = Color(0xFFFCF8FE)
+    val onBackground = Color(0xFF1B1B21)
+    val surface = Color(0xFFFCF8FE)
+    val onSurface = Color(0xFF1B1B21)
+    val surfaceVariant = Color(0xFFE4E1ED)
+    val onSurfaceVariant = Color(0xFF46464F)
+    val surfaceContainerLowest = Color(0xFFFFFFFF)
+    val surfaceContainerLow = Color(0xFFF6F2FB)
+    val surfaceContainer = Color(0xFFF0ECF5)
+    val surfaceContainerHigh = Color(0xFFEAE7F0)
+    val surfaceContainerHighest = Color(0xFFE4E1ED)
+    val outline = Color(0xFF777680)
+    val outlineVariant = Color(0xFFC7C5D0)
+    val error = Color(0xFFA8364B)
+    val onError = Color(0xFFFFFFFF)
+    val errorContainer = Color(0xFFFFD9DE)
+    val onErrorContainer = Color(0xFF400013)
+}
 
-// Neutrals
-val Gray50 = Color(0xFFFAFAFA)
-val Gray100 = Color(0xFFF5F5F5)
-val Gray200 = Color(0xFFE5E5E5)
-val Gray300 = Color(0xFFD4D4D4)
-val Gray400 = Color(0xFFA3A3A3)
-val Gray500 = Color(0xFF737373)
-val Gray600 = Color(0xFF525252)
-val Gray700 = Color(0xFF404040)
-val Gray800 = Color(0xFF262626)
-val Gray900 = Color(0xFF171717)
+object OrionDark {
+    val primary = Color(0xFFC0C1FF)
+    val onPrimary = Color(0xFF1B1B60)
+    val primaryContainer = Color(0xFF3F40C0)
+    val onPrimaryContainer = Color(0xFFE1E0FF)
+    val secondary = Color(0xFFC4C5DD)
+    val onSecondary = Color(0xFF2D2F42)
+    val secondaryContainer = Color(0xFF393953)
+    val onSecondaryContainer = Color(0xFFE1E0FF)
+    val tertiary = Color(0xFFF1FFD4)
+    val onTertiary = Color(0xFF243600)
+    val tertiaryContainer = Color(0xFFCAFB80)
+    val onTertiaryContainer = Color(0xFF102000)
+    val background = Color(0xFF0E0E12)
+    val onBackground = Color(0xFFE5E2E9)
+    val surface = Color(0xFF0E0E12)
+    val onSurface = Color(0xFFE5E2E9)
+    val surfaceVariant = Color(0xFF46464F)
+    val onSurfaceVariant = Color(0xFFC7C5D0)
+    val surfaceContainerLowest = Color(0xFF09090C)
+    val surfaceContainerLow = Color(0xFF131318)
+    val surfaceContainer = Color(0xFF1A1A21)
+    val surfaceContainerHigh = Color(0xFF20202A)
+    val surfaceContainerHighest = Color(0xFF25252E)
+    val outline = Color(0xFF918F9A)
+    val outlineVariant = Color(0xFF46464F)
+    val error = Color(0xFFF97386)
+    val onError = Color(0xFF5B0F24)
+    val errorContainer = Color(0xFF7C2237)
+    val onErrorContainer = Color(0xFFFFD9DE)
+}
 
-// Semantic
-val Success = Color(0xFF22C55E)
-val Warning = Color(0xFFF59E0B)
-val Error = Color(0xFFEF4444)
-val Info = Color(0xFF3B82F6)
+// ── Semantic and status (design.md 2.4) ─────────────────────────────
 
-// Category Colors
-val CategoryRed = Color(0xFFEF4444)
-val CategoryBlue = Color(0xFF3B82F6)
-val CategoryYellow = Color(0xFFEAB308)
-val CategoryGray = Color(0xFF6B7280)
-val CategoryOrange = Color(0xFFF97316)
-val CategoryCyan = Color(0xFF06B6D4)
-val CategoryEmerald = Color(0xFF10B981)
-val CategoryAmber = Color(0xFFFEF3C7)
+object EfinaSemantic {
+    val safe = Color(0xFF10B981)
+    val caution = Color(0xFFF59E0B)
+    val danger = Color(0xFFEF4444)
+    val warn = Color(0xFFEAB308)
+    val info = Color(0xFF3B82F6)
+}
+
+/**
+ * Money colours. Deliberately not part of the M3 scheme: a palette swap must not
+ * turn an expense green. These are tuned to stay legible on both light and dark
+ * surfaces, and are paired with a foreground for text drawn on the container.
+ */
+object MoneyColors {
+    val incomeLight = Color(0xFF0E7C5A)
+    val incomeOnLight = Color(0xFFD7FBE8)
+    val expenseLight = Color(0xFFB3261E)
+    val expenseOnLight = Color(0xFFFFDAD6)
+    val transferLight = Color(0xFF2A5EA8)
+    val transferOnLight = Color(0xFFD8E5FF)
+
+    val incomeDark = Color(0xFF6FDCAF)
+    val incomeOnDark = Color(0xFF00382A)
+    val expenseDark = Color(0xFFFFB4AB)
+    val expenseOnDark = Color(0xFF690005)
+    val transferDark = Color(0xFFA8C8FF)
+    val transferOnDark = Color(0xFF002F66)
+}
+
+/**
+ * `tonal()` from design.md 2.5: derive a (container, onContainer) pair from an
+ * arbitrary accent so backend-provided category colours always look native.
+ * Lightness 0.88/0.26 for containers, 0.3/0.82 for foreground.
+ */
+fun tonal(accent: Color, dark: Boolean): Pair<Color, Color> {
+    val hsl = FloatArray(3)
+    androidx.core.graphics.ColorUtils.colorToHSL(accent.toArgbInt(), hsl)
+    val h = hsl[0]
+    val s = hsl[1].coerceIn(0f, 1f)
+
+    val container = Color.hsl(h, (s * 0.55f).coerceIn(0.05f, 0.5f), if (dark) 0.26f else 0.88f)
+    val onContainer = Color.hsl(h, (s * 0.75f).coerceIn(0.05f, 0.6f), if (dark) 0.82f else 0.30f)
+    return container to onContainer
+}
+
+private fun Color.toArgbInt(): Int =
+    androidx.compose.ui.graphics.toArgb(this)
+
+/** Parses "#RRGGBB", "#AARRGGBB" or a named fallback into a Color. */
+fun parseHexColor(value: String?, fallback: Color): Color {
+    if (value.isNullOrBlank()) return fallback
+    val hex = value.removePrefix("#")
+    return runCatching {
+        when (hex.length) {
+            6 -> Color(hex.toLong(16) or 0xFF000000)
+            8 -> Color(hex.toLong(16))
+            else -> fallback
+        }
+    }.getOrDefault(fallback)
+}

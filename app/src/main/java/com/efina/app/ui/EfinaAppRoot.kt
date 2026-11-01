@@ -1,7 +1,6 @@
 package com.efina.app.ui
 
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
@@ -19,258 +18,245 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.efina.app.ui.accounts.AccountFormScreen
+import com.efina.app.ui.accounts.AccountSharingScreen
 import com.efina.app.ui.accounts.AccountsScreen
-import com.efina.app.ui.accounts.CreateAccountScreen
-import com.efina.app.ui.accounts.EditAccountScreen
-import com.efina.app.ui.auth.LoginScreen
+import com.efina.app.ui.accounts.AccountsViewModel
 import com.efina.app.ui.auth.AuthViewModel
+import com.efina.app.ui.auth.LoginScreen
 import com.efina.app.ui.budgets.BudgetsScreen
 import com.efina.app.ui.budgets.GoalsScreen
+import com.efina.app.ui.categories.CategoriesScreen
+import com.efina.app.ui.family.FamilyScreen
 import com.efina.app.ui.home.HomeScreen
-import com.efina.app.ui.transactions.CreateTransactionScreen
-import com.efina.app.ui.transactions.EditTransactionScreen
+import com.efina.app.ui.settings.SettingsScreen
+import com.efina.app.ui.stats.StatsScreen
+import com.efina.app.ui.transactions.TransactionFormScreen
 import com.efina.app.ui.transactions.TransactionsScreen
+import com.efina.app.ui.transactions.TransactionsViewModel
+import com.efina.app.ui.theme.EfinaTheme
 
+/**
+ * Navigation graph.
+ *
+ * Routes mirror the web app's primary destinations (Dashboard, Transactions,
+ * Statistics, Profile/Settings, Family) plus the money-path detail screens.
+ * Budgets and Goals are top-level here rather than tabs, because the reference
+ * design favours a short bottom bar; PARITY.md records that.
+ */
 sealed class Screen(val route: String) {
     data object Login : Screen("login")
-    data object Register : Screen("register")
     data object Home : Screen("home")
     data object Accounts : Screen("accounts")
-    data object CreateAccount : Screen("create_account")
-    data object EditAccount : Screen("edit_account/{accountId}") {
-        fun createRoute(id: Long) = "edit_account/$id"
+    data object AccountForm : Screen("account_form?accountId={accountId}") {
+        fun route(accountId: Long?) =
+            if (accountId == null) "account_form" else "account_form?accountId=$accountId"
+    }
+    data object AccountSharing : Screen("account_sharing/{accountId}") {
+        fun route(id: Long) = "account_sharing/$id"
     }
     data object Transactions : Screen("transactions")
-    data object CreateTransaction : Screen("create_transaction")
-    data object EditTransaction : Screen("edit_transaction/{transactionId}") {
-        fun createRoute(id: Long) = "edit_transaction/$id"
+    data object TransactionForm : Screen("transaction_form?transactionId={transactionId}") {
+        fun route(id: Long?) =
+            if (id == null) "transaction_form" else "transaction_form?transactionId=$id"
     }
-    data object Transfer : Screen("transfer")
     data object Budgets : Screen("budgets")
     data object Goals : Screen("goals")
     data object Stats : Screen("stats")
-    data object Chat : Screen("chat")
     data object Settings : Screen("settings")
+    data object Categories : Screen("categories")
+    data object Family : Screen("family")
 }
 
-sealed class BottomNavItem(
-    val route: String,
-    val icon: ImageVector,
-    val label: String
-) {
-    data object Home : BottomNavItem("home", Icons.Default.Home, "Home")
-    data object Accounts : BottomNavItem("accounts", Icons.Default.AccountBalanceWallet, "Accounts")
-    data object Transactions : BottomNavItem("transactions", Icons.Default.Receipt, "Transactions")
-    data object Budgets : BottomNavItem("budgets", Icons.Default.PieChart, "Budgets")
-    data object Stats : BottomNavItem("stats", Icons.Default.BarChart, "Stats")
-}
+private data class NavItem(val screen: Screen, val icon: ImageVector, val label: String)
+
+private val bottomNavItems = listOf(
+    NavItem(Screen.Home, Icons.Default.Home, "Home"),
+    NavItem(Screen.Transactions, Icons.Default.Receipt, "Activity"),
+    NavItem(Screen.Budgets, Icons.Default.PieChart, "Budgets"),
+    NavItem(Screen.Stats, Icons.Default.BarChart, "Stats"),
+    NavItem(Screen.Settings, Icons.Default.Person, "Profile")
+)
 
 @Composable
 fun EfinaAppRoot(
     navController: NavHostController = rememberNavController(),
     authViewModel: AuthViewModel = hiltViewModel()
 ) {
-    val isLoggedIn by authViewModel.isLoggedIn.collectAsState(initial = null)
-    
-    if (isLoggedIn == null) {
+    val authState by authViewModel.state.collectAsState()
+
+    // Wait for the stored session to be read before deciding the start screen,
+    // otherwise a logged-in user sees a flash of the login form.
+    if (!authState.checked) {
+        EfinaTheme {
+            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                CircularProgressIndicator()
+            }
+        }
         return
     }
-    
-    val startDestination = if (isLoggedIn == true) Screen.Home.route else Screen.Login.route
-    
-    Scaffold(
-        bottomBar = {
-            val navBackStackEntry by navController.currentBackStackEntryAsState()
-            val currentRoute = navBackStackEntry?.destination?.route
-            
-            // Only show bottom nav for main screens
-            val showBottomNav = currentRoute in listOf(
-                Screen.Home.route,
-                Screen.Accounts.route,
-                Screen.Transactions.route,
-                Screen.Budgets.route,
-                Screen.Stats.route
-            )
-            
-            val bottomNavItems = listOf(
-                BottomNavItem.Home,
-                BottomNavItem.Accounts,
-                BottomNavItem.Transactions,
-                BottomNavItem.Budgets,
-                BottomNavItem.Stats
-            )
-            
-            if (showBottomNav) {
-                NavigationBar {
-                    bottomNavItems.forEach { item ->
-                        NavigationBarItem(
-                            icon = { Icon(item.icon, contentDescription = item.label) },
-                            label = { Text(item.label) },
-                            selected = currentRoute == item.route,
-                            onClick = {
-                                if (currentRoute != item.route) {
-                                    navController.navigate(item.route) {
-                                        popUpTo(Screen.Home.route) {
-                                            saveState = true
+
+    val startDestination = if (authState.isLoggedIn) Screen.Home.route else Screen.Login.route
+
+    EfinaTheme {
+        Scaffold(
+            bottomBar = {
+                val navBackStackEntry by navController.currentBackStackEntryAsState()
+                val currentRoute = navBackStackEntry?.destination?.route
+                val showBar = bottomNavItems.any { it.screen.route == currentRoute }
+
+                if (showBar) {
+                    NavigationBar {
+                        bottomNavItems.forEach { item ->
+                            NavigationBarItem(
+                                icon = { Icon(item.icon, contentDescription = item.label) },
+                                label = { Text(item.label) },
+                                selected = currentRoute == item.screen.route,
+                                onClick = {
+                                    if (currentRoute != item.screen.route) {
+                                        navController.navigate(item.screen.route) {
+                                            popUpTo(Screen.Home.route) { saveState = true }
+                                            launchSingleTop = true
+                                            restoreState = true
                                         }
-                                        launchSingleTop = true
-                                        restoreState = true
                                     }
                                 }
-                            }
-                        )
+                            )
+                        }
                     }
                 }
             }
-        }
-    ) { padding ->
-        NavHost(
-            navController = navController,
-            startDestination = startDestination,
-            modifier = Modifier.padding(padding)
-        ) {
-            // Auth
-            composable(Screen.Login.route) {
-                LoginScreen(
-                    onLoginSuccess = {
-                        navController.navigate(Screen.Home.route) {
-                            popUpTo(Screen.Login.route) { inclusive = true }
+        ) { padding ->
+            NavHost(
+                navController = navController,
+                startDestination = startDestination,
+                modifier = Modifier.padding(padding)
+            ) {
+                composable(Screen.Login.route) {
+                    LoginScreen(
+                        onLoginSuccess = {
+                            navController.navigate(Screen.Home.route) {
+                                popUpTo(Screen.Login.route) { inclusive = true }
+                            }
+                        },
+                        onNavigateToRegister = { }
+                    )
+                }
+
+                composable(Screen.Home.route) {
+                    HomeScreen(
+                        onNavigateToAccounts = { navController.navigate(Screen.Accounts.route) },
+                        onNavigateToTransactions = { navController.navigate(Screen.Transactions.route) },
+                        onNavigateToBudgets = { navController.navigate(Screen.Budgets.route) },
+                        onNavigateToGoals = { navController.navigate(Screen.Goals.route) },
+                        onNavigateToStats = { navController.navigate(Screen.Stats.route) },
+                        onNavigateToSettings = { navController.navigate(Screen.Settings.route) }
+                    )
+                }
+
+                composable(Screen.Accounts.route) {
+                    AccountsScreen(
+                        onNavigateToCreate = { navController.navigate(Screen.AccountForm.route(null)) },
+                        onNavigateToEdit = { id -> navController.navigate(Screen.AccountForm.route(id)) },
+                        onNavigateToShare = { id ->
+                            navController.navigate(Screen.AccountSharing.route(id))
                         }
-                    },
-                    onNavigateToRegister = {
-                        navController.navigate(Screen.Register.route)
-                    },
-                    onNavigateToPinLogin = { }
-                )
-            }
-            
-            // Home
-            composable(Screen.Home.route) {
-                HomeScreen(
-                    onNavigateToAccounts = { navController.navigate(Screen.Accounts.route) },
-                    onNavigateToTransactions = { navController.navigate(Screen.Transactions.route) },
-                    onNavigateToBudgets = { navController.navigate(Screen.Budgets.route) },
-                    onNavigateToGoals = { navController.navigate(Screen.Goals.route) },
-                    onNavigateToStats = { navController.navigate(Screen.Stats.route) },
-                    onNavigateToSettings = { navController.navigate(Screen.Settings.route) }
-                )
-            }
-            
-            // Accounts
-            composable(Screen.Accounts.route) {
-                AccountsScreen(
-                    onNavigateToCreate = { navController.navigate(Screen.CreateAccount.route) },
-                    onNavigateToEdit = { id -> navController.navigate(Screen.EditAccount.createRoute(id)) }
-                )
-            }
-            
-            composable(Screen.CreateAccount.route) {
-                CreateAccountScreen(
-                    onNavigateBack = { navController.popBackStack() }
-                )
-            }
-            
-            composable(
-                route = Screen.EditAccount.route,
-                arguments = listOf(navArgument("accountId") { type = NavType.LongType })
-            ) { backStackEntry ->
-                val accountId = backStackEntry.arguments?.getLong("accountId") ?: return@composable
-                EditAccountScreen(
-                    accountId = accountId,
-                    onNavigateBack = { navController.popBackStack() }
-                )
-            }
-            
-            // Transactions
-            composable(Screen.Transactions.route) {
-                TransactionsScreen(
-                    onNavigateToCreate = { navController.navigate(Screen.CreateTransaction.route) },
-                    onNavigateToEdit = { id -> navController.navigate(Screen.EditTransaction.createRoute(id)) }
-                )
-            }
-            
-            composable(Screen.CreateTransaction.route) {
-                CreateTransactionScreen(
-                    onNavigateBack = { navController.popBackStack() }
-                )
-            }
-            
-            composable(
-                route = Screen.EditTransaction.route,
-                arguments = listOf(navArgument("transactionId") { type = NavType.LongType })
-            ) { backStackEntry ->
-                val transactionId = backStackEntry.arguments?.getLong("transactionId") ?: return@composable
-                EditTransactionScreen(
-                    transactionId = transactionId,
-                    onNavigateBack = { navController.popBackStack() }
-                )
-            }
-            
-            // Budgets
-            composable(Screen.Budgets.route) {
-                BudgetsScreen(
-                    onNavigateToCreate = { }
-                )
-            }
-            
-            // Goals
-            composable(Screen.Goals.route) {
-                GoalsScreen(
-                    onNavigateToCreate = { }
-                )
-            }
-            
-            // Stats
-            composable(Screen.Stats.route) {
-                StatsPlaceholder()
-            }
-            
-            // Settings
-            composable(Screen.Settings.route) {
-                SettingsPlaceholder(
-                    onNavigateBack = { navController.popBackStack() }
-                )
-            }
-            
-            // Chat
-            composable(Screen.Chat.route) {
-                ChatPlaceholder()
+                    )
+                }
+
+                composable(
+                    route = Screen.AccountForm.route,
+                    arguments = listOf(
+                        navArgument("accountId") {
+                            type = NavType.LongType
+                            defaultValue = -1L
+                        }
+                    )
+                ) { entry ->
+                    val id = entry.arguments?.getLong("accountId")?.takeIf { it > 0 }
+                    val accountsVm: AccountsViewModel = hiltViewModel()
+                    val accountsState by accountsVm.state.collectAsState()
+                    val existing = accountsState.accounts.firstOrNull { it.id == id }
+                    // Fetch once so edit mode has the row before first composition.
+                    LaunchedEffect(id) { if (id != null && existing == null) accountsVm.load() }
+
+                    AccountFormScreen(
+                        account = existing,
+                        onNavigateBack = { navController.popBackStack() },
+                        onSaved = { navController.popBackStack() },
+                        viewModel = accountsVm
+                    )
+                }
+
+                composable(
+                    route = Screen.AccountSharing.route,
+                    arguments = listOf(navArgument("accountId") { type = NavType.LongType })
+                ) { entry ->
+                    val id = entry.arguments?.getLong("accountId") ?: return@composable
+                    AccountSharingScreen(
+                        accountId = id,
+                        onNavigateBack = { navController.popBackStack() }
+                    )
+                }
+
+                composable(Screen.Transactions.route) {
+                    TransactionsScreen(
+                        onNavigateToCreate = { navController.navigate(Screen.TransactionForm.route(null)) },
+                        onNavigateToEdit = { id ->
+                            navController.navigate(Screen.TransactionForm.route(id))
+                        }
+                    )
+                }
+
+                composable(
+                    route = Screen.TransactionForm.route,
+                    arguments = listOf(
+                        navArgument("transactionId") {
+                            type = NavType.LongType
+                            defaultValue = -1L
+                        }
+                    )
+                ) { entry ->
+                    val id = entry.arguments?.getLong("transactionId")?.takeIf { it > 0 }
+                    val txVm: TransactionsViewModel = hiltViewModel()
+                    val txState by txVm.state.collectAsState()
+                    val existing = txState.transactions.firstOrNull { it.id == id }
+                    LaunchedEffect(id) { if (id != null && existing == null) txVm.load() }
+
+                    TransactionFormScreen(
+                        existing = existing,
+                        onNavigateBack = { navController.popBackStack() },
+                        onSaved = { navController.popBackStack() },
+                        viewModel = txVm
+                    )
+                }
+
+                composable(Screen.Budgets.route) { BudgetsScreen() }
+                composable(Screen.Goals.route) { GoalsScreen() }
+                composable(Screen.Stats.route) { StatsScreen() }
+
+                composable(Screen.Settings.route) {
+                    SettingsScreen(
+                        onNavigateBack = { navController.popBackStack() },
+                        onNavigateToCategories = { navController.navigate(Screen.Categories.route) },
+                        onNavigateToFamily = { navController.navigate(Screen.Family.route) },
+                        onLogout = {
+                            authViewModel.logout()
+                            navController.navigate(Screen.Login.route) {
+                                popUpTo(0) { inclusive = true }
+                            }
+                        }
+                    )
+                }
+
+                composable(Screen.Categories.route) {
+                    CategoriesScreen(onNavigateBack = { navController.popBackStack() })
+                }
+
+                composable(Screen.Family.route) {
+                    FamilyScreen(onNavigateBack = { navController.popBackStack() })
+                }
             }
         }
-    }
-}
-
-@Composable
-fun StatsPlaceholder() {
-    Box(
-        modifier = Modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center
-    ) {
-        Text("Stats Screen - Coming Soon")
-    }
-}
-
-@Composable
-fun SettingsPlaceholder(onNavigateBack: () -> Unit) {
-    Box(
-        modifier = Modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center
-    ) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Text("Settings - Coming Soon")
-            TextButton(onClick = onNavigateBack) {
-                Text("Go Back")
-            }
-        }
-    }
-}
-
-@Composable
-fun ChatPlaceholder() {
-    Box(
-        modifier = Modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center
-    ) {
-        Text("AI Chat - Coming Soon")
     }
 }

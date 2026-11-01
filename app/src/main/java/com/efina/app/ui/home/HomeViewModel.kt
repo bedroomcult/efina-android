@@ -2,70 +2,114 @@ package com.efina.app.ui.home
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.efina.app.data.remote.api.EfinaApi
-import com.efina.app.data.remote.dto.*
 import com.efina.app.domain.model.*
+import com.efina.app.domain.repository.*
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import java.text.SimpleDateFormat
+import java.util.Calendar
+import java.util.Locale
 import javax.inject.Inject
 
 data class HomeUiState(
-    val isLoading: Boolean = false,
-    val error: String? = null,
-    val accounts: List<Account> = emptyList(),
-    val recentTransactions: List<Transaction> = emptyList(),
-    val totalBalance: Double = 0.0,
-    val healthScore: Int? = null,
-    val currency: String = "IDR"
+    val loading: Boolean = true,
+    val refreshing: Boolean = false,
+    val data: DashboardData = DashboardData(),
+    val healthScore: HealthScore? = null,
+    val error: String? = null
 )
 
+/**
+ * The dashboard is composed client-side.
+ *
+ * There is no `/api/dashboard` on the backend (verified: functions/api has no
+ * dashboard directory), so this fans out to the real endpoints in parallel and
+ * assembles the same view the web app builds from its react-query caches.
+ */
 @HiltViewModel
 class HomeViewModel @Inject constructor(
-    private val api: EfinaApi
+    private val accountRepository: AccountRepository,
+    private val transactionRepository: TransactionRepository,
+    private val budgetRepository: BudgetRepository,
+    private val goalRepository: GoalRepository,
+    private val insightsRepository: InsightsRepository
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow(HomeUiState())
-    val uiState: StateFlow<HomeUiState> = _uiState.asStateFlow()
+    private val _state = MutableStateFlow(HomeUiState())
+    val state: StateFlow<HomeUiState> = _state.asStateFlow()
 
-    init {
-        loadDashboard()
-    }
+    init { load() }
 
-    fun loadDashboard() {
+    fun load(isRefresh: Boolean = false) {
+        _state.value = _state.value.copy(
+            loading = !isRefresh && _state.value.data.accounts.isEmpty(),
+            refreshing = isRefresh,
+            error = null
+        )
+
         viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(isLoading = true, error = null)
-            try {
-                val accountsResponse = api.getAccounts()
-                val healthResponse = api.getHealthScore()
-                val txResponse = api.getTransactions(limit = 5)
+            val (startDate, endDate) = currentMonthRange()
 
-                if (accountsResponse.isSuccessful) {
-                    val accounts = accountsResponse.body()!!.map { it.toDomain() }
-                    val healthScore = if (healthResponse.isSuccessful) healthResponse.body()?.get("score") as? Int else null
-                    val recentTx = if (txResponse.isSuccessful) txResponse.body()!!.map { it.toDomain() } else emptyList()
-
-                    _uiState.value = _uiState.value.copy(
-                        isLoading = false,
-                        accounts = accounts,
-                        totalBalance = accounts.sumOf { it.balance },
-                        healthScore = healthScore,
-                        recentTransactions = recentTx
+            // Fan out; a failure in one panel must not blank the whole dashboard.
+            val accountsJob = async { accountRepository.getAccounts() }
+            val txJob = async {
+                transactionRepository.getTransactions(
+                    TransactionFilter(
+                        limit = 10,
+                        offset = 0,
+                        startDate = startDate,
+                        endDate = endDate
                     )
-                } else {
-                    _uiState.value = _uiState.value.copy(
-                        isLoading = false,
-                        error = "Failed to load accounts"
-                    )
-                }
-            } catch (e: Exception) {
-                _uiState.value = _uiState.value.copy(
-                    isLoading = false,
-                    error = e.message ?: "Failed to load dashboard"
                 )
             }
+            val budgetJob = async { budgetRepository.getBudgets() }
+            val goalJob = async { goalRepository.getGoals() }
+            val healthJob = async { insightsRepository.getHealthScore() }
+
+            val accounts = accountsJob.await().getOrDefault(emptyList())
+            val txPage = txJob.await().getOrNull()
+            val budgets = budgetJob.await().getOrDefault(emptyList())
+            val goals = goalJob.await().getOrDefault(emptyList())
+            val health = healthJob.await().getOrNull()
+
+            val transactions = txPage?.transactions ?: emptyList()
+            val income = transactions.filter { it.type == TransactionType.INCOME }
+                .sumOf { it.amount }
+            val expense = transactions.filter { it.type == TransactionType.EXPENSE }
+                .sumOf { it.amount }
+
+            _state.value = HomeUiState(
+                loading = false,
+                refreshing = false,
+                data = DashboardData(
+                    totalBalance = accounts.sumOf { it.balance },
+                    accounts = accounts,
+                    recentTransactions = transactions,
+                    budgets = budgets,
+                    goals = goals,
+                    monthlyIncome = income,
+                    monthlyExpense = expense
+                ),
+                healthScore = health,
+                error = null
+            )
         }
+    }
+
+    fun refresh() = load(isRefresh = true)
+
+    private fun currentMonthRange(): Pair<String, String> {
+        val cal = Calendar.getInstance()
+        val start = cal.clone() as Calendar
+        start.set(Calendar.DAY_OF_MONTH, 1)
+        val end = cal.clone() as Calendar
+        end.set(Calendar.DAY_OF_MONTH, end.getActualMaximum(Calendar.DAY_OF_MONTH))
+
+        val fmt = SimpleDateFormat("yyyy-MM-dd", Locale.US)
+        return "${fmt.format(start.time)}T00:00:00" to "${fmt.format(end.time)}T23:59:59"
     }
 }

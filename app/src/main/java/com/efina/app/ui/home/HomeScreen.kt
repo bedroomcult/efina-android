@@ -1,194 +1,363 @@
 package com.efina.app.ui.home
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.efina.app.domain.model.Transaction
 import com.efina.app.domain.model.TransactionType
 import com.efina.app.ui.components.*
-import com.efina.app.ui.theme.Error
-import com.efina.app.ui.theme.Success
-import com.efina.app.ui.theme.Warning
+import com.efina.app.ui.theme.EfinaCorners
+import com.efina.app.ui.theme.EfinaSemantic
+import com.efina.app.ui.theme.EfinaType
+import com.efina.app.ui.theme.LocalMoneyPalette
 
+/**
+ * Dashboard. Assembled from accounts + transactions + budgets + goals, per
+ * HomeViewModel, because the backend has no single dashboard endpoint.
+ */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
-    viewModel: HomeViewModel = hiltViewModel(),
     onNavigateToAccounts: () -> Unit,
     onNavigateToTransactions: () -> Unit,
     onNavigateToBudgets: () -> Unit,
     onNavigateToGoals: () -> Unit,
     onNavigateToStats: () -> Unit,
-    onNavigateToSettings: () -> Unit
+    onNavigateToSettings: () -> Unit,
+    viewModel: HomeViewModel = hiltViewModel()
 ) {
-    val uiState by viewModel.uiState.collectAsState()
+    val state by viewModel.state.collectAsState()
 
-    LaunchedEffect(Unit) {
-        viewModel.loadDashboard()
-    }
-
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
-    ) {
-        when {
-            uiState.isLoading -> LoadingIndicator()
-            uiState.error != null -> ErrorState(
-                message = uiState.error!!,
-                onRetry = { viewModel.loadDashboard() }
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("efina", style = EfinaType.titleLargeEmphasized) },
+                actions = {
+                    TextButton(onClick = onNavigateToSettings) { Text("Settings") }
+                }
             )
-            else -> {
-                // Balance Card
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.primaryContainer
+        }
+    ) { padding ->
+        PullToRefreshBox(
+            isRefreshing = state.refreshing,
+            onRefresh = { viewModel.refresh() },
+            modifier = Modifier.fillMaxSize().padding(padding)
+        ) {
+            if (state.loading) {
+                Column(Modifier.padding(16.dp)) {
+                    Box(
+                        Modifier
+                            .fillMaxWidth()
+                            .height(140.dp)
+                            .background(
+                                MaterialTheme.colorScheme.surfaceContainerHighest,
+                                EfinaCorners.hero
+                            )
                     )
+                    Spacer(Modifier.height(16.dp))
+                    LoadingList(rows = 4)
+                }
+            } else {
+                val data = state.data
+                LazyColumn(
+                    contentPadding = PaddingValues(16.dp, 8.dp, 16.dp, 96.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
-                    val score = uiState.healthScore
-                    Column(modifier = Modifier.padding(20.dp)) {
-                        Text("Total Balance", style = MaterialTheme.typography.labelLarge)
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Text(
-                            text = formatCurrency(uiState.totalBalance, uiState.currency),
-                            style = MaterialTheme.typography.headlineLarge,
-                            color = Success
-                        )
-                        if (score != null) {
-                            Spacer(modifier = Modifier.height(12.dp))
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Text("Health Score: ", style = MaterialTheme.typography.labelMedium)
-                                Text(
-                                    text = "$score/100",
-                                    style = MaterialTheme.typography.titleMedium,
-                                    color = when {
-                                        score >= 80 -> Success
-                                        score >= 60 -> Warning
-                                        else -> Error
-                                    }
-                                )
-                            }
-                            LinearProgressIndicator(
-                                progress = { score / 100f },
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(6.dp)
-                                    .padding(top = 4.dp),
-                                color = when {
-                                    score >= 80 -> Success
-                                    score >= 60 -> Warning
-                                    else -> Error
-                                },
-                                trackColor = MaterialTheme.colorScheme.surfaceVariant
+                    item { BalanceHero(data.totalBalance, data.accounts.count()) }
+
+                    item {
+                        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                            FlowStat(
+                                "Income", data.monthlyIncome, MaterialTheme.colorScheme.surfaceContainerLow,
+                                LocalMoneyPalette.current.income, Modifier.weight(1f)
+                            )
+                            FlowStat(
+                                "Expense", data.monthlyExpense, MaterialTheme.colorScheme.surfaceContainerLow,
+                                LocalMoneyPalette.current.expense, Modifier.weight(1f)
                             )
                         }
                     }
-                }
 
-                // Quick Actions
-                Text("Quick Actions", style = MaterialTheme.typography.titleMedium)
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    QuickActionCard(Icons.Default.Add, "Income", onNavigateToTransactions, Modifier.weight(1f))
-                    QuickActionCard(Icons.Default.Remove, "Expense", onNavigateToTransactions, Modifier.weight(1f))
-                    QuickActionCard(Icons.Default.SwapHoriz, "Transfer", onNavigateToTransactions, Modifier.weight(1f))
-                }
+                    if (data.accounts.isNotEmpty()) {
+                        item {
+                            SectionHeader(
+                                title = "Accounts",
+                                action = {
+                                    TextButton(onClick = onNavigateToAccounts) { Text("See all") }
+                                }
+                            )
+                        }
+                        item {
+                            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                                data.accounts.take(4).forEachIndexed { index, account ->
+                                    val last = index == minOf(3, data.accounts.lastIndex)
+                                    Surface(
+                                        Modifier.fillMaxWidth(),
+                                        shape = if (index == 0 && last) EfinaCorners.groupOuter
+                                        else if (index == 0) androidx.compose.foundation.shape.RoundedCornerShape(
+                                            topStart = 20.dp, topEnd = 20.dp, bottomStart = 4.dp, bottomEnd = 4.dp
+                                        )
+                                        else if (last) androidx.compose.foundation.shape.RoundedCornerShape(
+                                            topStart = 4.dp, topEnd = 4.dp, bottomStart = 20.dp, bottomEnd = 20.dp
+                                        )
+                                        else EfinaCorners.groupInner,
+                                        color = MaterialTheme.colorScheme.surfaceContainerLow,
+                                        onClick = onNavigateToAccounts
+                                    ) {
+                                        Row(
+                                            Modifier.fillMaxWidth().padding(14.dp),
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            AccountIconTile(account, size = 34)
+                                            Spacer(Modifier.width(10.dp))
+                                            Column(Modifier.weight(1f)) {
+                                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                                    Text(
+                                                        account.name,
+                                                        style = MaterialTheme.typography.titleSmall,
+                                                        maxLines = 1,
+                                                        modifier = Modifier.weight(1f, fill = false)
+                                                    )
+                                                    if (account.isShared || account.role != null) {
+                                                        Spacer(Modifier.width(6.dp))
+                                                        SharedAccountBadge(account)
+                                                    }
+                                                }
+                                                Text(
+                                                    account.type.displayName,
+                                                    style = MaterialTheme.typography.labelSmall,
+                                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                                )
+                                            }
+                                            Text(
+                                                formatMoney(account.balance, account.currency),
+                                                style = MaterialTheme.typography.labelLarge,
+                                                fontWeight = FontWeight.Bold
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
 
-                // Recent Transactions
-                if (uiState.recentTransactions.isNotEmpty()) {
-                    Text("Recent Transactions", style = MaterialTheme.typography.titleMedium)
-                    uiState.recentTransactions.forEach { tx ->
-                        TransactionItem(
-                            description = tx.description ?: "",
-                            categoryName = tx.categoryName,
-                            categoryColor = tx.categoryColor?.let {
-                                try { Color(android.graphics.Color.parseColor(it)) }
-                                catch (_: Exception) { null }
-                            },
-                            amount = tx.amount,
-                            isExpense = tx.type == TransactionType.EXPENSE,
-                            date = tx.date.take(10),
-                            currency = uiState.currency,
-                            onClick = { }
+                    if (state.healthScore != null) {
+                        item { HealthCard(state.healthScore!!) }
+                    }
+
+                    if (data.budgets.isNotEmpty()) {
+                        item {
+                            SectionHeader(
+                                title = "Budgets",
+                                action = { TextButton(onClick = onNavigateToBudgets) { Text("See all") } }
+                            )
+                        }
+                        items(minOf(3, data.budgets.size)) { i ->
+                            val b = data.budgets[i]
+                            Surface(
+                                Modifier.fillMaxWidth(),
+                                shape = EfinaCorners.menu,
+                                color = MaterialTheme.colorScheme.surfaceContainerLow,
+                                onClick = onNavigateToBudgets
+                            ) {
+                                Column(Modifier.padding(14.dp)) {
+                                    Row {
+                                        Text(
+                                            b.categoryName ?: "Category",
+                                            style = MaterialTheme.typography.titleSmall,
+                                            modifier = Modifier.weight(1f)
+                                        )
+                                        Text(
+                                            "${formatMoney(b.spent)} / ${formatMoney(b.amount)}",
+                                            style = MaterialTheme.typography.labelSmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                    }
+                                    Spacer(Modifier.height(8.dp))
+                                    LinearProgressIndicator(
+                                        progress = { (b.percentage / 100f).coerceIn(0f, 1f) },
+                                        modifier = Modifier.fillMaxWidth().height(6.dp),
+                                        color = if (b.isOverBudget) MaterialTheme.colorScheme.error
+                                        else MaterialTheme.colorScheme.primary,
+                                        trackColor = MaterialTheme.colorScheme.surfaceContainerHighest,
+                                        strokeCap = androidx.compose.ui.graphics.StrokeCap.Round
+                                    )
+                                }
+                            }
+                        }
+                    }
+
+                    if (data.goals.isNotEmpty()) {
+                        item {
+                            SectionHeader(
+                                title = "Goals",
+                                action = { TextButton(onClick = onNavigateToGoals) { Text("See all") } }
+                            )
+                        }
+                        items(minOf(2, data.goals.size)) { i ->
+                            val g = data.goals[i]
+                            Surface(
+                                Modifier.fillMaxWidth(),
+                                shape = EfinaCorners.menu,
+                                color = MaterialTheme.colorScheme.surfaceContainerLow,
+                                onClick = onNavigateToGoals
+                            ) {
+                                Column(Modifier.padding(14.dp)) {
+                                    Text(g.name, style = MaterialTheme.typography.titleSmall)
+                                    Spacer(Modifier.height(6.dp))
+                                    LinearProgressIndicator(
+                                        progress = { g.progressPercentage / 100f },
+                                        modifier = Modifier.fillMaxWidth().height(6.dp),
+                                        color = MaterialTheme.colorScheme.tertiary,
+                                        trackColor = MaterialTheme.colorScheme.surfaceContainerHighest,
+                                        strokeCap = androidx.compose.ui.graphics.StrokeCap.Round
+                                    )
+                                    Spacer(Modifier.height(4.dp))
+                                    Text(
+                                        "${formatMoney(g.currentAmount)} of ${formatMoney(g.targetAmount)}",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                            }
+                        }
+                    }
+
+                    item {
+                        SectionHeader(
+                            title = "Recent",
+                            action = { TextButton(onClick = onNavigateToTransactions) { Text("See all") } }
                         )
                     }
+                    if (data.recentTransactions.isEmpty()) {
+                        item {
+                            EmptyState(
+                                title = "Nothing this month",
+                                message = "Record a transaction to see it here."
+                            )
+                        }
+                    } else {
+                        items(data.recentTransactions.size) { i ->
+                            RecentRow(data.recentTransactions[i], onNavigateToTransactions)
+                        }
+                    }
                 }
-
-                // Menu
-                Text("Manage", style = MaterialTheme.typography.titleMedium)
-                MenuListItem(Icons.Default.AccountBalanceWallet, "Accounts",
-                    "${uiState.accounts.size} accounts", onNavigateToAccounts)
-                MenuListItem(Icons.Default.Receipt, "Transactions",
-                    "View all transactions", onNavigateToTransactions)
-                MenuListItem(Icons.Default.PieChart, "Budgets",
-                    "${uiState.budgets.size} active budgets", onNavigateToBudgets)
-                MenuListItem(Icons.Default.Flag, "Goals",
-                    "${uiState.goals.size} goals", onNavigateToGoals)
-                MenuListItem(Icons.Default.BarChart, "Statistics",
-                    "View insights", onNavigateToStats)
             }
         }
     }
 }
 
 @Composable
-fun QuickActionCard(
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
-    title: String,
-    onClick: () -> Unit,
+private fun BalanceHero(total: Double, accountCount: Int) {
+    Column(
+        Modifier
+            .fillMaxWidth()
+            .background(MaterialTheme.colorScheme.primaryContainer, EfinaCorners.hero)
+            .padding(22.dp)
+    ) {
+        Text(
+            "Total balance",
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.75f)
+        )
+        Spacer(Modifier.height(6.dp))
+        Text(
+            formatMoney(total),
+            style = EfinaType.amountLarge,
+            color = MaterialTheme.colorScheme.onPrimaryContainer
+        )
+        Text(
+            "$accountCount account${if (accountCount == 1) "" else "s"}",
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
+        )
+    }
+}
+
+@Composable
+private fun FlowStat(
+    label: String,
+    amount: Double,
+    container: androidx.compose.ui.graphics.Color,
+    content: androidx.compose.ui.graphics.Color,
     modifier: Modifier = Modifier
 ) {
-    Card(onClick = onClick, modifier = modifier) {
-        Column(
-            modifier = Modifier.fillMaxWidth().padding(16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Icon(icon, title, tint = MaterialTheme.colorScheme.primary)
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(title, style = MaterialTheme.typography.labelMedium)
+    Column(
+        modifier
+            .background(container, EfinaCorners.menu)
+            .padding(14.dp)
+    ) {
+        Text(label, style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Spacer(Modifier.height(4.dp))
+        Text(formatMoney(amount), style = EfinaType.amountSmall, color = content)
+    }
+}
+
+@Composable
+private fun HealthCard(health: com.efina.app.domain.model.HealthScore) {
+    Surface(
+        Modifier.fillMaxWidth(),
+        shape = EfinaCorners.menu,
+        color = MaterialTheme.colorScheme.surfaceContainerLow
+    ) {
+        Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
+            Column(Modifier.weight(1f)) {
+                Text("Financial health", style = MaterialTheme.typography.titleSmall)
+                Text(
+                    "${health.factors.size} factors tracked",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+            Text(
+                "${health.score}",
+                style = EfinaType.amountMedium,
+                color = when {
+                    health.score >= 70 -> EfinaSemantic.safe
+                    health.score >= 40 -> EfinaSemantic.caution
+                    else -> MaterialTheme.colorScheme.error
+                }
+            )
         }
     }
 }
 
 @Composable
-fun MenuListItem(
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
-    title: String,
-    subtitle: String,
-    onClick: () -> Unit
-) {
-    Card(onClick = onClick, modifier = Modifier.fillMaxWidth()) {
+private fun RecentRow(tx: Transaction, onClick: () -> Unit) {
+    Surface(
+        Modifier.fillMaxWidth(),
+        shape = EfinaCorners.groupInner,
+        color = MaterialTheme.colorScheme.surfaceContainerLow,
+        onClick = onClick
+    ) {
         Row(
-            modifier = Modifier.fillMaxWidth().padding(16.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
+            Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Icon(icon, null, tint = MaterialTheme.colorScheme.primary)
-                Column {
-                    Text(title, style = MaterialTheme.typography.titleMedium)
-                    Text(subtitle, style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant)
-                }
+            Column(Modifier.weight(1f)) {
+                Text(
+                    tx.description ?: tx.categoryName ?: "Untitled",
+                    style = MaterialTheme.typography.titleSmall,
+                    maxLines = 1
+                )
+                Text(
+                    formatDate(tx.date) + (tx.accountName?.let { " · $it" } ?: ""),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1
+                )
             }
-            Icon(Icons.Default.ChevronRight, null)
+            Spacer(Modifier.width(8.dp))
+            AmountText(tx.amount, tx.type)
         }
     }
 }

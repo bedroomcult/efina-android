@@ -1,5 +1,6 @@
 package com.efina.app.ui.components
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
@@ -7,397 +8,313 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.efina.app.ui.theme.*
+import com.efina.app.domain.model.Account
+import com.efina.app.domain.model.AccountType
+import com.efina.app.domain.model.AccountShareRole
+import com.efina.app.domain.model.TransactionType
+import com.efina.app.ui.theme.EfinaCorners
+import com.efina.app.ui.theme.EfinaType
+import com.efina.app.ui.theme.LocalIsDarkTheme
+import com.efina.app.ui.theme.LocalMoneyPalette
+import com.efina.app.ui.theme.parseHexColor
+import com.efina.app.ui.theme.tonal
 import java.text.NumberFormat
+import java.util.Currency
 import java.util.Locale
 
-// ============ Loading Indicator ============
+/**
+ * Shared UI primitives. These carry the design.md rules that would otherwise be
+ * re-typed per screen: pill tags, segmented rows, tonal icon tiles, tabular
+ * money text, skeleton and empty states.
+ */
 
+// ── Money formatting ────────────────────────────────────────────────
+
+/**
+ * Formats an amount for display. Uses the account currency, falls back gracefully
+ * for unknown ISO codes (the backend allows free-text currency).
+ */
+fun formatMoney(amount: Double, currency: String = "IDR"): String {
+    val locale = Locale("id", "ID")
+    return try {
+        NumberFormat.getCurrencyInstance(locale).apply {
+            this.currency = Currency.getInstance(currency)
+            maximumFractionDigits = if (currency == "IDR") 0 else 2
+        }.format(amount)
+    } catch (_: Exception) {
+        NumberFormat.getNumberInstance(locale).apply { maximumFractionDigits = 2 }
+            .format(amount) + " " + currency
+    }
+}
+
+/** Compact form for dense rows: 1.2jt, 850rb. */
+fun formatCompact(amount: Double, currency: String = "IDR"): String {
+    val abs = kotlin.math.abs(amount)
+    val sign = if (amount < 0) "-" else ""
+    val body = when {
+        abs >= 1_000_000_000 -> "%.1fM".format(abs / 1_000_000_000)
+        abs >= 1_000_000 -> "%.1fjt".format(abs / 1_000_000)
+        abs >= 1_000 -> "%.0frb".format(abs / 1_000)
+        else -> "%.0f".format(abs)
+    }
+    return sign + body
+}
+
+/** Short date: "12 Nov 2026" from an ISO string. */
+fun formatDate(iso: String?): String {
+    if (iso.isNullOrBlank()) return "—"
+    return runCatching {
+        val datePart = iso.substringBefore('T').substringBefore(' ')
+        val (y, m, d) = datePart.split("-").map { it.toInt() }
+        val months = listOf(
+            "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+            "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
+        )
+        "$d ${months[m - 1]} $y"
+    }.getOrDefault(iso.take(10))
+}
+
+// ── Tags and badges ─────────────────────────────────────────────────
+
+/** Pill tag, design.md: "chips, tags, version badges are full radius". */
 @Composable
-fun LoadingIndicator(
-    modifier: Modifier = Modifier
+fun PillTag(
+    text: String,
+    modifier: Modifier = Modifier,
+    container: Color = MaterialTheme.colorScheme.secondaryContainer,
+    content: Color = MaterialTheme.colorScheme.onSecondaryContainer
 ) {
     Box(
-        modifier = modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center
-    ) {
-        CircularProgressIndicator(
-            color = MaterialTheme.colorScheme.primary
-        )
-    }
-}
-
-// ============ Error State ============
-
-@Composable
-fun ErrorState(
-    message: String,
-    onRetry: (() -> Unit)? = null,
-    modifier: Modifier = Modifier
-) {
-    Column(
         modifier = modifier
-            .fillMaxSize()
-            .padding(24.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
+            .background(container, EfinaCorners.pill)
+            .padding(horizontal = 10.dp, vertical = 3.dp)
     ) {
         Text(
-            text = message,
-            style = MaterialTheme.typography.bodyLarge,
-            color = MaterialTheme.colorScheme.error
+            text = text,
+            style = MaterialTheme.typography.labelSmall,
+            color = content,
+            maxLines = 1
         )
-        
-        onRetry?.let {
-            Spacer(modifier = Modifier.height(16.dp))
-            Button(onClick = it) {
-                Text("Retry")
-            }
-        }
     }
 }
 
-// ============ Empty State ============
+/** Marks a shared account, and says what the caller may do with it. */
+@Composable
+fun SharedAccountBadge(account: Account, modifier: Modifier = Modifier) {
+    if (!account.isShared && account.role == null) return
+    val isViewer = account.role == AccountShareRole.VIEWER
+    PillTag(
+        text = if (isViewer) "View only" else "Family",
+        modifier = modifier,
+        container = if (isViewer) MaterialTheme.colorScheme.surfaceContainerHighest
+        else MaterialTheme.colorScheme.primaryContainer,
+        content = if (isViewer) MaterialTheme.colorScheme.onSurfaceVariant
+        else MaterialTheme.colorScheme.onPrimaryContainer
+    )
+}
+
+/** Tonal icon tile: colour derived from the accent, per design.md `tonal()`. */
+@Composable
+fun AccountIconTile(
+    account: Account,
+    modifier: Modifier = Modifier,
+    size: Int = 40
+) {
+    val dark = LocalIsDarkTheme.current
+    val accent = parseHexColor(account.color, MaterialTheme.colorScheme.primary)
+    val (container, onContainer) = tonal(accent, dark)
+
+    Box(
+        modifier = modifier
+            .size(size.dp)
+            .background(container, EfinaCorners.icon(size)),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = accountTypeGlyph(account.type),
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Black,
+            color = onContainer
+        )
+    }
+}
+
+private fun accountTypeGlyph(type: AccountType): String = when (type) {
+    AccountType.CASH -> "C"
+    AccountType.BANK -> "B"
+    AccountType.E_WALLET -> "E"
+    AccountType.CREDIT -> "K"
+    AccountType.OTHER -> "O"
+}
+
+/** Signed amount text, coloured by transaction type. */
+@Composable
+fun AmountText(
+    amount: Double,
+    type: TransactionType,
+    currency: String = "IDR",
+    modifier: Modifier = Modifier,
+    style: androidx.compose.ui.text.TextStyle = EfinaType.amountSmall
+) {
+    val money = LocalMoneyPalette.current
+    val (color, prefix) = when (type) {
+        TransactionType.INCOME -> money.income to "+"
+        TransactionType.EXPENSE -> money.expense to "−"
+        TransactionType.TRANSFER -> money.transfer to ""
+        TransactionType.ADJUSTMENT -> MaterialTheme.colorScheme.onSurfaceVariant to ""
+    }
+    Text(
+        text = prefix + formatMoney(kotlin.math.abs(amount), currency),
+        style = style,
+        color = color,
+        maxLines = 1,
+        overflow = TextOverflow.Ellipsis,
+        modifier = modifier
+    )
+}
+
+// ── Section header ──────────────────────────────────────────────────
+
+/** Section title + optional trailing action, design.md `titleLargeEmphasized`. */
+@Composable
+fun SectionHeader(
+    title: String,
+    modifier: Modifier = Modifier,
+    subtitle: String? = null,
+    action: (@Composable () -> Unit)? = null
+) {
+    Row(
+        modifier = modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Column(Modifier.weight(1f)) {
+            Text(title, style = EfinaType.titleLargeEmphasized)
+            if (subtitle != null) {
+                Text(
+                    subtitle,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
+        action?.invoke()
+    }
+}
+
+// ── States ──────────────────────────────────────────────────────────
+
+/** Shaped placeholder mirroring a row, per design.md skeletons. */
+@Composable
+fun SkeletonRow(modifier: Modifier = Modifier) {
+    Column(modifier.fillMaxWidth().padding(vertical = 10.dp)) {
+        Box(
+            Modifier
+                .fillMaxWidth(0.45f)
+                .height(14.dp)
+                .background(MaterialTheme.colorScheme.surfaceContainerHighest, EfinaCorners.groupInner)
+        )
+        Spacer(Modifier.height(6.dp))
+        Box(
+            Modifier
+                .fillMaxWidth(0.25f)
+                .height(10.dp)
+                .background(MaterialTheme.colorScheme.surfaceContainerHighest, EfinaCorners.groupInner)
+        )
+    }
+}
+
+@Composable
+fun LoadingList(rows: Int = 5, modifier: Modifier = Modifier) {
+    Column(modifier.fillMaxWidth()) {
+        repeat(rows) { SkeletonRow() }
+    }
+}
 
 @Composable
 fun EmptyState(
     title: String,
-    description: String? = null,
-    icon: ImageVector? = null,
-    action: (@Composable () -> Unit)? = null,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    message: String? = null,
+    action: (@Composable () -> Unit)? = null
 ) {
     Column(
         modifier = modifier
-            .fillMaxSize()
-            .padding(24.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
+            .fillMaxWidth()
+            .padding(vertical = 48.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        icon?.let {
-            Icon(
-                imageVector = it,
-                contentDescription = null,
-                modifier = Modifier.size(64.dp),
-                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
-            )
-            Spacer(modifier = Modifier.height(16.dp))
-        }
-        
         Text(
-            text = title,
-            style = MaterialTheme.typography.titleMedium,
+            title,
+            style = EfinaType.titleMediumEmphasized,
             color = MaterialTheme.colorScheme.onSurface
         )
-        
-        description?.let {
-            Spacer(modifier = Modifier.height(8.dp))
+        if (message != null) {
+            Spacer(Modifier.height(6.dp))
             Text(
-                text = it,
+                message,
                 style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center
             )
         }
-        
-        action?.let {
-            Spacer(modifier = Modifier.height(24.dp))
-            it()
+        if (action != null) {
+            Spacer(Modifier.height(16.dp))
+            action()
         }
     }
 }
-
-// ============ Account Card ============
 
 @Composable
-fun AccountCard(
-    name: String,
-    balance: Double,
-    currency: String,
-    type: String,
-    color: Color? = null,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    Card(
-        onClick = onClick,
-        modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant
-        )
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Column {
-                Text(
-                    text = name,
-                    style = MaterialTheme.typography.titleMedium,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
-                Spacer(modifier = Modifier.height(4.dp))
-                Text(
-                    text = type,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-            
-            Text(
-                text = formatCurrency(balance, currency),
-                style = MaterialTheme.typography.titleMedium,
-                color = if (balance >= 0) Success else Error
-            )
-        }
-    }
-}
-
-// ============ Budget Progress Bar ============
-
-@Composable
-fun BudgetProgressCard(
-    categoryName: String,
-    amount: Double,
-    spent: Double,
-    remaining: Double,
-    currency: String,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    val percentage = if (amount > 0) ((spent / amount) * 100).toInt() else 0
-    Card(
-        onClick = onClick,
-        modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(12.dp)
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp)
-        ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Text(
-                    text = categoryName,
-                    style = MaterialTheme.typography.titleSmall
-                )
-                Text(
-                    text = "$percentage%",
-                    style = MaterialTheme.typography.titleSmall,
-                    color = when {
-                        percentage >= 100 -> Error
-                        percentage >= 80 -> Warning
-                        else -> Success
-                    }
-                )
-            }
-            
-            Spacer(modifier = Modifier.height(12.dp))
-            
-            LinearProgressIndicator(
-                progress = { (percentage / 100f).coerceIn(0f, 1f) },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(8.dp),
-                color = when {
-                    percentage >= 100 -> Error
-                    percentage >= 80 -> Warning
-                    else -> MaterialTheme.colorScheme.primary
-                },
-                trackColor = MaterialTheme.colorScheme.surfaceVariant
-            )
-            
-            Spacer(modifier = Modifier.height(8.dp))
-            
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Text(
-                    text = formatCurrency(spent, currency),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                Text(
-                    text = formatCurrency(amount, currency),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-        }
-    }
-}
-
-// ============ Goal Card ============
-
-@Composable
-fun GoalCard(
-    name: String,
-    currentAmount: Double,
-    targetAmount: Double,
-    progressPercentage: Int,
-    currency: String,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    val progress = (progressPercentage / 100f).coerceIn(0f, 1f)
-    
-    Card(
-        onClick = onClick,
-        modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(12.dp)
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp)
-        ) {
-            Text(
-                text = name,
-                style = MaterialTheme.typography.titleMedium
-            )
-            
-            Spacer(modifier = Modifier.height(12.dp))
-            
-            CircularProgressIndicator(
-                progress = { progress },
-                modifier = Modifier.size(80.dp),
-                color = MaterialTheme.colorScheme.primary,
-                strokeWidth = 8.dp,
-                trackColor = MaterialTheme.colorScheme.surfaceVariant
-            )
-            
-            Spacer(modifier = Modifier.height(12.dp))
-            
-            Text(
-                text = "${formatCurrency(currentAmount, currency)} / ${formatCurrency(targetAmount, currency)}",
-                style = MaterialTheme.typography.bodyMedium
-            )
-            
-            Text(
-                text = "${formatCurrency(targetAmount - currentAmount, currency)} remaining",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-        }
-    }
-}
-
-// ============ Transaction Item ============
-
-@Composable
-fun TransactionItem(
-    description: String,
-    categoryName: String?,
-    categoryColor: Color?,
-    amount: Double,
-    isExpense: Boolean,
-    date: String,
-    currency: String,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    Card(
-        onClick = onClick,
-        modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(8.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
-        )
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(12.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                // Category indicator
-                Box(
-                    modifier = Modifier
-                        .size(40.dp)
-                        .padding(4.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Surface(
-                        shape = RoundedCornerShape(8.dp),
-                        color = categoryColor ?: MaterialTheme.colorScheme.surfaceVariant
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .padding(8.dp)
-                        )
-                    }
-                }
-                
-                Column {
-                    Text(
-                        text = description.ifBlank { categoryName ?: "Transaction" },
-                        style = MaterialTheme.typography.bodyMedium,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                    Text(
-                        text = "${categoryName ?: "Uncategorized"} • $date",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-            }
-            
-            Text(
-                text = "${if (isExpense) "-" else "+"}${formatCurrency(amount, currency)}",
-                style = MaterialTheme.typography.bodyMedium,
-                color = if (isExpense) Error else Success
-            )
-        }
-    }
-}
-
-// ============ Currency Formatter ============
-
-fun formatCurrency(amount: Double, currency: String): String {
-    val format = NumberFormat.getCurrencyInstance(Locale("id", "ID"))
-    return when (currency.uppercase()) {
-        "IDR" -> format.format(amount.toLong())
-        "USD" -> NumberFormat.getCurrencyInstance(Locale.US).format(amount)
-        else -> NumberFormat.getCurrencyInstance(Locale.getDefault()).format(amount)
-    }
-}
-
-// ============ Category Chip ============
-
-@Composable
-fun CategoryChip(
-    name: String,
-    color: Color,
-    selected: Boolean,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    FilterChip(
-        selected = selected,
-        onClick = onClick,
-        label = { Text(name) },
+fun ErrorState(message: String, modifier: Modifier = Modifier, onRetry: (() -> Unit)? = null) {
+    EmptyState(
+        title = "Something went wrong",
+        message = message,
         modifier = modifier,
-        colors = FilterChipDefaults.filterChipColors(
-            selectedContainerColor = color.copy(alpha = 0.2f),
-            selectedLabelColor = color
-        )
+        action = onRetry?.let { { Button(onClick = it) { Text("Retry") } } }
     )
+}
+
+/** Segmented row group, design.md: 20dp outer, 4dp inner, 2dp gaps. */
+@Composable
+fun SegmentedColumn(
+    modifier: Modifier = Modifier,
+    content: @Composable ColumnScope.() -> Unit
+) {
+    Column(modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+        content()
+    }
+}
+
+@Composable
+fun SegmentedRow(
+    modifier: Modifier = Modifier,
+    first: Boolean = false,
+    last: Boolean = false,
+    onClick: (() -> Unit)? = null,
+    content: @Composable RowScope.() -> Unit
+) {
+    val shape = when {
+        first && last -> EfinaCorners.groupOuter
+        first -> RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp, bottomStart = 4.dp, bottomEnd = 4.dp)
+        last -> RoundedCornerShape(topStart = 4.dp, topEnd = 4.dp, bottomStart = 20.dp, bottomEnd = 20.dp)
+        else -> EfinaCorners.groupInner
+    }
+    Surface(
+        modifier = modifier.fillMaxWidth(),
+        shape = shape,
+        color = MaterialTheme.colorScheme.surfaceContainerLow,
+        onClick = onClick ?: {}
+    ) {
+        Row(
+            Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 14.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            content = content
+        )
+    }
 }

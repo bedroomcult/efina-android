@@ -2,312 +2,227 @@ package com.efina.app.ui.transactions
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.efina.app.domain.model.TransactionFilter
+import com.efina.app.domain.model.Transaction
 import com.efina.app.domain.model.TransactionType
 import com.efina.app.ui.components.*
-import com.efina.app.ui.theme.Error
+import com.efina.app.ui.theme.EfinaCorners
+import com.efina.app.ui.theme.EfinaType
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TransactionsScreen(
-    viewModel: TransactionsViewModel = hiltViewModel(),
     onNavigateToCreate: () -> Unit,
-    onNavigateToEdit: (Long) -> Unit
+    onNavigateToEdit: (Long) -> Unit,
+    viewModel: TransactionsViewModel = hiltViewModel()
 ) {
-    val uiState by viewModel.uiState.collectAsState()
+    val state by viewModel.state.collectAsState()
+    var searchOpen by remember { mutableStateOf(false) }
+    var query by remember { mutableStateOf("") }
+    var pendingDelete by remember { mutableStateOf<Transaction?>(null) }
     val listState = rememberLazyListState()
-    var showFilterSheet by remember { mutableStateOf(false) }
-    var searchQuery by remember { mutableStateOf("") }
-    var showDeleteDialog by remember { mutableStateOf<Long?>(null) }
-    
-    // Infinite scroll detection
-    LaunchedEffect(listState) {
-        snapshotFlow { listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index }
-            .collect { lastIndex ->
-                if (lastIndex != null && lastIndex >= uiState.transactions.size - 5) {
-                    viewModel.loadMore()
-                }
-            }
+    val snackbar = remember { SnackbarHostState() }
+
+    LaunchedEffect(state.error) {
+        state.error?.let { snackbar.showSnackbar(it); viewModel.clearError() }
     }
-    
+
+    // Infinite scroll: request the next page when the last item is visible.
+    val shouldLoadMore by remember {
+        derivedStateOf {
+            val last = listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: 0
+            last >= state.transactions.size - 3 && state.hasMore && !state.loadingMore
+        }
+    }
+    LaunchedEffect(shouldLoadMore) {
+        if (shouldLoadMore) viewModel.loadMore()
+    }
+
     Scaffold(
+        snackbarHost = { SnackbarHost(snackbar) },
         topBar = {
-            TopAppBar(
-                title = { Text("Transactions") },
-                actions = {
-                    IconButton(onClick = { showFilterSheet = true }) {
-                        Icon(Icons.Default.FilterList, "Filter")
+            if (searchOpen) {
+                SearchBar(
+                    query = query,
+                    onQueryChange = { query = it; viewModel.search(it) },
+                    onSearch = { viewModel.search(it) },
+                    active = false,
+                    onActiveChange = {},
+                    modifier = Modifier.fillMaxWidth().padding(8.dp),
+                    placeholder = { Text("Search transactions") },
+                    trailingIcon = {
+                        TextButton(onClick = {
+                            searchOpen = false; query = ""; viewModel.search("")
+                        }) { Text("Cancel") }
                     }
-                    IconButton(onClick = { viewModel.loadTransactions() }) {
-                        Icon(Icons.Default.Refresh, "Refresh")
+                ) {}
+            } else {
+                TopAppBar(
+                    title = { Text("Transactions", style = EfinaType.titleLargeEmphasized) },
+                    actions = {
+                        IconButton(onClick = { searchOpen = true }) {
+                            Icon(Icons.Default.Search, contentDescription = "Search")
+                        }
                     }
-                }
-            )
+                )
+            }
         },
         floatingActionButton = {
             FloatingActionButton(
                 onClick = onNavigateToCreate,
-                containerColor = MaterialTheme.colorScheme.primary
-            ) {
-                Icon(Icons.Default.Add, "Add Transaction")
-            }
+                shape = EfinaCorners.menu
+            ) { Icon(Icons.Default.Add, contentDescription = "Add transaction") }
         }
     ) { padding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
-        ) {
-            // Search Bar
-            OutlinedTextField(
-                value = searchQuery,
-                onValueChange = {
-                    searchQuery = it
-                    viewModel.search(it)
-                },
-                placeholder = { Text("Search transactions...") },
-                leadingIcon = { Icon(Icons.Default.Search, null) },
-                trailingIcon = {
-                    if (searchQuery.isNotEmpty()) {
-                        IconButton(onClick = {
-                            searchQuery = ""
-                            viewModel.search("")
-                        }) {
-                            Icon(Icons.Default.Clear, "Clear")
-                        }
-                    }
-                },
-                singleLine = true,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 8.dp)
-            )
-            
-            // Type Filter Chips
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                FilterChip(
-                    selected = uiState.filter.type == null,
-                    onClick = { viewModel.filterByType(null) },
-                    label = { Text("All") }
-                )
-                FilterChip(
-                    selected = uiState.filter.type == TransactionType.INCOME,
-                    onClick = { viewModel.filterByType(TransactionType.INCOME) },
-                    label = { Text("Income") }
-                )
-                FilterChip(
-                    selected = uiState.filter.type == TransactionType.EXPENSE,
-                    onClick = { viewModel.filterByType(TransactionType.EXPENSE) },
-                    label = { Text("Expense") }
-                )
-            }
-            
-            // Transaction Count
-            Text(
-                text = "${uiState.total} transactions",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
-            )
-            
-            // Transactions List
+        Column(Modifier.fillMaxSize().padding(padding)) {
+            TypeFilterRow(selected = state.filter.type) { viewModel.setType(it) }
+
             when {
-                uiState.isLoading && uiState.transactions.isEmpty() -> LoadingIndicator()
-                uiState.error != null && uiState.transactions.isEmpty() -> ErrorState(
-                    message = uiState.error!!,
-                    onRetry = { viewModel.loadTransactions() }
-                )
-                uiState.transactions.isEmpty() -> EmptyState(
-                    title = "No transactions",
-                    description = "Your transactions will appear here.",
-                    icon = Icons.Default.Receipt
+                state.loading -> LoadingList(rows = 6, modifier = Modifier.padding(16.dp))
+                state.isEmpty -> EmptyState(
+                    title = "No transactions yet",
+                    message = "Record your first income or expense to see it here."
                 )
                 else -> LazyColumn(
                     state = listState,
-                    modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                    contentPadding = PaddingValues(16.dp, 0.dp, 16.dp, 96.dp),
+                    verticalArrangement = Arrangement.spacedBy(2.dp)
                 ) {
-                    items(uiState.transactions, key = { it.id }) { transaction ->
-                        TransactionItem(
-                            description = transaction.description ?: "",
-                            categoryName = transaction.categoryName,
-                            categoryColor = transaction.categoryColor?.let {
-                                try { Color(android.graphics.Color.parseColor(it)) }
-                                catch (e: Exception) { null }
+                    itemsIndexed(state.transactions, key = { _, t -> t.id }) { index, tx ->
+                        val (alpha, offsetY) = revealState(index)
+                        TransactionRow(
+                            tx = tx,
+                            modifier = Modifier.graphicsLayer {
+                                this.alpha = alpha
+                                translationY = offsetY
                             },
-                            amount = transaction.amount,
-                            isExpense = transaction.type == TransactionType.EXPENSE,
-                            date = transaction.date.take(10),
-                            currency = "IDR",
-                            onClick = { onNavigateToEdit(transaction.id) }
+                            onClick = { onNavigateToEdit(tx.id) },
+                            onLongClick = { pendingDelete = tx }
                         )
                     }
-                    
-                    if (uiState.isLoading) {
+                    if (state.loadingMore) {
                         item {
                             Box(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(16.dp),
+                                Modifier.fillMaxWidth().padding(16.dp),
                                 contentAlignment = Alignment.Center
-                            ) {
-                                CircularProgressIndicator(modifier = Modifier.size(32.dp))
-                            }
+                            ) { CircularProgressIndicator(Modifier.size(24.dp), strokeWidth = 2.dp) }
                         }
+                    }
+                    item {
+                        Text(
+                            text = "Showing ${state.transactions.size} of ${state.total}",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp)
+                        )
                     }
                 }
             }
         }
     }
-    
-    // Filter Bottom Sheet
-    if (showFilterSheet) {
-        ModalBottomSheet(
-            onDismissRequest = { showFilterSheet = false }
-        ) {
-            FilterBottomSheet(
-                accounts = uiState.accounts,
-                categories = uiState.categories,
-                selectedAccountId = uiState.filter.accountId,
-                selectedCategoryId = uiState.filter.categoryId,
-                onAccountSelected = {
-                    viewModel.filterByAccount(it)
-                    showFilterSheet = false
-                },
-                onCategorySelected = {
-                    viewModel.filterByCategory(it)
-                    showFilterSheet = false
-                },
-                onClearFilters = {
-                    viewModel.updateFilter(TransactionFilter())
-                    showFilterSheet = false
-                }
-            )
-        }
-    }
-    
-    // Delete Dialog
-    showDeleteDialog?.let { id ->
+
+    pendingDelete?.let { tx ->
         AlertDialog(
-            onDismissRequest = { showDeleteDialog = null },
-            title = { Text("Delete Transaction") },
-            text = { Text("Are you sure you want to delete this transaction?") },
+            onDismissRequest = { pendingDelete = null },
+            title = { Text("Delete transaction?") },
+            text = { Text("This reverses the balance change and cannot be undone.") },
             confirmButton = {
-                TextButton(
-                    onClick = {
-                        viewModel.deleteTransaction(id)
-                        showDeleteDialog = null
-                    }
-                ) {
-                    Text("Delete", color = Error)
-                }
+                TextButton(onClick = {
+                    viewModel.delete(tx.id); pendingDelete = null
+                }) { Text("Delete", color = MaterialTheme.colorScheme.error) }
             },
             dismissButton = {
-                TextButton(onClick = { showDeleteDialog = null }) {
-                    Text("Cancel")
-                }
+                TextButton(onClick = { pendingDelete = null }) { Text("Cancel") }
             }
         )
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun FilterBottomSheet(
-    accounts: List<com.efina.app.domain.model.Account>,
-    categories: List<com.efina.app.domain.model.Category>,
-    selectedAccountId: Long?,
-    selectedCategoryId: Long?,
-    onAccountSelected: (Long?) -> Unit,
-    onCategorySelected: (Long?) -> Unit,
-    onClearFilters: () -> Unit
-) {
-    Column(
-        modifier = Modifier
+private fun TypeFilterRow(selected: TransactionType?, onSelect: (TransactionType?) -> Unit) {
+    val options = listOf(
+        null to "All",
+        TransactionType.EXPENSE to "Expense",
+        TransactionType.INCOME to "Income",
+        TransactionType.TRANSFER to "Transfer"
+    )
+    Row(
+        Modifier
             .fillMaxWidth()
-            .padding(16.dp)
+            .padding(horizontal = 16.dp, vertical = 4.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        Text(
-            text = "Filters",
-            style = MaterialTheme.typography.titleLarge,
-            modifier = Modifier.padding(bottom = 16.dp)
-        )
-        
-        Text(
-            text = "Account",
-            style = MaterialTheme.typography.labelLarge,
-            modifier = Modifier.padding(bottom = 8.dp)
-        )
-        
-        accounts.forEach { account ->
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 4.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                RadioButton(
-                    selected = selectedAccountId == account.id,
-                    onClick = { onAccountSelected(account.id) }
-                )
-                Text(
-                    text = account.name,
-                    modifier = Modifier.padding(start = 8.dp)
-                )
-            }
+        options.forEach { (type, label) ->
+            FilterChip(
+                selected = selected == type,
+                onClick = { onSelect(type) },
+                label = { Text(label) },
+                shape = EfinaCorners.pill
+            )
         }
-        
-        HorizontalDivider(modifier = Modifier.padding(vertical = 16.dp))
-        
-        Text(
-            text = "Category",
-            style = MaterialTheme.typography.labelLarge,
-            modifier = Modifier.padding(bottom = 8.dp)
-        )
-        
-        categories.take(10).forEach { category ->
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 4.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                RadioButton(
-                    selected = selectedCategoryId == category.id,
-                    onClick = { onCategorySelected(category.id) }
-                )
-                Text(
-                    text = category.name,
-                    modifier = Modifier.padding(start = 8.dp)
-                )
-            }
-        }
-        
-        Spacer(modifier = Modifier.height(16.dp))
-        
-        TextButton(
-            onClick = onClearFilters,
-            modifier = Modifier.fillMaxWidth()
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun TransactionRow(
+    tx: Transaction,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit,
+    onLongClick: () -> Unit
+) {
+    val interaction = remember { androidx.compose.foundation.interaction.MutableInteractionSource() }
+    Surface(
+        modifier = modifier.fillMaxWidth(),
+        color = MaterialTheme.colorScheme.surfaceContainerLow,
+        shape = EfinaCorners.groupInner,
+        onClick = onClick
+    ) {
+        Row(
+            Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Text("Clear All Filters")
+            Column(Modifier.weight(1f)) {
+                Text(
+                    tx.description ?: tx.categoryName ?: "Untitled",
+                    style = MaterialTheme.typography.titleSmall,
+                    maxLines = 1
+                )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        formatDate(tx.date),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    val meta = tx.categoryName ?: tx.accountName
+                    if (meta != null) {
+                        Text(
+                            " · $meta",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            maxLines = 1
+                        )
+                    }
+                }
+            }
+            Spacer(Modifier.width(8.dp))
+            AmountText(
+                amount = tx.amount,
+                type = tx.type,
+                currency = "IDR"
+            )
         }
-        
-        Spacer(modifier = Modifier.height(32.dp))
     }
 }

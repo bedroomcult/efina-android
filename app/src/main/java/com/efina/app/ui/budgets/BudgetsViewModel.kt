@@ -3,7 +3,8 @@ package com.efina.app.ui.budgets
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.efina.app.domain.model.*
-import com.efina.app.domain.repository.*
+import com.efina.app.domain.repository.BudgetRepository
+import com.efina.app.domain.repository.CategoryRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -12,171 +13,75 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 data class BudgetsUiState(
-    val isLoading: Boolean = false,
-    val error: String? = null,
+    val loading: Boolean = true,
+    val saving: Boolean = false,
     val budgets: List<Budget> = emptyList(),
-    val categories: List<Category> = emptyList()
-)
+    val categories: List<Category> = emptyList(),
+    val error: String? = null
+) {
+    val totalBudget: Double get() = budgets.sumOf { it.amount }
+    val totalSpent: Double get() = budgets.sumOf { it.spent }
+    val overBudgetCount: Int get() = budgets.count { it.isOverBudget }
+}
 
 @HiltViewModel
 class BudgetsViewModel @Inject constructor(
-    private val budgetRepository: BudgetRepository,
+    private val repository: BudgetRepository,
     private val categoryRepository: CategoryRepository
 ) : ViewModel() {
-    
-    private val _uiState = MutableStateFlow(BudgetsUiState())
-    val uiState: StateFlow<BudgetsUiState> = _uiState.asStateFlow()
-    
-    init {
-        loadBudgets()
-        loadCategories()
-    }
-    
-    fun loadBudgets() {
-        viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(isLoading = true, error = null)
-            
-            budgetRepository.getBudgets()
-                .onSuccess { budgets ->
-                    _uiState.value = _uiState.value.copy(
-                        isLoading = false,
-                        budgets = budgets
-                    )
-                }
-                .onFailure { error ->
-                    _uiState.value = _uiState.value.copy(
-                        isLoading = false,
-                        error = error.message ?: "Failed to load budgets"
-                    )
-                }
-        }
-    }
-    
-    private fun loadCategories() {
-        viewModelScope.launch {
-            categoryRepository.getCategories(CategoryType.EXPENSE)
-                .onSuccess { categories ->
-                    _uiState.value = _uiState.value.copy(categories = categories)
-                }
-        }
-    }
-    
-    fun createBudget(request: CreateBudgetRequest) {
-        viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(isLoading = true, error = null)
-            
-            budgetRepository.createBudget(request)
-                .onSuccess {
-                    loadBudgets()
-                }
-                .onFailure { error ->
-                    _uiState.value = _uiState.value.copy(
-                        isLoading = false,
-                        error = error.message ?: "Failed to create budget"
-                    )
-                }
-        }
-    }
-    
-    fun deleteBudget(id: Long) {
-        viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(isLoading = true, error = null)
-            
-            budgetRepository.deleteBudget(id)
-                .onSuccess {
-                    loadBudgets()
-                }
-                .onFailure { error ->
-                    _uiState.value = _uiState.value.copy(
-                        isLoading = false,
-                        error = error.message ?: "Failed to delete budget"
-                    )
-                }
-        }
-    }
-}
 
-data class GoalsUiState(
-    val isLoading: Boolean = false,
-    val error: String? = null,
-    val goals: List<Goal> = emptyList(),
-    val accounts: List<Account> = emptyList()
-)
+    private val _state = MutableStateFlow(BudgetsUiState())
+    val state: StateFlow<BudgetsUiState> = _state.asStateFlow()
 
-@HiltViewModel
-class GoalsViewModel @Inject constructor(
-    private val goalRepository: GoalRepository,
-    private val accountRepository: AccountRepository
-) : ViewModel() {
-    
-    private val _uiState = MutableStateFlow(GoalsUiState())
-    val uiState: StateFlow<GoalsUiState> = _uiState.asStateFlow()
-    
-    init {
-        loadGoals()
-        loadAccounts()
-    }
-    
-    fun loadGoals() {
+    init { load() }
+
+    fun load() {
+        _state.value = _state.value.copy(loading = true, error = null)
         viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(isLoading = true, error = null)
-            
-            goalRepository.getGoals()
-                .onSuccess { goals ->
-                    _uiState.value = _uiState.value.copy(
-                        isLoading = false,
-                        goals = goals
-                    )
-                }
-                .onFailure { error ->
-                    _uiState.value = _uiState.value.copy(
-                        isLoading = false,
-                        error = error.message ?: "Failed to load goals"
-                    )
-                }
-        }
-    }
-    
-    private fun loadAccounts() {
-        viewModelScope.launch {
-            accountRepository.getAccounts()
-                .onSuccess { accounts ->
-                    _uiState.value = _uiState.value.copy(accounts = accounts)
-                }
-        }
-    }
-    
-    fun createGoal(request: CreateGoalRequest) {
-        viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(isLoading = true, error = null)
-            
-            goalRepository.createGoal(request)
+            val categories = categoryRepository.getCategories().getOrDefault(emptyList())
+            repository.getBudgets()
                 .onSuccess {
-                    loadGoals()
+                    _state.value = _state.value.copy(
+                        loading = false, budgets = it, categories = categories
+                    )
                 }
-                .onFailure { error ->
-                    _uiState.value = _uiState.value.copy(
-                        isLoading = false,
-                        error = error.message ?: "Failed to create goal"
+                .onFailure {
+                    _state.value = _state.value.copy(
+                        loading = false, categories = categories, error = it.message
                     )
                 }
         }
     }
-    
-    fun deleteGoal(id: Long) {
+
+    fun create(request: CreateBudgetRequest, onDone: () -> Unit) {
+        _state.value = _state.value.copy(saving = true, error = null)
         viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(isLoading = true, error = null)
-            
-            goalRepository.deleteGoal(id)
+            repository.createBudget(request)
                 .onSuccess {
-                    loadGoals()
+                    _state.value = _state.value.copy(saving = false); load(); onDone()
                 }
-                .onFailure { error ->
-                    _uiState.value = _uiState.value.copy(
-                        isLoading = false,
-                        error = error.message ?: "Failed to delete goal"
-                    )
-                }
+                .onFailure { _state.value = _state.value.copy(saving = false, error = it.message) }
         }
     }
+
+    fun update(id: Long, request: UpdateBudgetRequest, onDone: () -> Unit) {
+        _state.value = _state.value.copy(saving = true, error = null)
+        viewModelScope.launch {
+            repository.updateBudget(id, request)
+                .onSuccess {
+                    _state.value = _state.value.copy(saving = false); load(); onDone()
+                }
+                .onFailure { _state.value = _state.value.copy(saving = false, error = it.message) }
+        }
+    }
+
+    fun delete(id: Long) {
+        viewModelScope.launch {
+            repository.deleteBudget(id)
+                .onSuccess { load() }
+                .onFailure { _state.value = _state.value.copy(error = it.message) }
+        }
+    }
+
+    fun clearError() { _state.value = _state.value.copy(error = null) }
 }

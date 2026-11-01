@@ -3,7 +3,8 @@ package com.efina.app.ui.transactions
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.efina.app.domain.model.*
-import com.efina.app.domain.repository.*
+import com.efina.app.domain.repository.TransactionPage
+import com.efina.app.domain.repository.TransactionRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -12,160 +13,129 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 data class TransactionsUiState(
-    val isLoading: Boolean = false,
-    val error: String? = null,
+    val loading: Boolean = true,
+    val loadingMore: Boolean = false,
+    val saving: Boolean = false,
     val transactions: List<Transaction> = emptyList(),
     val total: Int = 0,
+    val page: TransactionPage? = null,
     val filter: TransactionFilter = TransactionFilter(),
-    val accounts: List<Account> = emptyList(),
-    val categories: List<Category> = emptyList()
-)
+    val error: String? = null
+) {
+    val isEmpty: Boolean get() = !loading && transactions.isEmpty()
+    val hasMore: Boolean get() = page?.hasMore == true
+}
 
 @HiltViewModel
 class TransactionsViewModel @Inject constructor(
-    private val transactionRepository: TransactionRepository,
-    private val accountRepository: AccountRepository,
-    private val categoryRepository: CategoryRepository
+    private val repository: TransactionRepository
 ) : ViewModel() {
-    
-    private val _uiState = MutableStateFlow(TransactionsUiState())
-    val uiState: StateFlow<TransactionsUiState> = _uiState.asStateFlow()
-    
-    init {
-        loadTransactions()
-        loadAccounts()
-        loadCategories()
-    }
-    
-    fun loadTransactions() {
+
+    private val _state = MutableStateFlow(TransactionsUiState())
+    val state: StateFlow<TransactionsUiState> = _state.asStateFlow()
+
+    init { load() }
+
+    fun load() {
+        _state.value = _state.value.copy(loading = true, error = null)
         viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(isLoading = true, error = null)
-            
-            transactionRepository.getTransactions(_uiState.value.filter)
-                .onSuccess { response ->
-                    _uiState.value = _uiState.value.copy(
-                        isLoading = false,
-                        transactions = response.transactions,
-                        total = response.total
+            repository.getTransactions(_state.value.filter.copy(offset = 0))
+                .onSuccess { page ->
+                    _state.value = _state.value.copy(
+                        loading = false,
+                        transactions = page.transactions,
+                        total = page.total,
+                        page = page
                     )
                 }
-                .onFailure { error ->
-                    _uiState.value = _uiState.value.copy(
-                        isLoading = false,
-                        error = error.message ?: "Failed to load transactions"
-                    )
+                .onFailure {
+                    _state.value = _state.value.copy(loading = false, error = it.message)
                 }
         }
     }
-    
-    private fun loadAccounts() {
-        viewModelScope.launch {
-            accountRepository.getAccounts()
-                .onSuccess { accounts ->
-                    _uiState.value = _uiState.value.copy(accounts = accounts)
-                }
-        }
-    }
-    
-    private fun loadCategories() {
-        viewModelScope.launch {
-            categoryRepository.getCategories()
-                .onSuccess { categories ->
-                    _uiState.value = _uiState.value.copy(categories = categories)
-                }
-        }
-    }
-    
+
+    /** Appends the next page. The backend returns an envelope with `total`. */
     fun loadMore() {
-        val current = _uiState.value
-        if (current.isLoading || current.transactions.size >= current.total) return
-        
-        val newOffset = current.filter.offset + current.filter.limit
-        val newFilter = current.filter.copy(offset = newOffset)
-        _uiState.value = current.copy(filter = newFilter)
-        
+        val current = _state.value
+        if (current.loadingMore || !current.hasMore) return
+        _state.value = current.copy(loadingMore = true)
         viewModelScope.launch {
-            transactionRepository.getTransactions(newFilter)
-                .onSuccess { response ->
-                    _uiState.value = current.copy(
-                        transactions = current.transactions + response.transactions,
-                        total = response.total,
-                        filter = newFilter
-                    )
-                }
+            repository.getTransactions(
+                current.filter.copy(offset = current.transactions.size)
+            ).onSuccess { page ->
+                _state.value = _state.value.copy(
+                    loadingMore = false,
+                    transactions = _state.value.transactions + page.transactions,
+                    total = page.total,
+                    page = page
+                )
+            }.onFailure {
+                _state.value = _state.value.copy(loadingMore = false, error = it.message)
+            }
         }
     }
-    
-    fun updateFilter(filter: TransactionFilter) {
-        _uiState.value = _uiState.value.copy(filter = filter.copy(offset = 0))
-        loadTransactions()
+
+    fun applyFilter(filter: TransactionFilter) {
+        _state.value = _state.value.copy(filter = filter.copy(offset = 0))
+        load()
     }
-    
+
+    fun setType(type: TransactionType?) {
+        applyFilter(_state.value.filter.copy(type = type))
+    }
+
     fun search(query: String) {
-        updateFilter(_uiState.value.filter.copy(search = query.ifBlank { null }))
+        applyFilter(_state.value.filter.copy(search = query.ifBlank { null }))
     }
-    
-    fun filterByType(type: TransactionType?) {
-        updateFilter(_uiState.value.filter.copy(type = type))
-    }
-    
-    fun filterByAccount(accountId: Long?) {
-        updateFilter(_uiState.value.filter.copy(accountId = accountId))
-    }
-    
-    fun filterByCategory(categoryId: Long?) {
-        updateFilter(_uiState.value.filter.copy(categoryId = categoryId))
-    }
-    
-    fun updateTransaction(id: Long, request: UpdateTransactionRequest) {
+
+    fun create(request: CreateTransactionRequest, onDone: () -> Unit) {
+        _state.value = _state.value.copy(saving = true, error = null)
         viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(isLoading = true, error = null)
-            transactionRepository.updateTransaction(id, request)
-                .onSuccess { loadTransactions() }
-                .onFailure { error ->
-                    _uiState.value = _uiState.value.copy(
-                        isLoading = false,
-                        error = error.message ?: "Failed to update transaction"
-                    )
-                }
-        }
-    }
-    
-    fun createTransaction(request: CreateTransactionRequest) {
-        viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(isLoading = true, error = null)
-            
-            transactionRepository.createTransaction(request)
+            repository.createTransaction(request)
                 .onSuccess {
-                    loadTransactions()
+                    _state.value = _state.value.copy(saving = false)
+                    load()
+                    onDone()
                 }
-                .onFailure { error ->
-                    _uiState.value = _uiState.value.copy(
-                        isLoading = false,
-                        error = error.message ?: "Failed to create transaction"
-                    )
-                }
+                .onFailure { _state.value = _state.value.copy(saving = false, error = it.message) }
         }
     }
-    
-    fun deleteTransaction(id: Long) {
+
+    fun update(id: Long, request: UpdateTransactionRequest, onDone: () -> Unit) {
+        _state.value = _state.value.copy(saving = true, error = null)
         viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(isLoading = true, error = null)
-            
-            transactionRepository.deleteTransaction(id)
+            repository.updateTransaction(id, request)
                 .onSuccess {
-                    loadTransactions()
+                    _state.value = _state.value.copy(saving = false)
+                    load()
+                    onDone()
                 }
-                .onFailure { error ->
-                    _uiState.value = _uiState.value.copy(
-                        isLoading = false,
-                        error = error.message ?: "Failed to delete transaction"
-                    )
-                }
+                .onFailure { _state.value = _state.value.copy(saving = false, error = it.message) }
         }
     }
-    
+
+    fun delete(id: Long) {
+        viewModelScope.launch {
+            repository.deleteTransaction(id)
+                .onSuccess { load() }
+                .onFailure { _state.value = _state.value.copy(error = it.message) }
+        }
+    }
+
+    fun transfer(request: CreateTransferRequest, onDone: () -> Unit) {
+        _state.value = _state.value.copy(saving = true, error = null)
+        viewModelScope.launch {
+            repository.createTransfer(request)
+                .onSuccess {
+                    _state.value = _state.value.copy(saving = false)
+                    load()
+                    onDone()
+                }
+                .onFailure { _state.value = _state.value.copy(saving = false, error = it.message) }
+        }
+    }
+
     fun clearError() {
-        _uiState.value = _uiState.value.copy(error = null)
+        _state.value = _state.value.copy(error = null)
     }
 }
