@@ -39,6 +39,7 @@ import com.efina.app.ui.transactions.TransactionFormScreen
 import com.efina.app.ui.transactions.TransactionsScreen
 import com.efina.app.ui.transactions.TransactionsViewModel
 import com.efina.app.ui.theme.EfinaTheme
+import com.efina.app.ui.theme.ThemePreference
 
 /**
  * Navigation graph.
@@ -95,8 +96,10 @@ fun EfinaAppRoot(
 
     // Wait for the stored session to be read before deciding the start screen,
     // otherwise a logged-in user sees a flash of the login form.
+    val (themeName, darkTheme) = ThemePreference.current()
+
     if (!authState.checked) {
-        EfinaTheme {
+        EfinaTheme(themeName = themeName, darkTheme = darkTheme) {
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 CircularProgressIndicator()
             }
@@ -116,7 +119,7 @@ fun EfinaAppRoot(
         }
     }
 
-    EfinaTheme {
+    EfinaTheme(themeName = themeName, darkTheme = darkTheme) {
         Scaffold(
             bottomBar = {
                 val navBackStackEntry by navController.currentBackStackEntryAsState()

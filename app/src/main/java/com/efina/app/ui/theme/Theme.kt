@@ -9,6 +9,11 @@ import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
@@ -153,6 +158,36 @@ private fun monoScheme(dark: Boolean): ColorScheme =
         outline = Color(0xFF77777E),
         error = Color(0xFFA8364B)
     )
+
+/**
+ * The theme the user picked, held in memory so [EfinaTheme] can read it without a
+ * ViewModel being threaded through MainActivity.
+ *
+ * Settings writes `theme` to PUT /settings; before this existed nothing read it
+ * back, so the appearance chips appeared to work and changed nothing on restart.
+ * Set from SettingsViewModel via [ThemePreference.apply].
+ */
+object ThemePreference {
+    private val _name = MutableStateFlow("orion")
+    val name: StateFlow<String> = _name.asStateFlow()
+
+    /** True when the stored value asks for a dark surface. */
+    @Composable
+    fun current(): Pair<String, Boolean> {
+        val stored by name.collectAsState()
+        return when (stored) {
+            "dark", "mono-dark" -> (if (stored == "mono-dark") "mono" else "orion") to true
+            "light", "mono" -> (if (stored == "mono") "mono" else "orion") to false
+            "system" -> "orion" to isSystemInDarkTheme()
+            // Older/unknown values fall back to following the system.
+            else -> "orion" to isSystemInDarkTheme()
+        }
+    }
+
+    fun apply(storedTheme: String?) {
+        if (!storedTheme.isNullOrBlank()) _name.value = storedTheme
+    }
+}
 
 @Composable
 fun EfinaTheme(

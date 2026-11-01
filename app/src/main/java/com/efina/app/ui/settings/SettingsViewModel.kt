@@ -3,6 +3,7 @@ package com.efina.app.ui.settings
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.efina.app.domain.model.UpdateSettingsRequest
+import com.efina.app.ui.theme.ThemePreference
 import com.efina.app.domain.model.User
 import com.efina.app.domain.model.UserSettings
 import com.efina.app.domain.repository.AuthRepository
@@ -40,6 +41,9 @@ class SettingsViewModel @Inject constructor(
             val userResult = authRepository.refreshCurrentUser().getOrNull()
             settingsRepository.getSettings()
                 .onSuccess {
+                    // Push the saved preference into the theme so a restart shows
+                    // the user's choice rather than the default.
+                    ThemePreference.apply(it.theme)
                     _state.value = _state.value.copy(loading = false, settings = it, user = userResult)
                 }
                 .onFailure {
@@ -53,6 +57,7 @@ class SettingsViewModel @Inject constructor(
         viewModelScope.launch {
             settingsRepository.updateSettings(request)
                 .onSuccess {
+                    ThemePreference.apply(it.theme)
                     _state.value = _state.value.copy(
                         saving = false,
                         settings = it,
