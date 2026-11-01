@@ -38,6 +38,7 @@ import com.efina.app.ui.stats.StatsScreen
 import com.efina.app.ui.transactions.TransactionFormScreen
 import com.efina.app.ui.transactions.TransactionsScreen
 import com.efina.app.ui.transactions.TransactionsViewModel
+import com.efina.app.data.remote.DataEvents
 import com.efina.app.ui.theme.EfinaTheme
 import com.efina.app.ui.theme.ThemePreference
 
@@ -49,6 +50,24 @@ import com.efina.app.ui.theme.ThemePreference
  * Budgets and Goals are top-level here rather than tabs, because the reference
  * design favours a short bottom bar; PARITY.md records that.
  */
+
+/**
+ * Re-reads a screen's data when a write happens anywhere in [domains].
+ *
+ * Every ViewModel loads once in `init`, and Android keeps that instance alive
+ * while its destination sits on the back stack. Without this, creating a
+ * transaction and popping back showed the old list — money moved and the screen
+ * did not.
+ */
+@Composable
+private fun ReloadOnChange(vararg domains: DataEvents.Domain, reload: () -> Unit) {
+    LaunchedEffect(domains.toList()) {
+        DataEvents.changed.collect { changed ->
+            if (changed in domains) reload()
+        }
+    }
+}
+
 sealed class Screen(val route: String) {
     data object Login : Screen("login")
     data object Home : Screen("home")
@@ -165,6 +184,8 @@ fun EfinaAppRoot(
                 }
 
                 composable(Screen.Home.route) {
+                    val homeVm: com.efina.app.ui.home.HomeViewModel = hiltViewModel()
+                    ReloadOnChange(DataEvents.Domain.TRANSACTIONS, DataEvents.Domain.ACCOUNTS, DataEvents.Domain.BUDGETS, DataEvents.Domain.GOALS) { homeVm.refresh() }
                     HomeScreen(
                         onNavigateToAccounts = { navController.navigate(Screen.Accounts.route) },
                         onNavigateToTransactions = { navController.navigate(Screen.Transactions.route) },
@@ -176,6 +197,8 @@ fun EfinaAppRoot(
                 }
 
                 composable(Screen.Accounts.route) {
+                    val accVm: AccountsViewModel = hiltViewModel()
+                    ReloadOnChange(DataEvents.Domain.ACCOUNTS) { accVm.load() }
                     AccountsScreen(
                         onNavigateToCreate = { navController.navigate(Screen.AccountForm.route(null)) },
                         onNavigateToEdit = { id -> navController.navigate(Screen.AccountForm.route(id)) },
@@ -221,6 +244,8 @@ fun EfinaAppRoot(
                 }
 
                 composable(Screen.Transactions.route) {
+                    val txListVm: TransactionsViewModel = hiltViewModel()
+                    ReloadOnChange(DataEvents.Domain.TRANSACTIONS, DataEvents.Domain.ACCOUNTS) { txListVm.load() }
                     TransactionsScreen(
                         onNavigateToCreate = { navController.navigate(Screen.TransactionForm.route(null)) },
                         onNavigateToEdit = { id ->
@@ -252,9 +277,21 @@ fun EfinaAppRoot(
                     )
                 }
 
-                composable(Screen.Budgets.route) { BudgetsScreen() }
-                composable(Screen.Goals.route) { GoalsScreen() }
-                composable(Screen.Stats.route) { StatsScreen() }
+                composable(Screen.Budgets.route) {
+                    val bVm: com.efina.app.ui.budgets.BudgetsViewModel = hiltViewModel()
+                    ReloadOnChange(DataEvents.Domain.BUDGETS, DataEvents.Domain.TRANSACTIONS) { bVm.load() }
+                    BudgetsScreen(viewModel = bVm)
+                }
+                composable(Screen.Goals.route) {
+                    val gVm: com.efina.app.ui.budgets.GoalsViewModel = hiltViewModel()
+                    ReloadOnChange(DataEvents.Domain.GOALS, DataEvents.Domain.ACCOUNTS) { gVm.load() }
+                    GoalsScreen(viewModel = gVm)
+                }
+                composable(Screen.Stats.route) {
+                    val sVm: com.efina.app.ui.stats.StatsViewModel = hiltViewModel()
+                    ReloadOnChange(DataEvents.Domain.TRANSACTIONS) { sVm.load() }
+                    StatsScreen(viewModel = sVm)
+                }
 
                 composable(Screen.Settings.route) {
                     SettingsScreen(

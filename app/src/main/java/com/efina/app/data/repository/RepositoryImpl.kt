@@ -1,5 +1,6 @@
 package com.efina.app.data.repository
 
+import com.efina.app.data.remote.DataEvents
 import com.efina.app.data.remote.SessionEvents
 import com.efina.app.data.remote.api.EfinaApi
 import com.efina.app.data.remote.dto.*
@@ -39,6 +40,11 @@ internal fun <T> Response<T>.toResult(): Result<T> {
 }
 
 internal class ApiException(val status: Int, override val message: String) : Exception(message)
+
+
+/** Emits a refresh signal for [domain] when the write succeeds. */
+private inline fun <T> Result<T>.announce(domain: DataEvents.Domain): Result<T> =
+    onSuccess { DataEvents.emit(domain) }
 
 /** Shared reader for error bodies, so a failure does not allocate a Json each time. */
 private val errorJson = Json {
@@ -104,13 +110,13 @@ class AccountRepositoryImpl @Inject constructor(
         api.getAccounts().toResult().map { list -> list.map { it.toDomain() } }
 
     override suspend fun createAccount(request: CreateAccountRequest): Result<Account> =
-        api.createAccount(request.toDto()).toResult().map { it.toDomain() }
+        api.createAccount(request.toDto()).toResult().announce(DataEvents.Domain.ACCOUNTS).map { it.toDomain() }
 
     override suspend fun updateAccount(id: Long, request: UpdateAccountRequest): Result<Account> =
-        api.updateAccount(id, request.toDto()).toResult().map { it.toDomain() }
+        api.updateAccount(id, request.toDto()).toResult().announce(DataEvents.Domain.ACCOUNTS).map { it.toDomain() }
 
     override suspend fun deleteAccount(id: Long): Result<Unit> =
-        api.deleteAccount(id).toResult().map { }
+        api.deleteAccount(id).toResult().announce(DataEvents.Domain.ACCOUNTS).map { }
 
     override suspend fun setShared(id: Long, familyId: Long?): Result<Account> =
         api.updateAccountSharing(id, UpdateAccountSharingRequestDto(familyId))
@@ -160,13 +166,13 @@ class TransactionRepositoryImpl @Inject constructor(
         }
 
     override suspend fun createTransaction(request: CreateTransactionRequest): Result<Transaction> =
-        api.createTransaction(request.toDto()).toResult().map { it.toDomain() }
+        api.createTransaction(request.toDto()).toResult().announce(DataEvents.Domain.TRANSACTIONS).map { it.toDomain() }
 
     override suspend fun updateTransaction(id: Long, request: UpdateTransactionRequest): Result<Transaction> =
-        api.updateTransaction(id, request.toDto()).toResult().map { it.toDomain() }
+        api.updateTransaction(id, request.toDto()).toResult().announce(DataEvents.Domain.TRANSACTIONS).map { it.toDomain() }
 
     override suspend fun deleteTransaction(id: Long): Result<Unit> =
-        api.deleteTransaction(id).toResult().map { }
+        api.deleteTransaction(id).toResult().announce(DataEvents.Domain.TRANSACTIONS).map { }
 
     override suspend fun createTransfer(request: CreateTransferRequest): Result<Unit> =
         api.createTransfer(
@@ -189,13 +195,13 @@ class CategoryRepositoryImpl @Inject constructor(
         api.getCategories().toResult().map { list -> list.map { it.toDomain() } }
 
     override suspend fun createCategory(request: CreateCategoryRequest): Result<Category> =
-        api.createCategory(request.toDto()).toResult().map { it.toDomain() }
+        api.createCategory(request.toDto()).toResult().announce(DataEvents.Domain.CATEGORIES).map { it.toDomain() }
 
     override suspend fun updateCategory(id: Long, request: UpdateCategoryRequest): Result<Category> =
-        api.updateCategory(id, request.toDto()).toResult().map { it.toDomain() }
+        api.updateCategory(id, request.toDto()).toResult().announce(DataEvents.Domain.CATEGORIES).map { it.toDomain() }
 
     override suspend fun deleteCategory(id: Long): Result<Unit> =
-        api.deleteCategory(id).toResult().map { }
+        api.deleteCategory(id).toResult().announce(DataEvents.Domain.CATEGORIES).map { }
 }
 
 @Singleton
@@ -207,13 +213,13 @@ class BudgetRepositoryImpl @Inject constructor(
         api.getBudgets().toResult().map { list -> list.map { it.toDomain() } }
 
     override suspend fun createBudget(request: CreateBudgetRequest): Result<Budget> =
-        api.createBudget(request.toDto()).toResult().map { it.toDomain() }
+        api.createBudget(request.toDto()).toResult().announce(DataEvents.Domain.BUDGETS).map { it.toDomain() }
 
     override suspend fun updateBudget(id: Long, request: UpdateBudgetRequest): Result<Budget> =
-        api.updateBudget(id, request.toDto()).toResult().map { it.toDomain() }
+        api.updateBudget(id, request.toDto()).toResult().announce(DataEvents.Domain.BUDGETS).map { it.toDomain() }
 
     override suspend fun deleteBudget(id: Long): Result<Unit> =
-        api.deleteBudget(id).toResult().map { }
+        api.deleteBudget(id).toResult().announce(DataEvents.Domain.BUDGETS).map { }
 }
 
 @Singleton
@@ -225,13 +231,13 @@ class GoalRepositoryImpl @Inject constructor(
         api.getGoals().toResult().map { list -> list.map { it.toDomain() } }
 
     override suspend fun createGoal(request: CreateGoalRequest): Result<Goal> =
-        api.createGoal(request.toDto()).toResult().map { it.toDomain() }
+        api.createGoal(request.toDto()).toResult().announce(DataEvents.Domain.GOALS).map { it.toDomain() }
 
     override suspend fun updateGoal(id: Long, request: UpdateGoalRequest): Result<Goal> =
-        api.updateGoal(id, request.toDto()).toResult().map { it.toDomain() }
+        api.updateGoal(id, request.toDto()).toResult().announce(DataEvents.Domain.GOALS).map { it.toDomain() }
 
     override suspend fun deleteGoal(id: Long): Result<Unit> =
-        api.deleteGoal(id).toResult().map { }
+        api.deleteGoal(id).toResult().announce(DataEvents.Domain.GOALS).map { }
 
     override suspend fun addFunds(id: Long, amount: Double, accountId: Long): Result<Goal> =
         api.addGoalFunds(id, AddGoalFundsRequestDto(amount, accountId))
