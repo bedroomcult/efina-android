@@ -20,12 +20,12 @@ val hasSigningMaterial = keystoreProps.getProperty("storeFile") != null
 
 android {
     namespace = "com.efina.app"
-    compileSdk = 36
+    compileSdk = 35
 
     defaultConfig {
         applicationId = "com.efina.app"
         minSdk = 26
-        targetSdk = 36
+        targetSdk = 35
         // Supplied by the release workflow as -PversionCode / -PversionName.
         versionCode = (project.findProperty("versionCode") as String?)?.toIntOrNull() ?: 1
         versionName = (project.findProperty("versionName") as String?) ?: "1.0.0"
@@ -103,7 +103,7 @@ dependencies {
     implementation("androidx.activity:activity-compose:1.8.2")
     
     // Compose BOM
-    val composeBom = platform("androidx.compose:compose-bom:2026.01.00")
+    val composeBom = platform("androidx.compose:compose-bom:2026.09.00")
     implementation(composeBom)
     implementation("androidx.compose.ui:ui")
     implementation("androidx.compose.ui:ui-graphics")
