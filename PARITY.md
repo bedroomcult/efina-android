@@ -73,7 +73,7 @@ Each row names the reason so nothing is silently missing.
 | §4 Corner scale | `Shape.kt` | 4/8/12/16/28 + `EfinaCorners` for hero (28), menu (20), grouped rows (20/4 with 2dp gaps), pill, icon (24%) |
 | §4 Segmented lists | `SegmentedColumn`/`SegmentedRow`, used in Accounts and Settings | |
 | §4 Shape morphing | **omitted** | Requires `MaterialShapes` (material3 1.4+); the BOM here predates it |
-| §5 Motion scheme | `Motion.kt` `EfinaMotion` | spring specs approximating `MotionScheme.expressive()`. **Not the real API** — it does not exist in this Compose BOM |
+| §5 Motion scheme | `Motion.kt` `EfinaMotion` | spring specs approximating `MotionScheme.expressive()`. **Not the real API**: `MaterialExpressiveTheme` and `MotionScheme` are declared `internal` in material3 1.4.0 (the newest stable — 1.5.0 is unreleased), so they cannot be called. Attempting it fails to compile with "Cannot access 'interface MotionScheme': it is internal in file". Verified by building, then reverted |
 | §5 `springClick` | `Modifier.springClick` | 0.94 press scale; haptic hook present but not fired (no haptics dependency) |
 | §5 `reveal(index)` | `revealState(index)` | 28dp rise + fade, 45ms stagger, first 9 items |
 | §5 Shared-element icons | **omitted** | `SharedTransitionLayout` is also 1.4+ |
