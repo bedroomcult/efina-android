@@ -335,8 +335,9 @@ data class CreateGoalRequestDto(
     val start_date: String? = null,
     val target_date: String? = null,
     val period_type: String? = null,
-    val linked_account_id: Long? = null,
-    val icon: String? = null
+    val linked_account_id: Long? = null
+    // functions/api/goals/index.js destructures exactly these seven; it does not
+    // read an icon, so sending one would be silently discarded.
 )
 
 @Serializable

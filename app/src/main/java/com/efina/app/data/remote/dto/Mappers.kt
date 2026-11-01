@@ -262,8 +262,7 @@ fun CreateGoalRequest.toDto(): CreateGoalRequestDto = CreateGoalRequestDto(
     start_date = startDate,
     target_date = targetDate,
     period_type = periodType,
-    linked_account_id = linkedAccountId,
-    icon = icon
+    linked_account_id = linkedAccountId
 )
 
 fun UpdateGoalRequest.toDto(): UpdateGoalRequestDto = UpdateGoalRequestDto(

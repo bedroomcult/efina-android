@@ -325,6 +325,29 @@ placeholder markers. They do **not** type-check. Only Gradle does that.
 
 ---
 
+## Screen fields mapped to accepted API fields
+
+Contract: every screen's fields map to fields the real API accepts, confirmed
+row by row. Backend side read from the `const { ... } = body` destructure in each
+handler; client side from the Kotlin create DTO.
+
+| Entity | Backend destructures | Client sends | Match |
+|---|---|---|---|
+| accounts | `name, type, balance, currency, description, color, family_id` | same 7 | exact |
+| transactions | `account_id, category_id, amount, type, description, date, mood, source` | same 8 | exact |
+| budgets | `category_id, amount, period_type` | same 3 | exact |
+| categories | `name, type, parent_id, color, icon` | same 5 | exact |
+| goals | `name, target_amount, current_amount, start_date, target_date, period_type, linked_account_id` | same 7 | exact |
+
+The goals form originally also sent `icon`, which `functions/api/goals/index.js`
+never reads. It was removed from `CreateGoalRequestDto` so the client sends
+exactly what the handler consumes.
+
+Screens with no create form (dashboard, statistics, settings, family) write
+through their own routes and are covered by the endpoint table above.
+
+---
+
 ## Deep links and back handling
 
 ### Declared in AndroidManifest.xml
