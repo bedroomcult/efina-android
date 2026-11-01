@@ -207,7 +207,7 @@ private fun FamilyCard(
     val canManage = family.memberRole == "owner" || family.memberRole == "admin"
 
     Surface(
-        Modifier.fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth(),
         shape = EfinaCorners.menu,
         color = MaterialTheme.colorScheme.surfaceContainerLow
     ) {

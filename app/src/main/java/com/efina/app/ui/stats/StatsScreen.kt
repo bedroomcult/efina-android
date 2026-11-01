@@ -53,7 +53,7 @@ fun StatsScreen(viewModel: StatsViewModel = hiltViewModel()) {
 
             item {
                 Surface(
-                    Modifier.fillMaxWidth(),
+                    modifier = Modifier.fillMaxWidth(),
                     shape = EfinaCorners.menu,
                     color = MaterialTheme.colorScheme.surfaceContainerLow
                 ) {
@@ -79,7 +79,7 @@ fun StatsScreen(viewModel: StatsViewModel = hiltViewModel()) {
             if (state.health != null) {
                 item {
                     Surface(
-                        Modifier.fillMaxWidth(),
+                        modifier = Modifier.fillMaxWidth(),
                         shape = EfinaCorners.menu,
                         color = MaterialTheme.colorScheme.surfaceContainerLow
                     ) {

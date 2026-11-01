@@ -71,12 +71,9 @@ fun GoalsScreen(viewModel: GoalsViewModel = hiltViewModel()) {
                     GoalsSummary(state.totalSaved, state.totalTarget, state.completedCount)
                 }
                 itemsIndexed(state.goals, key = { _, g -> g.id }) { index, goal ->
-                    val (alpha, offsetY) = revealState(index)
                     GoalCard(
                         goal = goal,
-                        modifier = Modifier.then(
-                            Modifier.graphicsLayer { this.alpha = alpha; translationY = offsetY }
-                        ),
+                        modifier = revealModifier(index),
                         onFund = { funding = goal },
                         onDelete = { pendingDelete = goal }
                     )

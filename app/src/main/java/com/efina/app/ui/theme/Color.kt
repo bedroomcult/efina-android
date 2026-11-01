@@ -1,6 +1,7 @@
 package com.efina.app.ui.theme
 
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
 
 /**
  * Palettes and semantic colours, following design.md sections 2.3 and 2.4.
@@ -128,8 +129,7 @@ fun tonal(accent: Color, dark: Boolean): Pair<Color, Color> {
     return container to onContainer
 }
 
-private fun Color.toArgbInt(): Int =
-    androidx.compose.ui.graphics.toArgb(this)
+private fun Color.toArgbInt(): Int = this.toArgb()
 
 /** Parses "#RRGGBB", "#AARRGGBB" or a named fallback into a Color. */
 fun parseHexColor(value: String?, fallback: Color): Color {

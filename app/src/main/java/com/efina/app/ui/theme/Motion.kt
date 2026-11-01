@@ -92,11 +92,14 @@ fun Modifier.springClick(
 }
 
 /**
- * `reveal(index)` from design.md: 28dp rise plus fade in, staggered. Returns the
- * modifier to apply and the alpha/offset pair via graphicsLayer.
+ * `reveal(index)` from design.md: 28dp rise plus fade in, staggered.
+ *
+ * Returns a Modifier rather than a (alpha, offset) pair so it can be applied
+ * directly inside a LazyColumn item lambda, which is not itself a @Composable
+ * scope for destructuring.
  */
 @Composable
-fun revealState(index: Int): Pair<Float, Float> {
+fun revealModifier(index: Int): Modifier {
     var shown by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) {
         if (EfinaMotion.enabled) {
@@ -114,5 +117,8 @@ fun revealState(index: Int): Pair<Float, Float> {
         animationSpec = EfinaMotion.spatial(),
         label = "revealOffset"
     )
-    return alpha to offset
+    return Modifier.graphicsLayer {
+        this.alpha = alpha
+        translationY = offset
+    }
 }

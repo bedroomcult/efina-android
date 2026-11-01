@@ -11,7 +11,6 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -84,11 +83,9 @@ fun AccountsScreen(
                     TotalCard(state.totalBalance, state.accounts.firstOrNull()?.currency ?: "IDR")
                 }
                 itemsIndexed(state.accounts, key = { _, a -> a.id }) { index, account ->
-                    val (alpha, offsetY) = revealState(index)
                     AccountRow(
                         account = account,
-                        modifier = Modifier
-                            .graphicsLayerCompat(alpha, offsetY),
+                        modifier = revealModifier(index),
                         onClick = { onNavigateToEdit(account.id) },
                         onShare = { onNavigateToShare(account.id) },
                         onDelete = { pendingDelete = account }
@@ -118,13 +115,6 @@ fun AccountsScreen(
     }
 }
 
-private fun Modifier.graphicsLayerCompat(alpha: Float, offsetY: Float): Modifier =
-    this.then(
-        Modifier.graphicsLayer {
-            this.alpha = alpha
-            translationY = offsetY
-        }
-    )
 
 @Composable
 private fun TotalCard(total: Double, currency: String) {

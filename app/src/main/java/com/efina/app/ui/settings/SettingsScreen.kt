@@ -73,7 +73,7 @@ fun SettingsScreen(
         ) {
             state.user?.let { user ->
                 Surface(
-                    Modifier.fillMaxWidth(),
+                    modifier = Modifier.fillMaxWidth(),
                     shape = EfinaCorners.menu,
                     color = MaterialTheme.colorScheme.surfaceContainerLow
                 ) {

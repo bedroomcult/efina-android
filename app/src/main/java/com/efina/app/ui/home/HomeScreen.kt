@@ -100,7 +100,7 @@ fun HomeScreen(
                                 data.accounts.take(4).forEachIndexed { index, account ->
                                     val last = index == minOf(3, data.accounts.lastIndex)
                                     Surface(
-                                        Modifier.fillMaxWidth(),
+                                        modifier = Modifier.fillMaxWidth(),
                                         shape = if (index == 0 && last) EfinaCorners.groupOuter
                                         else if (index == 0) androidx.compose.foundation.shape.RoundedCornerShape(
                                             topStart = 20.dp, topEnd = 20.dp, bottomStart = 4.dp, bottomEnd = 4.dp
@@ -163,7 +163,7 @@ fun HomeScreen(
                         items(minOf(3, data.budgets.size)) { i ->
                             val b = data.budgets[i]
                             Surface(
-                                Modifier.fillMaxWidth(),
+                                modifier = Modifier.fillMaxWidth(),
                                 shape = EfinaCorners.menu,
                                 color = MaterialTheme.colorScheme.surfaceContainerLow,
                                 onClick = onNavigateToBudgets
@@ -205,7 +205,7 @@ fun HomeScreen(
                         items(minOf(2, data.goals.size)) { i ->
                             val g = data.goals[i]
                             Surface(
-                                Modifier.fillMaxWidth(),
+                                modifier = Modifier.fillMaxWidth(),
                                 shape = EfinaCorners.menu,
                                 color = MaterialTheme.colorScheme.surfaceContainerLow,
                                 onClick = onNavigateToGoals
@@ -305,7 +305,7 @@ private fun FlowStat(
 @Composable
 private fun HealthCard(health: com.efina.app.domain.model.HealthScore) {
     Surface(
-        Modifier.fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth(),
         shape = EfinaCorners.menu,
         color = MaterialTheme.colorScheme.surfaceContainerLow
     ) {
@@ -334,7 +334,7 @@ private fun HealthCard(health: com.efina.app.domain.model.HealthScore) {
 @Composable
 private fun RecentRow(tx: Transaction, onClick: () -> Unit) {
     Surface(
-        Modifier.fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth(),
         shape = EfinaCorners.groupInner,
         color = MaterialTheme.colorScheme.surfaceContainerLow,
         onClick = onClick

@@ -74,10 +74,9 @@ fun BudgetsScreen(
                     )
                 }
                 itemsIndexed(state.budgets, key = { _, b -> b.id }) { index, budget ->
-                    val (alpha, offsetY) = revealState(index)
                     BudgetCard(
                         budget = budget,
-                        modifier = Modifier.graphicsLayerCompat(alpha, offsetY),
+                        modifier = revealModifier(index),
                         onDelete = { pendingDelete = budget }
                     )
                 }
@@ -112,9 +111,6 @@ fun BudgetsScreen(
         )
     }
 }
-
-private fun Modifier.graphicsLayerCompat(alpha: Float, offsetY: Float): Modifier =
-    this.then(androidx.compose.ui.graphics.graphicsLayer { this.alpha = alpha; translationY = offsetY })
 
 @Composable
 private fun BudgetSummaryCard(total: Double, spent: Double, over: Int) {

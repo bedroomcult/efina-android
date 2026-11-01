@@ -11,7 +11,6 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.efina.app.domain.model.Transaction
@@ -100,13 +99,9 @@ fun TransactionsScreen(
                     verticalArrangement = Arrangement.spacedBy(2.dp)
                 ) {
                     itemsIndexed(state.transactions, key = { _, t -> t.id }) { index, tx ->
-                        val (alpha, offsetY) = revealState(index)
                         TransactionRow(
                             tx = tx,
-                            modifier = Modifier.graphicsLayer {
-                                this.alpha = alpha
-                                translationY = offsetY
-                            },
+                            modifier = revealModifier(index),
                             onClick = { onNavigateToEdit(tx.id) },
                             onLongClick = { pendingDelete = tx }
                         )

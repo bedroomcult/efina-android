@@ -20,25 +20,25 @@ import androidx.compose.ui.unit.sp
 private val Default = FontFamily.Default
 
 val Typography = Typography(
-    displayLarge = TextStyle(Default, FontWeight.Bold, 57.sp, 64.sp, (-0.25).sp),
-    displayMedium = TextStyle(Default, FontWeight.Bold, 45.sp, 52.sp, 0.sp),
-    displaySmall = TextStyle(Default, FontWeight.Bold, 36.sp, 44.sp, 0.sp),
+    displayLarge = TextStyle(fontFamily = Default, fontWeight = FontWeight.Bold, fontSize = 57.sp, lineHeight = 64.sp, letterSpacing = (-0.25).sp),
+    displayMedium = TextStyle(fontFamily = Default, fontWeight = FontWeight.Bold, fontSize = 45.sp, lineHeight = 52.sp, letterSpacing = 0.sp),
+    displaySmall = TextStyle(fontFamily = Default, fontWeight = FontWeight.Bold, fontSize = 36.sp, lineHeight = 44.sp, letterSpacing = 0.sp),
 
-    headlineLarge = TextStyle(Default, FontWeight.SemiBold, 32.sp, 40.sp, 0.sp),
-    headlineMedium = TextStyle(Default, FontWeight.SemiBold, 28.sp, 36.sp, 0.sp),
-    headlineSmall = TextStyle(Default, FontWeight.SemiBold, 24.sp, 32.sp, 0.sp),
+    headlineLarge = TextStyle(fontFamily = Default, fontWeight = FontWeight.SemiBold, fontSize = 32.sp, lineHeight = 40.sp, letterSpacing = 0.sp),
+    headlineMedium = TextStyle(fontFamily = Default, fontWeight = FontWeight.SemiBold, fontSize = 28.sp, lineHeight = 36.sp, letterSpacing = 0.sp),
+    headlineSmall = TextStyle(fontFamily = Default, fontWeight = FontWeight.SemiBold, fontSize = 24.sp, lineHeight = 32.sp, letterSpacing = 0.sp),
 
-    titleLarge = TextStyle(Default, FontWeight.SemiBold, 22.sp, 28.sp, 0.sp),
-    titleMedium = TextStyle(Default, FontWeight.Medium, 16.sp, 24.sp, 0.15.sp),
-    titleSmall = TextStyle(Default, FontWeight.Medium, 14.sp, 20.sp, 0.1.sp),
+    titleLarge = TextStyle(fontFamily = Default, fontWeight = FontWeight.SemiBold, fontSize = 22.sp, lineHeight = 28.sp, letterSpacing = 0.sp),
+    titleMedium = TextStyle(fontFamily = Default, fontWeight = FontWeight.Medium, fontSize = 16.sp, lineHeight = 24.sp, letterSpacing = 0.15.sp),
+    titleSmall = TextStyle(fontFamily = Default, fontWeight = FontWeight.Medium, fontSize = 14.sp, lineHeight = 20.sp, letterSpacing = 0.1.sp),
 
-    bodyLarge = TextStyle(Default, FontWeight.Normal, 16.sp, 24.sp, 0.5.sp),
-    bodyMedium = TextStyle(Default, FontWeight.Normal, 14.sp, 20.sp, 0.25.sp),
-    bodySmall = TextStyle(Default, FontWeight.Normal, 12.sp, 16.sp, 0.4.sp),
+    bodyLarge = TextStyle(fontFamily = Default, fontWeight = FontWeight.Normal, fontSize = 16.sp, lineHeight = 24.sp, letterSpacing = 0.5.sp),
+    bodyMedium = TextStyle(fontFamily = Default, fontWeight = FontWeight.Normal, fontSize = 14.sp, lineHeight = 20.sp, letterSpacing = 0.25.sp),
+    bodySmall = TextStyle(fontFamily = Default, fontWeight = FontWeight.Normal, fontSize = 12.sp, lineHeight = 16.sp, letterSpacing = 0.4.sp),
 
-    labelLarge = TextStyle(Default, FontWeight.Medium, 14.sp, 20.sp, 0.1.sp),
-    labelMedium = TextStyle(Default, FontWeight.Medium, 12.sp, 16.sp, 0.5.sp),
-    labelSmall = TextStyle(Default, FontWeight.Medium, 11.sp, 16.sp, 0.5.sp)
+    labelLarge = TextStyle(fontFamily = Default, fontWeight = FontWeight.Medium, fontSize = 14.sp, lineHeight = 20.sp, letterSpacing = 0.1.sp),
+    labelMedium = TextStyle(fontFamily = Default, fontWeight = FontWeight.Medium, fontSize = 12.sp, lineHeight = 16.sp, letterSpacing = 0.5.sp),
+    labelSmall = TextStyle(fontFamily = Default, fontWeight = FontWeight.Medium, fontSize = 11.sp, lineHeight = 16.sp, letterSpacing = 0.5.sp)
 )
 
 /**
@@ -47,20 +47,20 @@ val Typography = Typography(
  * emphasis is rationed.
  */
 object EfinaType {
-    val displaySmallEmphasized = TextStyle(Default, FontWeight.Black, 36.sp, 44.sp, 0.sp)
-    val headlineSmallEmphasized = TextStyle(Default, FontWeight.Bold, 24.sp, 32.sp, 0.sp)
-    val titleLargeEmphasized = TextStyle(Default, FontWeight.Bold, 22.sp, 28.sp, 0.sp)
-    val titleMediumEmphasized = TextStyle(Default, FontWeight.SemiBold, 16.sp, 24.sp, 0.15.sp)
-    val bodyMediumEmphasized = TextStyle(Default, FontWeight.Medium, 14.sp, 20.sp, 0.25.sp)
+    val displaySmallEmphasized = TextStyle(fontFamily = Default, fontWeight = FontWeight.Black, fontSize = 36.sp, lineHeight = 44.sp, letterSpacing = 0.sp)
+    val headlineSmallEmphasized = TextStyle(fontFamily = Default, fontWeight = FontWeight.Bold, fontSize = 24.sp, lineHeight = 32.sp, letterSpacing = 0.sp)
+    val titleLargeEmphasized = TextStyle(fontFamily = Default, fontWeight = FontWeight.Bold, fontSize = 22.sp, lineHeight = 28.sp, letterSpacing = 0.sp)
+    val titleMediumEmphasized = TextStyle(fontFamily = Default, fontWeight = FontWeight.SemiBold, fontSize = 16.sp, lineHeight = 24.sp, letterSpacing = 0.15.sp)
+    val bodyMediumEmphasized = TextStyle(fontFamily = Default, fontWeight = FontWeight.Medium, fontSize = 14.sp, lineHeight = 20.sp, letterSpacing = 0.25.sp)
 
     /** Uppercase eyebrow labels above sections. */
-    val eyebrow = TextStyle(Default, FontWeight.Black, 11.sp, 16.sp, 0.8.sp)
+    val eyebrow = TextStyle(fontFamily = Default, fontWeight = FontWeight.Black, fontSize = 11.sp, lineHeight = 16.sp, letterSpacing = 0.8.sp)
 
     /** Monospaced, used for account numbers and IDs. */
-    val code = TextStyle(FontFamily.Monospace, FontWeight.Medium, 13.sp, 18.sp, 0.sp)
+    val code = TextStyle(fontFamily = FontFamily.Monospace, fontWeight = FontWeight.Medium, fontSize = 13.sp, lineHeight = 18.sp, letterSpacing = 0.sp)
 
     /** Money figures. Tabular by default via the caller's fontFeatureSettings. */
-    val amountLarge = TextStyle(Default, FontWeight.Black, 32.sp, 38.sp, (-0.5).sp)
-    val amountMedium = TextStyle(Default, FontWeight.Bold, 20.sp, 26.sp, (-0.2).sp)
-    val amountSmall = TextStyle(Default, FontWeight.Bold, 15.sp, 20.sp, 0.sp)
+    val amountLarge = TextStyle(fontFamily = Default, fontWeight = FontWeight.Black, fontSize = 32.sp, lineHeight = 38.sp, letterSpacing = (-0.5).sp)
+    val amountMedium = TextStyle(fontFamily = Default, fontWeight = FontWeight.Bold, fontSize = 20.sp, lineHeight = 26.sp, letterSpacing = (-0.2).sp)
+    val amountSmall = TextStyle(fontFamily = Default, fontWeight = FontWeight.Bold, fontSize = 15.sp, lineHeight = 20.sp, letterSpacing = 0.sp)
 }
