@@ -32,8 +32,11 @@ class AuthViewModel @Inject constructor(
     val state: StateFlow<AuthUiState> = _state.asStateFlow()
 
     init {
-        restore()
+        // Collector first: restore() fires a network call, and a 401 arriving
+        // before anyone is listening would be dropped (SharedFlow with replay=0
+        // and no subscriber). Order here is load-bearing.
         observeUnauthorized()
+        restore()
     }
 
     /**

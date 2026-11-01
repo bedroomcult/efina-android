@@ -22,10 +22,12 @@ import kotlinx.coroutines.flow.asSharedFlow
  */
 object SessionEvents {
 
-    private val _unauthorized = MutableSharedFlow<Unit>(
-        replay = 0,
-        extraBufferCapacity = 1
-    )
+    // replay = 1, not 0. viewModelScope.launch does not attach the collector
+    // synchronously, so with replay = 0 a 401 raised during the very first
+    // request (the session-restore call) would find no subscriber and be
+    // dropped, leaving the app on a dead token. One replayed slot makes the
+    // signal durable until someone is listening.
+    private val _unauthorized = MutableSharedFlow<Unit>(replay = 1)
 
     /** Collected once by AuthViewModel; every 401 emission means "log out". */
     val unauthorized: SharedFlow<Unit> = _unauthorized.asSharedFlow()
