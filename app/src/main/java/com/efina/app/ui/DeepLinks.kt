@@ -1,6 +1,5 @@
 package com.efina.app.ui
 
-import androidx.activity.compose.BackHandler
 import androidx.compose.runtime.Composable
 import androidx.navigation.NavHostController
 
@@ -66,19 +65,19 @@ fun routeForUri(uri: String?): String? {
 }
 
 /**
- * Handles the system back button at the graph root.
+ * Back handling is deliberately absent.
  *
- * Below the root, Navigation Compose pops normally and this does not fire.
- * At the root, back leaves the app rather than doing nothing — the user expects
- * it to close, and trapping them would be worse than the risk of backgrounding.
+ * Navigation Compose already does the right thing: below the graph root, back
+ * pops the previous destination; at the root, back is not consumed and the
+ * system finishes the activity, which is the platform convention for leaving an
+ * app.
+ *
+ * An earlier version installed a BackHandler at the root that navigated to Home
+ * with popUpTo(inclusive = true). That consumed the event without changing the
+ * screen, so the back button became a no-op and the user could never leave the
+ * app. The handler was worse than no handler, so it is gone rather than patched.
+ *
+ * Dialogs and sheets handle back themselves through their Material components,
+ * which intercept before the activity sees the event.
  */
-@Composable
-fun SystemBackHandler(navController: NavHostController) {
-    val atRoot = navController.previousBackStackEntry == null
-    BackHandler(enabled = atRoot) {
-        // Default behaviour: let the system finish the activity.
-        navController.navigate(Screen.Home.route) {
-            popUpTo(Screen.Home.route) { inclusive = true }
-        }
-    }
-}
+

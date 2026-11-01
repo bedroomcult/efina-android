@@ -140,8 +140,6 @@ fun EfinaAppRoot(
                 }
             }
         ) { padding ->
-            SystemBackHandler(navController)
-
             NavHost(
                 navController = navController,
                 startDestination = startDestination,

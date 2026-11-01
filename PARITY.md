@@ -385,10 +385,15 @@ nothing.
 
 ### Back handling
 
-`SystemBackHandler` installs a `BackHandler` only at the graph root. Below the
-root, Navigation Compose pops the back stack normally. At the root, back returns
-to the start destination and lets the system finish the activity, which is the
-platform convention; trapping the user inside the app would be worse.
+Handled entirely by Navigation Compose, with no custom `BackHandler`. Below the
+graph root, back pops the previous destination. At the root, back is not consumed
+and the system finishes the activity, which is the platform convention for
+leaving an app.
+
+An earlier revision installed a `BackHandler` at the root that navigated to Home
+with `popUpTo(inclusive = true)`. That consumed the event without changing the
+screen, making the back button a permanent no-op and trapping the user in the
+app. It was removed rather than patched.
 
 Transient UI (dialogs, sheets, the search bar) handles back through the Compose
 `AlertDialog`/`SearchBar` components themselves, which intercept before this
