@@ -59,6 +59,225 @@ Rows 1–3 and 10 are the nonexistent paths; rows 4–9 are the six wrong verbs.
 `API_BASE_URL` also pointed at `efina.11112021.xyz` (curl returns 000) instead of
 `efina.himz.my.id` (curl returns 200).
 
+## Every endpoint under functions/api/
+
+All 138 routes, extracted from the backend source by tools/check-api-contract.mjs --emit-manifest. Auth and CSRF apply to every one except the public routes listed in _middleware.js.
+
+**accounts**
+
+- DELETE /api/accounts/:id
+- DELETE /api/accounts/:id/members
+- GET /api/accounts
+- GET /api/accounts/:id
+- GET /api/accounts/:id/members
+- GET /api/accounts/recalculate
+- PATCH /api/accounts/:id
+- POST /api/accounts
+- POST /api/accounts/:id/members
+- POST /api/accounts/recalculate
+- PUT /api/accounts
+- PUT /api/accounts/:id
+
+**achievements**
+
+- GET /api/achievements
+- POST /api/achievements/:id/seen
+- POST /api/achievements/batch-seen
+
+**admin**
+
+- DELETE /api/admin/achievements
+- DELETE /api/admin/pricing/:id
+- DELETE /api/admin/user-achievements
+- DELETE /api/admin/users
+- GET /api/admin/achievements
+- GET /api/admin/gamification-details
+- GET /api/admin/pricing
+- GET /api/admin/users
+- PATCH /api/admin/achievements
+- PATCH /api/admin/users
+- POST /api/admin/achievements
+- POST /api/admin/backfill-user
+- POST /api/admin/pricing
+- POST /api/admin/recalc-tiers
+- POST /api/admin/user-achievements
+- PUT /api/admin/pricing/:id
+
+**ai**
+
+- GET /api/ai/context
+- GET /api/ai/mood_insights
+- POST /api/ai/chat
+- POST /api/ai/metadata
+- POST /api/ai/mood_insights
+- POST /api/ai/ocr
+
+**auth**
+
+- DELETE /api/auth/sessions
+- GET /api/auth/csrf
+- GET /api/auth/sessions
+- POST /api/auth/google
+- POST /api/auth/login
+- POST /api/auth/register
+- POST /api/auth/reset-password/confirm
+- POST /api/auth/reset-password/request
+- POST /api/auth/reset-pin
+- POST /api/auth/verify-pin
+- PUT /api/auth/pin
+
+**budgets**
+
+- DELETE /api/budgets/:id
+- GET /api/budgets
+- GET /api/budgets/vs-actual
+- POST /api/budgets
+- POST /api/budgets/check-alerts
+- PUT /api/budgets/:id
+
+**categories**
+
+- DELETE /api/categories/:id
+- GET /api/categories
+- POST /api/categories
+- PUT /api/categories/:id
+
+**debts**
+
+- DELETE /api/debts/:id
+- GET /api/debts
+- GET /api/debts/:id
+- POST /api/debts
+- POST /api/debts/:id/pay
+- POST /api/debts/check-overdue
+- PUT /api/debts/:id
+
+**families**
+
+- DELETE /api/families/:id/members
+- GET /api/families
+- GET /api/families/:id
+- POST /api/families
+- POST /api/families/:id/members
+- POST /api/families/invites/accept
+
+**forecast**
+
+- GET /api/forecast
+
+**gamification**
+
+- GET /api/gamification/history
+- POST /api/gamification/award-xp
+
+**goals**
+
+- DELETE /api/goals/:id
+- GET /api/goals
+- POST /api/goals
+- POST /api/goals/:id/add-funds
+- PUT /api/goals/:id
+
+**health-score**
+
+- GET /api/health-score
+
+**leaderboard**
+
+- GET /api/leaderboard
+
+**mcp**
+
+- DELETE /api/mcp/keys
+- GET /api/mcp/keys
+- PATCH /api/mcp/keys
+- POST /api/mcp/keys
+
+**notifications**
+
+- DELETE /api/notifications
+- DELETE /api/notifications/:id
+- GET /api/notifications
+- POST /api/notifications
+- PUT /api/notifications/read-all
+
+**products**
+
+- DELETE /api/products/:id
+- GET /api/products
+- POST /api/products
+- PUT /api/products/:id
+
+**public**
+
+- GET /api/public/debug
+- GET /api/public/pricing
+- POST /api/public/debug
+
+**sales**
+
+- DELETE /api/sales/:id
+- GET /api/sales
+- GET /api/sales/:id
+- GET /api/sales/analytics
+- POST /api/sales
+- PUT /api/sales/:id
+- PUT /api/sales/:id/status
+
+**scheduled**
+
+- DELETE /api/scheduled/:id
+- GET /api/scheduled
+- POST /api/scheduled
+- POST /api/scheduled/:id/confirm
+- POST /api/scheduled/:id/pay-now
+- POST /api/scheduled/:id/skip
+- POST /api/scheduled/process
+- PUT /api/scheduled/:id
+
+**settings**
+
+- GET /api/settings
+- PUT /api/settings
+
+**telegram**
+
+- DELETE /api/telegram/link
+- GET /api/telegram/link
+- POST /api/telegram/link
+
+**transactions**
+
+- DELETE /api/transactions/:id
+- GET /api/transactions
+- GET /api/transactions/anomalies
+- POST /api/transactions
+- POST /api/transactions/:id/split
+- PUT /api/transactions/:id
+
+**transfers**
+
+- DELETE /api/transfers/:id
+- POST /api/transfers
+- PUT /api/transfers/:id
+
+**user**
+
+- DELETE /api/user
+- GET /api/user
+- GET /api/user/export
+- GET /api/user/heatmap
+- GET /api/user/monthly-stats
+- GET /api/user/stats
+- POST /api/user/backfill-achievements
+- POST /api/user/bind-google
+- POST /api/user/change-password
+- POST /api/user/refresh-achievements
+- POST /api/user/review-summary
+- PUT /api/user
+
+---
+
 ## Design parity
 
 See **DESIGN-PARITY.md** — a section-by-section table mapping design.md to the
