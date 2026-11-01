@@ -46,8 +46,11 @@ jobs:
           distribution: temurin
           java-version: '17'
 
-      - name: Setup Android SDK
-        uses: android-actions/setup-android@v3
+      # The ubuntu-latest image ships the Android SDK; android-actions/setup-android@v3
+      # currently fails against its cmdline-tools 16 layout ("Failed to find package
+      # 'tools'"). Only the platform/build-tools are pinned here.
+      - name: Accept SDK licenses
+        run: yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null 2>&1 || true
 
       - name: Make gradlew executable
         run: chmod +x gradlew
