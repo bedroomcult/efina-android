@@ -27,6 +27,8 @@ import com.efina.app.ui.auth.LoginScreen
 import com.efina.app.ui.budgets.BudgetsScreen
 import com.efina.app.ui.budgets.GoalsScreen
 import com.efina.app.ui.categories.CategoriesScreen
+import com.efina.app.ui.debts.DebtsScreen
+import com.efina.app.ui.scheduled.ScheduledScreen
 import com.efina.app.ui.family.FamilyScreen
 import com.efina.app.ui.home.HomeScreen
 import com.efina.app.ui.settings.SettingsScreen
@@ -66,6 +68,8 @@ sealed class Screen(val route: String) {
     data object Settings : Screen("settings")
     data object Categories : Screen("categories")
     data object Family : Screen("family")
+    data object Debts : Screen("debts")
+    data object Scheduled : Screen("scheduled")
 }
 
 private data class NavItem(val screen: Screen, val icon: ImageVector, val label: String)
@@ -240,6 +244,8 @@ fun EfinaAppRoot(
                         onNavigateBack = { navController.popBackStack() },
                         onNavigateToCategories = { navController.navigate(Screen.Categories.route) },
                         onNavigateToFamily = { navController.navigate(Screen.Family.route) },
+                        onNavigateToDebts = { navController.navigate(Screen.Debts.route) },
+                        onNavigateToScheduled = { navController.navigate(Screen.Scheduled.route) },
                         onLogout = {
                             authViewModel.logout()
                             navController.navigate(Screen.Login.route) {
@@ -255,6 +261,14 @@ fun EfinaAppRoot(
 
                 composable(Screen.Family.route) {
                     FamilyScreen(onNavigateBack = { navController.popBackStack() })
+                }
+
+                composable(Screen.Debts.route) {
+                    DebtsScreen(onNavigateBack = { navController.popBackStack() })
+                }
+
+                composable(Screen.Scheduled.route) {
+                    ScheduledScreen(onNavigateBack = { navController.popBackStack() })
                 }
             }
         }

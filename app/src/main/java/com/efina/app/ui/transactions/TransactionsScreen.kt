@@ -217,7 +217,7 @@ private fun TransactionRow(
             AmountText(
                 amount = tx.amount,
                 type = tx.type,
-                currency = "IDR"
+                currency = tx.currency
             )
         }
     }

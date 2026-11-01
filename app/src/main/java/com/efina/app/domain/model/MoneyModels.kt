@@ -92,6 +92,8 @@ data class Transaction(
     val accountId: Long,
     val accountName: String?,
     val accountRole: AccountShareRole? = null,
+    /** Currency of the account this row belongs to. */
+    val currency: String = "IDR",
     val categoryId: Long?,
     val categoryName: String?,
     val categoryColor: String?,

@@ -246,7 +246,13 @@ fun HomeScreen(
                         }
                     } else {
                         items(data.recentTransactions.size) { i ->
-                            RecentRow(data.recentTransactions[i], onNavigateToTransactions)
+                            val currencyByAccount = data.accounts.associate { it.id to it.currency }
+                            RecentRow(
+                                tx = data.recentTransactions[i],
+                                currency = currencyByAccount[data.recentTransactions[i].accountId]
+                                    ?: "IDR",
+                                onClick = onNavigateToTransactions
+                            )
                         }
                     }
                 }
@@ -332,7 +338,7 @@ private fun HealthCard(health: com.efina.app.domain.model.HealthScore) {
 }
 
 @Composable
-private fun RecentRow(tx: Transaction, onClick: () -> Unit) {
+private fun RecentRow(tx: Transaction, currency: String, onClick: () -> Unit) {
     Surface(
         modifier = Modifier.fillMaxWidth(),
         shape = EfinaCorners.groupInner,
@@ -357,7 +363,7 @@ private fun RecentRow(tx: Transaction, onClick: () -> Unit) {
                 )
             }
             Spacer(Modifier.width(8.dp))
-            AmountText(tx.amount, tx.type)
+            AmountText(tx.amount, tx.type, currency = currency)
         }
     }
 }

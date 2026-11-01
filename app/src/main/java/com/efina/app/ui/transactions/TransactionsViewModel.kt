@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.efina.app.domain.model.*
 import com.efina.app.domain.repository.TransactionPage
+import com.efina.app.domain.repository.AccountRepository
 import com.efina.app.domain.repository.TransactionRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -28,8 +29,22 @@ data class TransactionsUiState(
 
 @HiltViewModel
 class TransactionsViewModel @Inject constructor(
-    private val repository: TransactionRepository
+    private val repository: TransactionRepository,
+    private val accountRepository: AccountRepository
 ) : ViewModel() {
+
+    /** accountId -> ISO currency, so rows can render in their account's currency. */
+    private var currencyByAccount: Map<Long, String> = emptyMap()
+
+    private suspend fun loadCurrencies() {
+        currencyByAccount = accountRepository.getAccounts()
+            .getOrDefault(emptyList())
+            .associate { it.id to it.currency }
+    }
+
+    /** The transactions endpoint does not return currency, so join it here. */
+    private fun List<com.efina.app.domain.model.Transaction>.withCurrency() =
+        map { tx -> tx.copy(currency = currencyByAccount[tx.accountId] ?: tx.currency) }
 
     private val _state = MutableStateFlow(TransactionsUiState())
     val state: StateFlow<TransactionsUiState> = _state.asStateFlow()
@@ -39,11 +54,12 @@ class TransactionsViewModel @Inject constructor(
     fun load() {
         _state.value = _state.value.copy(loading = true, error = null)
         viewModelScope.launch {
+            if (currencyByAccount.isEmpty()) loadCurrencies()
             repository.getTransactions(_state.value.filter.copy(offset = 0))
                 .onSuccess { page ->
                     _state.value = _state.value.copy(
                         loading = false,
-                        transactions = page.transactions,
+                        transactions = page.transactions.withCurrency(),
                         total = page.total,
                         page = page
                     )
@@ -65,7 +81,7 @@ class TransactionsViewModel @Inject constructor(
             ).onSuccess { page ->
                 _state.value = _state.value.copy(
                     loadingMore = false,
-                    transactions = _state.value.transactions + page.transactions,
+                    transactions = _state.value.transactions + page.transactions.withCurrency(),
                     total = page.total,
                     page = page
                 )

@@ -172,6 +172,9 @@ data class TransactionDto(
     val account_name: String? = null,
     val account_color: String? = null,
     val account_role: String? = null,
+    /** Present only if the backend joins it; the client falls back to the
+     *  accounts list, since the transactions query does not select currency. */
+    val account_currency: String? = null,
     val to_account_name: String? = null,
     val category_name: String? = null,
     val category_color: String? = null,

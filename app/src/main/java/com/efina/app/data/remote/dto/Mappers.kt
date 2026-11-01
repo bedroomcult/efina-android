@@ -36,6 +36,7 @@ fun TransactionDto.toDomain(): Transaction = Transaction(
     accountId = account_id,
     accountName = account_name,
     accountRole = AccountShareRole.from(account_role),
+    currency = account_currency ?: "IDR",
     categoryId = category_id,
     categoryName = category_name,
     categoryColor = category_color,

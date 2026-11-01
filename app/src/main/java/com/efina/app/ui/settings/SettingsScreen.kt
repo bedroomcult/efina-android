@@ -29,6 +29,8 @@ fun SettingsScreen(
     onNavigateBack: () -> Unit,
     onNavigateToCategories: () -> Unit,
     onNavigateToFamily: () -> Unit,
+    onNavigateToDebts: () -> Unit = {},
+    onNavigateToScheduled: () -> Unit = {},
     onLogout: () -> Unit,
     viewModel: SettingsViewModel = hiltViewModel()
 ) {
@@ -137,6 +139,10 @@ fun SettingsScreen(
                 SegmentedColumn {
                     SettingRow("Categories", "Manage income and expense categories",
                         first = true, onClick = onNavigateToCategories)
+                    SettingRow("Debts", "Money you owe, and money owed to you",
+                        onClick = onNavigateToDebts)
+                    SettingRow("Scheduled", "Recurring income and expenses",
+                        onClick = onNavigateToScheduled)
                     SettingRow("Family", "Share accounts with your household",
                         last = true, onClick = onNavigateToFamily)
                 }

@@ -31,6 +31,8 @@ Generated for the rebuild described in API_CONTRACT.md. Static checks:
 | Statistics | `StatsScreen` | `GET transactions` + `forecast` + `health-score` + `achievements` + `leaderboard` | derived client-side |
 | Settings | `SettingsScreen` | `GET/PUT settings`, `POST user/change-password` | currency, language, theme, password, sign out |
 | Family | `FamilyScreen` | `families`, `families/{id}`, `families/{id}/members`, `families/invites/accept` | invite code + 72h expiry surfaced |
+| Debts | `DebtsScreen` | `GET/POST/PUT/DELETE debts`, `POST debts/{id}/pay` | borrow vs lend, payment books against an account |
+| Scheduled | `ScheduledScreen` | `GET/POST/DELETE scheduled` | recurring create + cancel |
 
 ---
 
@@ -40,8 +42,7 @@ Each row names the reason so nothing is silently missing.
 
 | Web feature | Why not | What it needs |
 |---|---|---|
-| Debts UI | domain + repository + endpoints are wired (`DebtRepository`, `POST debts/{id}/pay`), no screen yet | a `DebtsScreen`; the data layer is done |
-| Scheduled transactions UI | same: `ScheduledRepository` is wired | a `ScheduledScreen` |
+| Scheduled toggle/pause | `ScheduledScreen` can create and delete; the backend has an `is_active` flag with no PATCH wired | expose update, not create/delete only |
 | AI Assistant chat | `ChatRepository` + `POST ai/chat` wired | a chat screen with history state |
 | Receipt OCR | native camera + `POST ai/ocr` multipart | camera permission flow, file upload |
 | Leaderboard screen | data loads inside Stats | dedicated screen if it warrants one |
@@ -94,9 +95,10 @@ Each row names the reason so nothing is silently missing.
 3. **`X-CSRF-Token` is read from the login response only.** If the server rotates
    the CSRF cookie mid-session the app will 403 until re-login.
 
-4. **Currency is hardcoded to IDR in list rows.** `AmountText` takes a currency but
-   transaction rows pass `"IDR"` because the transactions response does not join
-   the account currency.
+4. **Currency is resolved by joining the accounts list.** The `GET transactions`
+   response does not include currency, so `TransactionsViewModel` builds an
+   `accountId -> currency` map from `GET accounts` and applies it per row. Two
+   requests on first load instead of one; correct for multi-currency users.
 
 5. **Compiles, but never run.** CI `assembleDebug` succeeds and produces a 22 MB
    APK, which proves the code type-checks and links. No emulator or device has
