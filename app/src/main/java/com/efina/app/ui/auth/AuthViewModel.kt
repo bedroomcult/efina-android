@@ -2,6 +2,8 @@ package com.efina.app.ui.auth
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.efina.app.data.remote.SessionEvents
+import com.efina.app.data.repository.ApiException
 import com.efina.app.domain.model.User
 import com.efina.app.domain.repository.AuthRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -31,6 +33,25 @@ class AuthViewModel @Inject constructor(
 
     init {
         restore()
+        observeUnauthorized()
+    }
+
+    /**
+     * Any 401 from any repository logs out, mirroring the web client's
+     * auth:unauthorized event. Collected for the whole ViewModel lifetime.
+     */
+    private fun observeUnauthorized() {
+        viewModelScope.launch {
+            SessionEvents.unauthorized.collect {
+                if (_state.value.isLoggedIn) {
+                    repository.logout()
+                    _state.value = AuthUiState(
+                        checked = true,
+                        error = "Session expired, please sign in again."
+                    )
+                }
+            }
+        }
     }
 
     /**
@@ -49,17 +70,16 @@ class AuthViewModel @Inject constructor(
             repository.refreshCurrentUser()
                 .onSuccess { _state.value = AuthUiState(checked = true, user = it) }
                 .onFailure {
-                    // Token exists but the profile call failed: stay logged in and
-                    // surface the message; only a 401 should log out.
-                    val message = it.message.orEmpty()
-                    val unauthorized = message.contains("401", true) ||
-                        message.contains("Unauthorized", true) ||
-                        message.contains("Session expired", true)
-                    if (unauthorized) {
-                        repository.logout()
-                        _state.value = AuthUiState(checked = true, error = "Session expired, please sign in again.")
+                    // A 401 already cleared the session via SessionEvents; anything
+                    // else (offline, 500) must not destroy a valid token.
+                    val status = (it as? ApiException)?.status
+                    if (status == 401) {
+                        _state.value = AuthUiState(
+                            checked = true,
+                            error = "Session expired, please sign in again."
+                        )
                     } else {
-                        _state.value = AuthUiState(checked = true, user = null, error = message)
+                        _state.value = AuthUiState(checked = true, user = null, error = it.message)
                     }
                 }
         }

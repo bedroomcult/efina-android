@@ -1,5 +1,6 @@
 package com.efina.app.data.repository
 
+import com.efina.app.data.remote.SessionEvents
 import com.efina.app.data.remote.api.EfinaApi
 import com.efina.app.data.remote.dto.*
 import com.efina.app.data.remote.interceptor.TokenManager
@@ -19,6 +20,12 @@ import javax.inject.Singleton
  * user sees the real reason instead of "HTTP 400".
  */
 internal fun <T> Response<T>.toResult(): Result<T> {
+    // A 401 anywhere means the session is dead. Announce it centrally so every
+    // screen logs out, not just whichever one made this call.
+    if (code() == 401) {
+        SessionEvents.emitUnauthorized()
+    }
+
     if (isSuccessful) {
         val body = body()
         return if (body != null) Result.success(body)
