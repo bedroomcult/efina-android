@@ -21,6 +21,7 @@ import com.efina.app.domain.model.PeriodType
 import com.efina.app.ui.components.*
 import com.efina.app.ui.theme.EfinaCorners
 import com.efina.app.ui.theme.EfinaType
+import com.efina.app.ui.theme.revealModifier
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable

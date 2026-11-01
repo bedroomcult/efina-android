@@ -23,6 +23,7 @@ import com.efina.app.ui.theme.EfinaType
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import com.efina.app.ui.theme.revealModifier
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable

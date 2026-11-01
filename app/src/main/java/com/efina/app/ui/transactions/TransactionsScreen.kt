@@ -18,6 +18,7 @@ import com.efina.app.domain.model.TransactionType
 import com.efina.app.ui.components.*
 import com.efina.app.ui.theme.EfinaCorners
 import com.efina.app.ui.theme.EfinaType
+import com.efina.app.ui.theme.revealModifier
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
