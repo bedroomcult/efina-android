@@ -36,52 +36,34 @@ Generated for the rebuild described in API_CONTRACT.md. Static checks:
 
 ---
 
-## Not implemented
+## API audit — the diff against the original EfinaApi.kt
 
-Each row names the reason so nothing is silently missing.
+Six wrong verbs and three nonexistent paths, each found by reading
+`functions/api/` in the web repo. Full request/response detail is in
+`API_CONTRACT.md`; this is the diff the audit task requires.
 
-| Web feature | Why not | What it needs |
-|---|---|---|
-| Scheduled toggle/pause | `ScheduledScreen` can create and delete; the backend has an `is_active` flag with no PATCH wired | expose update, not create/delete only |
-| AI Assistant chat | `ChatRepository` + `POST ai/chat` wired | a chat screen with history state |
-| Receipt OCR | native camera + `POST ai/ocr` multipart | camera permission flow, file upload |
-| Leaderboard screen | data loads inside Stats | dedicated screen if it warrants one |
-| Achievements screen | listed inside Stats | dedicated screen |
-| Onboarding wizard | web has a 3-step flow (`Onboarding.jsx`) | mirrored wizard; currently first-run lands on the dashboard |
-| PIN lock | backend has `auth/pin`, `verify-pin`, `reset-pin` | device biometric/PIN UX |
-| Google sign-in | `POST auth/google` is in the API layer | Google Play Services dependency + consent screen config |
-| Password reset | `POST auth/reset-password/request` is in the API layer | two screens (request, confirm) |
-| Sales / products module | different product surface | product decision |
-| Admin dashboard | operator-only | not an app feature |
-| Profile page (gamification detail) | Stats shows the summary | level/XP/tier detail screen |
-| PWA install prompt | not applicable | — |
-| Offline cache | Room is declared but unused | see "Known gaps" |
+| # | Kotlin originally declared | Backend actually has | Traceable to |
+|---|---|---|---|
+| 1 | `GET auth/me` | **no such route** — current user is `GET user` | `functions/api/user/index.js` |
+| 2 | `POST auth/logout` | **no such route** — it is `DELETE auth/sessions` | `functions/api/auth/sessions.js` |
+| 3 | `GET dashboard` | **no such route** — composed client-side from accounts + transactions + budgets + goals | `functions/api/` (no dashboard dir) |
+| 4 | `PATCH accounts/{id}` | `PUT accounts/{id}` (PATCH exists but is the sharing toggle only) | `functions/api/accounts/[id].js` |
+| 5 | `PATCH transactions/{id}` | `PUT transactions/{id}` | `functions/api/transactions/[id].js` |
+| 6 | `PATCH budgets/{id}` | `PUT budgets/{id}` | `functions/api/budgets/[id].js` |
+| 7 | `PATCH goals/{id}` | `PUT goals/{id}` | `functions/api/goals/[id].js` |
+| 8 | `PATCH categories/{id}` | `PUT categories/{id}` | `functions/api/categories/[id].js` |
+| 9 | `PATCH settings` | `PUT settings` | `functions/api/settings/index.js` |
+| 10 | `GET ai/xp-summary` | **no such route** — XP history is `gamification/history` | `functions/api/gamification/history.js` |
 
----
+Rows 1–3 and 10 are the nonexistent paths; rows 4–9 are the six wrong verbs.
+`API_BASE_URL` also pointed at `efina.11112021.xyz` (curl returns 000) instead of
+`efina.himz.my.id` (curl returns 200).
 
-## Design parity (design.md)
+## Design parity
 
-| design.md section | Implementation | Status |
-|---|---|---|
-| §2.1 Theme modes | `Theme.kt` | Light + Dark + Mono + Material You. **Dusk and OLED omitted** — `dynamicColorScheme` covers most of the intent on Android 12+ |
-| §2.2 14 palettes | `Color.kt` | **2 of 14** (Orion, Mono). Token names match, so adding one is a new object |
-| §2.3 Brand palette | `OrionLight` / `OrionDark` | Full primary/secondary/tertiary/surface/error set |
-| §2.4 Semantic colours | `EfinaSemantic` | safe/caution/danger/warn/info |
-| §2.5 `tonal()` | `tonal()` in `Color.kt` | Same HSL construction, 0.88/0.26 containers, 0.30/0.82 foreground |
-| §2.6 Install-state colours | n/a | App-store states have no finance analogue; income/expense/transfer get `MoneyColors` instead |
-| §3 Typography | `Type.kt` | Full M3 scale + `EfinaType` emphasized variants. **Font is the platform default, not Space Grotesk** — avoids a first-frame flash and a font download |
-| §4 Corner scale | `Shape.kt` | 4/8/12/16/28 + `EfinaCorners` for hero (28), menu (20), grouped rows (20/4 with 2dp gaps), pill, icon (24%) |
-| §4 Segmented lists | `SegmentedColumn`/`SegmentedRow`, used in Accounts and Settings | |
-| §4 Shape morphing | **omitted** | Requires `MaterialShapes` (material3 1.4+); the BOM here predates it |
-| §5 Motion scheme | `Motion.kt` `EfinaMotion` | spring specs approximating `MotionScheme.expressive()`. **Not the real API**: `MaterialExpressiveTheme` and `MotionScheme` are declared `internal` in material3 1.4.0 (the newest stable — 1.5.0 is unreleased), so they cannot be called. Attempting it fails to compile with "Cannot access 'interface MotionScheme': it is internal in file". Verified by building, then reverted |
-| §5 `springClick` | `Modifier.springClick` | 0.94 press scale; haptic hook present but not fired (no haptics dependency) |
-| §5 `reveal(index)` | `revealState(index)` | 28dp rise + fade, 45ms stagger, first 9 items |
-| §5 Shared-element icons | **omitted** | `SharedTransitionLayout` is also 1.4+ |
-| §5 Hero pager auto-advance | n/a | no carousel in a finance app |
-| §5 Dock / pull-to-refresh | `PullToRefreshBox` on Home | Standard M3 indicator, not the mascot |
-| §5 Skeletons | `SkeletonRow`, `LoadingList` | |
-
----
+See **DESIGN-PARITY.md** — a section-by-section table mapping design.md to the
+Kotlin file implementing it, with every omission named and the two
+compiler-verified impossibilities recorded.
 
 ## Known gaps and risks
 
@@ -121,3 +103,28 @@ Each row names the reason so nothing is silently missing.
 
 The static checks cover bracket balance, project-import resolution, and absence of
 placeholder markers. They do **not** type-check. Only Gradle does that.
+
+---
+
+## Not implemented
+
+Each row names the reason so nothing is silently missing.
+
+| Web feature | Why not | What it needs |
+|---|---|---|
+| Scheduled toggle/pause | `ScheduledScreen` can create and delete; the backend has an `is_active` flag with no PATCH wired | expose update, not create/delete only |
+| AI Assistant chat | `ChatRepository` + `POST ai/chat` wired | a chat screen with history state |
+| Receipt OCR | native camera + `POST ai/ocr` multipart | camera permission flow, file upload |
+| Leaderboard screen | data loads inside Stats | dedicated screen if it warrants one |
+| Achievements screen | listed inside Stats | dedicated screen |
+| Onboarding wizard | web has a 3-step flow (`Onboarding.jsx`) | mirrored wizard; currently first-run lands on the dashboard |
+| PIN lock | backend has `auth/pin`, `verify-pin`, `reset-pin` | device biometric/PIN UX |
+| Google sign-in | `POST auth/google` is in the API layer | Google Play Services dependency + consent screen config |
+| Password reset | `POST auth/reset-password/request` is in the API layer | two screens (request, confirm) |
+| Sales / products module | different product surface | product decision |
+| Admin dashboard | operator-only | not an app feature |
+| Profile page (gamification detail) | Stats shows the summary | level/XP/tier detail screen |
+| PWA install prompt | not applicable | — |
+| Offline cache | Room is declared but unused | see "Known gaps" |
+
+---
