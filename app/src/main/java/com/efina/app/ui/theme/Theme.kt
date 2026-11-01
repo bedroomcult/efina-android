@@ -3,6 +3,7 @@ package com.efina.app.ui.theme
 import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.ColorScheme
+import androidx.compose.material3.MaterialExpressiveTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.dynamicDarkColorScheme
@@ -190,10 +191,15 @@ fun EfinaTheme(
         LocalMoneyPalette provides money,
         LocalIsDarkTheme provides darkTheme
     ) {
-        MaterialTheme(
+        // MaterialExpressiveTheme is the material3 1.4 entry point that accepts a
+        // MotionScheme. Passing MotionScheme.expressive() is what design.md
+        // section 5 asks for, and it is what the components read when they use
+        // their default motion specs.
+        MaterialExpressiveTheme(
             colorScheme = scheme,
             typography = Typography,
             shapes = EfinaShapes,
+            motionScheme = EfinaMotion.scheme,
             content = content
         )
     }

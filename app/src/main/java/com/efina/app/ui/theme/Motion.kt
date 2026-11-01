@@ -1,9 +1,8 @@
 package com.efina.app.ui.theme
 
 import androidx.compose.animation.core.FiniteAnimationSpec
-import androidx.compose.animation.core.Spring
-import androidx.compose.animation.core.spring
-import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.snap
+import androidx.compose.material3.MotionScheme
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.PressInteraction
 import androidx.compose.runtime.Composable
@@ -17,16 +16,21 @@ import androidx.compose.ui.composed
 import androidx.compose.ui.graphics.graphicsLayer
 
 /**
- * Motion from design.md section 5, reimplemented without depending on the
- * Material 3 Expressive APIs.
+ * Motion from design.md section 5.
  *
- * design.md specifies `MotionScheme.expressive()`, which only exists in
- * material3 1.4+. This project is pinned to the Compose BOM in build.gradle.kts,
- * so the *feel* is reproduced with plain spring specs instead: the same squash on
- * press, the same staggered entrance, the same press haptic hook. DESIGN-PARITY.md
- * records the API gap.
+ * design.md specifies `MotionScheme.expressive()` with `MaterialExpressiveTheme`.
+ * Both now exist: material3 1.4.0 (BOM 2026.09.00) ships [MotionScheme] and the
+ * expressive theme. [EfinaMotion.scheme] is the real thing, not an approximation,
+ * and [EfinaTheme] passes it into `MaterialTheme`.
  *
- * All values respect the user's animation setting via [EfinaMotion.enabled].
+ * design.md also asks for a "Disable Animations" switch that swaps in an instant
+ * scheme where every spec is snap(). [EfinaMotion.enabled] does that by giving
+ * [spec] a zero-duration tween when off, which is equivalent for every call site
+ * and does not require a second MotionScheme instance.
+ *
+ * The custom pieces below (springClick, revealModifier) sit on top of the scheme
+ * because design.md specifies exact numbers for them: 0.94 press scale, 28dp
+ * rise, 45ms stagger, first 9 items.
  */
 
 object EfinaMotion {
@@ -34,21 +38,21 @@ object EfinaMotion {
     /** Global switch, set from the theme/settings layer. "Disable animations". */
     var enabled: Boolean = true
 
+    /**
+     * The Material 3 Expressive motion scheme, straight from the library.
+     * Spatial specs drive movement and shape; effect specs drive colour and
+     * alpha, which is why they are separate.
+     */
+    val scheme: MotionScheme = MotionScheme.expressive()
+
     private fun <T> spec(expressive: FiniteAnimationSpec<T>): FiniteAnimationSpec<T> =
-        if (enabled) expressive else tween(durationMillis = 0)
+        if (enabled) expressive else snap()
 
-    /** Movement: springy, spatial. */
-    fun <T> spatial(): FiniteAnimationSpec<T> = spec(
-        spring(
-            dampingRatio = 0.72f,
-            stiffness = Spring.StiffnessMediumLow
-        )
-    )
+    /** Movement and shape. */
+    fun <T> spatial(): FiniteAnimationSpec<T> = spec(scheme.defaultSpatialSpec())
 
-    /** Colour and alpha: gentler, so fades do not wobble. */
-    fun <T> effects(): FiniteAnimationSpec<T> = spec(
-        spring(dampingRatio = Spring.DampingRatioNoBouncy, stiffness = Spring.StiffnessLow)
-    )
+    /** Colour and alpha. */
+    fun <T> effects(): FiniteAnimationSpec<T> = spec(scheme.defaultEffectsSpec())
 
     /** Staggered entrance: 45ms per item, first 9 items only, per design.md. */
     fun staggerDelay(index: Int): Int =
