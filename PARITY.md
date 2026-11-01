@@ -98,8 +98,9 @@ Each row names the reason so nothing is silently missing.
    transaction rows pass `"IDR"` because the transactions response does not join
    the account currency.
 
-5. **Unverified against a running device.** No build was executed in the authoring
-   environment (see below); CI `assembleDebug` is the first real compile.
+5. **Compiles, but never run.** CI `assembleDebug` succeeds and produces a 22 MB
+   APK, which proves the code type-checks and links. No emulator or device has
+   executed it, so runtime behaviour (navigation, network, layout) is unproven.
 
 6. **Compose BOM is 2024.02.00.** Several design.md APIs (Material 3 Expressive,
    `MaterialShapes`, `SharedTransitionLayout`) require newer versions. Bumping the
@@ -113,7 +114,7 @@ Each row names the reason so nothing is silently missing.
 |---|---|---|
 | API contract | `node tools/check-api-contract.mjs --strict` | exit 0 |
 | Kotlin static | `node tools/check-kotlin.mjs --strict` | exit 0 |
-| Compile | CI `./gradlew assembleDebug` | see Actions |
+| Compile | CI `./gradlew assembleDebug` | **success** — 22.1 MB debug APK |
 
 The static checks cover bracket balance, project-import resolution, and absence of
 placeholder markers. They do **not** type-check. Only Gradle does that.
