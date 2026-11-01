@@ -1,5 +1,7 @@
 package com.efina.app.ui
 
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -86,8 +88,8 @@ private val bottomNavItems = listOf(
 fun EfinaAppRoot(
     navController: NavHostController = rememberNavController(),
     authViewModel: AuthViewModel = hiltViewModel(),
-    /** Route resolved from the launch Intent, applied once after login. */
-    deepLinkRoute: String? = null
+    /** Route resolved from the launch Intent or a later onNewIntent. */
+    deepLinkRoute: StateFlow<String?> = MutableStateFlow(null)
 ) {
     val authState by authViewModel.state.collectAsState()
 
@@ -105,9 +107,12 @@ fun EfinaAppRoot(
     val startDestination = if (authState.isLoggedIn) Screen.Home.route else Screen.Login.route
 
     // Apply an inbound deep link once the graph exists and the user is signed in.
-    LaunchedEffect(authState.isLoggedIn, deepLinkRoute) {
-        if (authState.isLoggedIn && deepLinkRoute != null) {
-            navController.navigate(deepLinkRoute)
+    // Keyed on the StateFlow so a link arriving while the app runs also navigates.
+    val link by deepLinkRoute.collectAsState()
+    LaunchedEffect(authState.isLoggedIn, link) {
+        val target = link
+        if (authState.isLoggedIn && target != null) {
+            navController.navigate(target)
         }
     }
 

@@ -373,8 +373,13 @@ disambiguation dialog. This is a server-side dependency, not an app-side one.
 - `routeForUri(uri)` strips the scheme and host, drops query and fragment, and
   matches the remainder against a table of web paths. Longest-prefix matching
   means `/family/3` resolves to the family destination rather than `/`.
-- `MainActivity.onCreate` reads `intent.dataString` once and passes the resolved
-  route to `EfinaAppRoot`.
+- `MainActivity` reads `intent.dataString` in `onCreate` **and** in
+  `onNewIntent`. The activity is `singleTop`, so a link tapped while the app is
+  running is delivered to the existing instance; without `onNewIntent` it would
+  be dropped and the app would merely come to the front on whatever screen it was
+  already showing.
+- The route is exposed as a `StateFlow`, not a plain field: Compose must observe
+  the change, and assigning to a `var` would update the value without recomposing.
 - `EfinaAppRoot` applies it in a `LaunchedEffect` keyed on login state, so a link
   opened while signed out lands on the destination only *after* sign-in rather
   than being dropped.

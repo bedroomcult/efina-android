@@ -29,6 +29,7 @@
         <!-- Main Activity -->
         <activity
             android:name=".MainActivity"
+            android:launchMode="singleTop"
             android:exported="true"
             android:theme="@style/Theme.Efina.Splash">
             <intent-filter>
