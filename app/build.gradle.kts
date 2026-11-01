@@ -7,6 +7,15 @@ plugins {
     kotlin("plugin.serialization")
 }
 
+// Release signing is driven by android/keystore.properties, which the release
+// workflow writes from repository secrets and deletes afterwards. Absent the file
+// (every push build, local dev) the release variant simply stays unsigned.
+val keystorePropsFile = rootProject.file("android/keystore.properties")
+val keystoreProps = java.util.Properties().apply {
+    if (keystorePropsFile.exists()) keystorePropsFile.inputStream().use { load(it) }
+}
+val hasSigningMaterial = keystoreProps.getProperty("storeFile") != null
+
 android {
     namespace = "com.efina.app"
     compileSdk = 35
@@ -15,8 +24,9 @@ android {
         applicationId = "com.efina.app"
         minSdk = 26
         targetSdk = 35
-        versionCode = 1
-        versionName = "1.0.0"
+        // Supplied by the release workflow as -PversionCode / -PversionName.
+        versionCode = (project.findProperty("versionCode") as String?)?.toIntOrNull() ?: 1
+        versionName = (project.findProperty("versionName") as String?) ?: "1.0.0"
 
         testInstrumentationRunner = "com.efina.app.HiltTestRunner"
 
@@ -29,8 +39,22 @@ android {
         }
     }
 
+    signingConfigs {
+        if (hasSigningMaterial) {
+            create("release") {
+                storeFile = file(keystoreProps.getProperty("storeFile"))
+                storePassword = keystoreProps.getProperty("storePassword")
+                keyAlias = keystoreProps.getProperty("keyAlias")
+                keyPassword = keystoreProps.getProperty("keyPassword")
+            }
+        }
+    }
+
     buildTypes {
         release {
+            if (hasSigningMaterial) {
+                signingConfig = signingConfigs.getByName("release")
+            }
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(

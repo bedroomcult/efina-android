@@ -65,3 +65,8 @@ schemas/
 # OS files
 .DS_Store
 Thumbs.db
+
+# Release signing material (written by CI, never committed)
+keystore.properties
+*.jks
+*.keystore
