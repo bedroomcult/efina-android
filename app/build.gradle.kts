@@ -1,6 +1,7 @@
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
+    id("org.jetbrains.kotlin.plugin.compose")
     id("com.google.dagger.hilt.android")
     id("com.google.devtools.ksp")
     kotlin("plugin.serialization")
@@ -8,12 +9,12 @@ plugins {
 
 android {
     namespace = "com.efina.app"
-    compileSdk = 34
+    compileSdk = 35
 
     defaultConfig {
         applicationId = "com.efina.app"
         minSdk = 26
-        targetSdk = 34
+        targetSdk = 35
         versionCode = 1
         versionName = "1.0.0"
 
@@ -58,9 +59,6 @@ android {
         buildConfig = true
     }
 
-    composeOptions {
-        kotlinCompilerExtensionVersion = "1.5.10"
-    }
 
     packaging {
         resources {
@@ -94,8 +92,8 @@ dependencies {
     implementation("androidx.hilt:hilt-navigation-compose:1.2.0")
     
     // Hilt DI
-    implementation("com.google.dagger:hilt-android:2.50")
-    ksp("com.google.dagger:hilt-compiler:2.50")
+    implementation("com.google.dagger:hilt-android:2.52")
+    ksp("com.google.dagger:hilt-compiler:2.52")
     
     // Retrofit + OkHttp
     implementation("com.squareup.retrofit2:retrofit:2.11.0")
@@ -151,7 +149,7 @@ dependencies {
     androidTestImplementation(composeBom)
     androidTestImplementation("androidx.compose.ui:ui-test-junit4")
     androidTestImplementation("com.google.dagger:hilt-android-testing:2.50")
-    kspAndroidTest("com.google.dagger:hilt-compiler:2.50")
+    kspAndroidTest("com.google.dagger:hilt-compiler:2.52")
 }
 
 kotlin {
