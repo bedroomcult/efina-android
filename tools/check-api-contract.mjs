@@ -22,6 +22,7 @@ const here = path.dirname(fileURLToPath(import.meta.url));
 const ANDROID_ROOT = path.resolve(here, '..');
 const WEB_ROOT = process.env.EFINA_WEB_ROOT || '/storage/emulated/0/git/efina';
 const API_DIR = path.join(WEB_ROOT, 'functions', 'api');
+const MANIFEST = path.join(ANDROID_ROOT, 'tools', 'backend-routes.json');
 const KOTLIN_API = path.join(
   ANDROID_ROOT,
   'app/src/main/java/com/efina/app/data/remote/api/EfinaApi.kt'
@@ -32,6 +33,22 @@ const strict = process.argv.includes('--strict');
 /** Build { "GET /api/accounts": true, ... } from the backend source. */
 function readBackendRoutes() {
   const routes = new Map();
+
+  // The backend repository is private, so CI cannot clone it. A vendored
+  // manifest of its routes is committed instead and regenerated with
+  // `--emit-manifest` whenever the backend changes.
+  if (!fs.existsSync(API_DIR)) {
+    if (!fs.existsSync(MANIFEST)) {
+      console.error(
+        `Backend not found at ${API_DIR} and no manifest at ${MANIFEST}.\n` +
+        'Run with a backend checkout, or regenerate the manifest with --emit-manifest.'
+      );
+      process.exit(2);
+    }
+    const manifest = JSON.parse(fs.readFileSync(MANIFEST, 'utf8'));
+    for (const key of Object.keys(manifest.routes)) routes.set(key, manifest.source);
+    return routes;
+  }
 
   const walk = (dir) => {
     for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
@@ -96,6 +113,21 @@ function normalise(raw) {
 }
 
 const backend = readBackendRoutes();
+
+if (process.argv.includes('--emit-manifest')) {
+  const sorted = [...backend.keys()].sort();
+  const payload = {
+    generatedFrom: 'bedroomcult/efina functions/api',
+    note: 'Regenerate with: node tools/check-api-contract.mjs --emit-manifest',
+    count: sorted.length,
+    routes: Object.fromEntries(sorted.map((k) => [k, true])),
+  };
+  fs.mkdirSync(path.dirname(MANIFEST), { recursive: true });
+  fs.writeFileSync(MANIFEST, JSON.stringify(payload, null, 2) + '\n');
+  console.log(`wrote ${sorted.length} routes to ${path.relative(ANDROID_ROOT, MANIFEST)}`);
+  process.exit(0);
+}
+
 const kotlin = readKotlinRoutes();
 
 const ok = [];

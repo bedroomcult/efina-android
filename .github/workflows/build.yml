@@ -21,19 +21,18 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # The backend is a separate repository. Clone it so the checker can read
-      # the real route files rather than trusting a hardcoded list.
-      - name: Clone backend
-        run: git clone --depth 1 https://github.com/bedroomcult/efina.git "$RUNNER_TEMP/efina-web"
-
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
 
+      # The backend repository is private, so CI cannot clone it anonymously.
+      # tools/backend-routes.json is a committed snapshot of its routes,
+      # regenerated with `node tools/check-api-contract.mjs --emit-manifest`.
       - name: Verify every Android route exists on the backend
-        env:
-          EFINA_WEB_ROOT: ${{ runner.temp }}/efina-web
         run: node tools/check-api-contract.mjs --strict
+
+      - name: Static Kotlin checks
+        run: node tools/check-kotlin.mjs --strict
 
   build:
     name: Assemble
