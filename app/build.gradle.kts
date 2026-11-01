@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
@@ -11,7 +13,7 @@ plugins {
 // workflow writes from repository secrets and deletes afterwards. Absent the file
 // (every push build, local dev) the release variant simply stays unsigned.
 val keystorePropsFile = rootProject.file("android/keystore.properties")
-val keystoreProps = java.util.Properties().apply {
+val keystoreProps = Properties().apply {
     if (keystorePropsFile.exists()) keystorePropsFile.inputStream().use { load(it) }
 }
 val hasSigningMaterial = keystoreProps.getProperty("storeFile") != null
