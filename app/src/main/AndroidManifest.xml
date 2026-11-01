@@ -43,6 +43,9 @@
                 <category android:name="android.intent.category.BROWSABLE" />
                 <data
                     android:scheme="https"
+                    android:host="efina.himz.my.id" />
+                <data
+                    android:scheme="https"
                     android:host="efina.app" />
             </intent-filter>
             

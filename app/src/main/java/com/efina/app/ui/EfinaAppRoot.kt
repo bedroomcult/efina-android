@@ -85,7 +85,9 @@ private val bottomNavItems = listOf(
 @Composable
 fun EfinaAppRoot(
     navController: NavHostController = rememberNavController(),
-    authViewModel: AuthViewModel = hiltViewModel()
+    authViewModel: AuthViewModel = hiltViewModel(),
+    /** Route resolved from the launch Intent, applied once after login. */
+    deepLinkRoute: String? = null
 ) {
     val authState by authViewModel.state.collectAsState()
 
@@ -101,6 +103,13 @@ fun EfinaAppRoot(
     }
 
     val startDestination = if (authState.isLoggedIn) Screen.Home.route else Screen.Login.route
+
+    // Apply an inbound deep link once the graph exists and the user is signed in.
+    LaunchedEffect(authState.isLoggedIn, deepLinkRoute) {
+        if (authState.isLoggedIn && deepLinkRoute != null) {
+            navController.navigate(deepLinkRoute)
+        }
+    }
 
     EfinaTheme {
         Scaffold(
@@ -131,6 +140,8 @@ fun EfinaAppRoot(
                 }
             }
         ) { padding ->
+            SystemBackHandler(navController)
+
             NavHost(
                 navController = navController,
                 startDestination = startDestination,

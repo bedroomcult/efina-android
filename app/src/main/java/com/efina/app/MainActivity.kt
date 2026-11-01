@@ -6,12 +6,16 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import com.efina.app.ui.EfinaAppRoot
+import com.efina.app.ui.routeForUri
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
+    private var initialRoute: String? = null
+
     override fun onCreate(savedInstanceState: Bundle?) {
         installSplashScreen()
+        initialRoute = routeForUri(intent?.dataString)
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         
@@ -19,7 +23,7 @@ class MainActivity : ComponentActivity() {
         // server-side settings row (GET /settings). Nothing here may read
         // MaterialTheme.colorScheme: there is no theme above this point.
         setContent {
-            EfinaAppRoot()
+            EfinaAppRoot(deepLinkRoute = initialRoute)
         }
     }
 }

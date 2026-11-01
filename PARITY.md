@@ -325,6 +325,54 @@ placeholder markers. They do **not** type-check. Only Gradle does that.
 
 ---
 
+## Deep links and back handling
+
+### Declared in AndroidManifest.xml
+
+Three intent filters on `MainActivity`:
+
+| Scheme | Host | Purpose |
+|---|---|---|
+| `https` | `efina.himz.my.id` | verified App Link, the live product host |
+| `https` | `efina.app` | legacy host, kept so older links resolve |
+| `efina` | `app` | custom scheme for in-app/share links |
+
+`android:autoVerify="true"` is set, so Android checks
+`https://efina.himz.my.id/.well-known/assetlinks.json` at install time and opens
+links in the app without showing a chooser. **That file must be published by the
+backend for verification to succeed**; without it Android falls back to a
+disambiguation dialog. This is a server-side dependency, not an app-side one.
+
+### Resolved in code
+
+`ui/DeepLinks.kt`:
+
+- `routeForUri(uri)` strips the scheme and host, drops query and fragment, and
+  matches the remainder against a table of web paths. Longest-prefix matching
+  means `/family/3` resolves to the family destination rather than `/`.
+- `MainActivity.onCreate` reads `intent.dataString` once and passes the resolved
+  route to `EfinaAppRoot`.
+- `EfinaAppRoot` applies it in a `LaunchedEffect` keyed on login state, so a link
+  opened while signed out lands on the destination only *after* sign-in rather
+  than being dropped.
+
+Unknown paths resolve to null and are ignored, leaving the user on the start
+destination. This is deliberate: guessing a destination is worse than doing
+nothing.
+
+### Back handling
+
+`SystemBackHandler` installs a `BackHandler` only at the graph root. Below the
+root, Navigation Compose pops the back stack normally. At the root, back returns
+to the start destination and lets the system finish the activity, which is the
+platform convention; trapping the user inside the app would be worse.
+
+Transient UI (dialogs, sheets, the search bar) handles back through the Compose
+`AlertDialog`/`SearchBar` components themselves, which intercept before this
+handler sees the event.
+
+---
+
 ## Not implemented
 
 Each row names the reason so nothing is silently missing.
@@ -346,4 +394,3 @@ Each row names the reason so nothing is silently missing.
 | PWA install prompt | not applicable | — |
 | Offline cache | Room is declared but unused | see "Known gaps" |
 
----
