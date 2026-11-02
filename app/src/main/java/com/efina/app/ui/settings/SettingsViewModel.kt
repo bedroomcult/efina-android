@@ -27,13 +27,21 @@ data class SettingsUiState(
 @HiltViewModel
 class SettingsViewModel @Inject constructor(
     private val settingsRepository: SettingsRepository,
-    private val authRepository: AuthRepository
+    private val authRepository: AuthRepository,
+    private val preferences: com.efina.app.util.PreferencesManager
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(SettingsUiState())
     val state: StateFlow<SettingsUiState> = _state.asStateFlow()
 
-    init { load() }
+    init {
+        // Write-through so a theme change survives process death; before this,
+        // ThemePreference was memory-only and reset on every cold start.
+        ThemePreference.persist = { value ->
+            viewModelScope.launch { preferences.setTheme(value) }
+        }
+        load()
+    }
 
     fun load() {
         _state.value = _state.value.copy(loading = true, error = null)

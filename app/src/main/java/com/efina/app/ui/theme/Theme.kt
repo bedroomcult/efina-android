@@ -185,8 +185,30 @@ object ThemePreference {
     }
 
     fun apply(storedTheme: String?) {
-        if (!storedTheme.isNullOrBlank()) _name.value = storedTheme
+        if (!storedTheme.isNullOrBlank()) {
+            _name.value = storedTheme
+            persist?.invoke(storedTheme)
+        }
     }
+
+    /** Set once by the settings layer so apply() can write through to disk. */
+    var persist: ((String) -> Unit)? = null
+
+    /**
+     * Restores the saved value at process start.
+     *
+     * ThemePreference is process memory, and apply() was only ever called from
+     * SettingsViewModel — so the theme reset on every cold start and only
+     * re-applied once the user opened Settings, causing a visible mid-session
+     * re-theme. The DataStore that holds it already existed but was injected
+     * nowhere.
+     */
+    fun restoreSync(block: () -> String?) {
+        block()?.let { apply(it) }
+    }
+
+    /** Test seam and process-death guard. */
+    internal fun setForTest(value: String) { _name.value = value }
 }
 
 @Composable

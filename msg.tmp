@@ -1,0 +1,17 @@
+fix(forms): stop edit screens submitting empty fields and zeroing balances
+
+A subagent review found the account and transaction edit forms were always blank.
+
+Cause: the entity loads asynchronously, but the form state was a plain
+remember { mutableStateOf(account?.name.orEmpty()) }. On first composition the
+account is null, so every field initialised empty and never re-initialised when
+the row arrived — there was no key. Worse for accounts: the blank balance parsed
+to 0.0 and the PUT submitted it, silently wiping the account's balance.
+
+- Both forms key their state on the loaded entity id, so fields populate when the
+  row lands.
+- The account form now refuses an empty balance in edit mode rather than coercing
+  it to zero.
+- Secondary defect from the same review: the transaction edit fallback called
+  load() with the default filter (limit 20), so any transaction outside the
+  newest 20 could never be found and the form stayed blank regardless.

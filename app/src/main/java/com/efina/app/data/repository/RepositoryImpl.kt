@@ -214,7 +214,7 @@ class TransactionRepositoryImpl @Inject constructor(
                 date = request.date,
                 description = request.description
             )
-        ) }.map { }
+        ) }.announce(DataEvents.Domain.TRANSACTIONS).map { }
 }
 
 @Singleton
@@ -291,7 +291,7 @@ class DebtRepositoryImpl @Inject constructor(
                 type = request.type.value,
                 notes = request.notes
             )
-        ) }.map { it.toDomain() }
+        ) }.announce(DataEvents.Domain.DEBTS).map { it.toDomain() }
 
     override suspend fun updateDebt(id: Long, request: UpdateDebtRequest): Result<Debt> =
         safeCall { api.updateDebt(
@@ -303,10 +303,10 @@ class DebtRepositoryImpl @Inject constructor(
                 type = request.type?.value,
                 notes = request.notes
             )
-        ) }.map { it.toDomain() }
+        ) }.announce(DataEvents.Domain.DEBTS).map { it.toDomain() }
 
     override suspend fun deleteDebt(id: Long): Result<Unit> =
-        safeCall { api.deleteDebt(id) }.map { }
+        safeCall { api.deleteDebt(id) }.announce(DataEvents.Domain.DEBTS).map { }
 
     override suspend fun payDebt(id: Long, request: PayDebtRequest): Result<Debt> =
         safeCall { api.payDebt(
@@ -317,7 +317,7 @@ class DebtRepositoryImpl @Inject constructor(
                 create_transaction = request.createTransaction,
                 date = request.date
             )
-        ) }.map { it.toDomain() }
+        ) }.announce(DataEvents.Domain.DEBTS).map { it.toDomain() }
 }
 
 @Singleton
@@ -339,10 +339,10 @@ class ScheduledRepositoryImpl @Inject constructor(
                 frequency = request.frequency,
                 next_date = request.nextDate
             )
-        ) }.map { it.toDomain() }
+        ) }.announce(DataEvents.Domain.SCHEDULED).map { it.toDomain() }
 
     override suspend fun deleteScheduled(id: Long): Result<Unit> =
-        safeCall { api.deleteScheduled(id) }.map { }
+        safeCall { api.deleteScheduled(id) }.announce(DataEvents.Domain.SCHEDULED).map { }
 }
 
 @Singleton
@@ -414,7 +414,7 @@ class FamilyRepositoryImpl @Inject constructor(
         safeCall { api.getFamilies() }.map { list -> list.map { it.toDomain() } }
 
     override suspend fun createFamily(name: String): Result<FamilyGroup> =
-        safeCall { api.createFamily(CreateFamilyRequestDto(name)) }.map { it.toDomain() }
+        safeCall { api.createFamily(CreateFamilyRequestDto(name)) }.announce(DataEvents.Domain.FAMILY).map { it.toDomain() }
 
     override suspend fun getFamily(id: Long): Result<FamilyGroup> =
         safeCall { api.getFamily(id) }.map { it.toDomain() }
