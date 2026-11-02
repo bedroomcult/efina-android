@@ -16,6 +16,7 @@ import org.junit.Test
  *
  * Backend sources: functions/api/debts, .../scheduled, .../goals, .../accounts.
  */
+@OptIn(kotlinx.serialization.ExperimentalSerializationApi::class)
 class DtoShapeTest {
 
     private val json = Json {
@@ -23,6 +24,9 @@ class DtoShapeTest {
         explicitNulls = false
         isLenient = true
         coerceInputValues = true
+        // Mirrors the production Json in AppModule: without this, defaults are
+        // omitted from encoded bodies and the assertions below would be vacuous.
+        encodeDefaults = true
     }
 
     @Test

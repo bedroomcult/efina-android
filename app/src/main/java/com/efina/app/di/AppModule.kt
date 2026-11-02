@@ -38,6 +38,13 @@ object NetworkModule {
         explicitNulls = false
         isLenient = true
         coerceInputValues = true
+        // kotlinx omits properties equal to their default when encoding. Several
+        // request DTOs carry handler-required fields as defaults (goal period_type,
+        // scheduled frequency/is_recurring), so those were silently dropped from the
+        // body and the server rejected the request. Sending them costs a few bytes.
+        // ponytail: global rather than per-field @EncodeDefault; revisit if a request
+        // ever needs to distinguish "absent" from "default".
+        encodeDefaults = true
     }
 
     @Provides
