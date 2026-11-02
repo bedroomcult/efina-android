@@ -89,7 +89,8 @@ data class ChangePasswordRequestDto(
 @Serializable
 data class AccountDto(
     val id: Long,
-    val user_id: Long,
+    /** Not sent by thin projections such as /ai/context. */
+    val user_id: Long = 0,
     val name: String,
     val type: String = "Bank",
     val balance: Double = 0.0,
@@ -543,7 +544,8 @@ data class NotificationDto(
     val id: Long,
     val user_id: Long = 0,
     val title: String,
-    val body: String? = null,
+    /** The column is `message`; `body` never existed. */
+    val message: String? = null,
     val type: String = "info",
     val link: String? = null,
     val is_read: Int = 0,
@@ -582,7 +584,9 @@ data class UpdateSettingsRequestDto(
 @Serializable
 data class ChatRequestDto(
     val message: String,
-    val history: List<ChatMessageDto> = emptyList()
+    val history: List<ChatMessageDto> = emptyList(),
+    /** ai/chat.js only builds the financial prompt when this is present. */
+    val context: String? = null
 )
 
 @Serializable
@@ -614,16 +618,29 @@ data class AiContextDto(
 
 @Serializable
 data class AchievementDto(
-    val id: Long,
+    /** `achievements.id` is TEXT PRIMARY KEY, not an integer. */
+    val id: String,
     val name: String,
     val description: String? = null,
     val icon: String? = null,
     val color: String? = null,
     val type: String? = null,
+    val tier: String? = null,
+    val xp_reward: Int = 0,
     val target: Int = 0,
     val progress: Int = 0,
-    val achieved: Boolean = false,
+    /** The server only sends achieved_at; unlocked is derived from it. */
     val achieved_at: String? = null
+) {
+    val achieved: Boolean get() = !achieved_at.isNullOrBlank()
+}
+
+@Serializable
+data class XpHistoryDto(
+    val history: List<XpHistoryEntryDto> = emptyList(),
+    val total: Int = 0,
+    @SerialName("totalXP") val totalXp: Int = 0,
+    @SerialName("xpBySource") val xpBySource: List<Map<String, String>> = emptyList()
 )
 
 @Serializable
@@ -646,12 +663,16 @@ data class LeaderboardPageDto(
 @Serializable
 data class LeaderboardEntryDto(
     val rank: Int = 0,
-    val user_id: Long,
+    /** The server selects `u.id`; a required `user_id` threw MissingFieldException. */
+    @SerialName("user_id") val userIdAlias: Long? = null,
+    val id: Long? = null,
     val name: String? = null,
     val xp: Int = 0,
     val level: Int = 1,
     val tier: String? = null
-)
+) {
+    val userId: Long get() = userIdAlias ?: id ?: 0L
+}
 
 // ─────────────────────────── Reporting ───────────────────────────
 
@@ -664,21 +685,24 @@ data class ForecastDto(
 
 @Serializable
 data class ForecastPointDto(
-    val month: String,
-    val predicted_expense: Double = 0.0,
-    val predictedExpense: Double? = null
+    val date: String = "",
+    val projectedBalance: Double = 0.0,
+    val income: Double = 0.0,
+    val expense: Double = 0.0,
+    val netChange: Double = 0.0
 )
 
 @Serializable
 data class HealthScoreDto(
     val score: Int = 0,
-    val factors: Map<String, HealthFactorDto> = emptyMap()
+    /** The server sends `components`. */
+    val components: Map<String, HealthFactorDto> = emptyMap()
 )
 
 @Serializable
 data class HealthFactorDto(
     val score: Int = 0,
-    val value: String? = null,
+    val value: Double = 0.0,
     val label: String? = null,
     val recommendation: String? = null
 )

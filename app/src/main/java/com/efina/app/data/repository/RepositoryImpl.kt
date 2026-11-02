@@ -398,11 +398,9 @@ class InsightsRepositoryImpl @Inject constructor(
         safeCall { api.getForecast() }.map { dto ->
             Forecast(
                 points = dto.forecast.map {
-                    ForecastPoint(it.month, it.predicted_expense.takeIf { p -> p != 0.0 }
-                        ?: (it.predictedExpense ?: 0.0))
+                    ForecastPoint(it.date, it.projectedBalance)
                 },
-                averageMonthlyExpense = dto.average_monthly_expense.takeIf { it != 0.0 }
-                    ?: (dto.averageMonthlyExpense ?: 0.0)
+                averageMonthlyExpense = dto.average_monthly_expense
             )
         }
 
@@ -410,8 +408,8 @@ class InsightsRepositoryImpl @Inject constructor(
         safeCall { api.getHealthScore() }.map { dto ->
             HealthScore(
                 score = dto.score,
-                factors = dto.factors.mapValues { (_, f) ->
-                    HealthFactor(f.score, f.value, f.label, f.recommendation)
+                factors = dto.components.mapValues { (_, f) ->
+                    HealthFactor(f.score, f.value.toString(), f.label, f.recommendation)
                 }
             )
         }

@@ -102,6 +102,7 @@ fun UserDto.toDomain(): User = User(
 
 fun AchievementDto.toDomain(): Achievement = Achievement(
     id = id,
+    // `id` is a TEXT key; domains still key on a string.
     name = name,
     description = description,
     icon = icon,

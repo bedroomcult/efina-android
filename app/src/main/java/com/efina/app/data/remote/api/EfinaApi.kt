@@ -268,7 +268,7 @@ interface EfinaApi {
     @GET("gamification/history")
     suspend fun getXpHistory(
         @Query("limit") limit: Int? = null
-    ): Response<List<XpHistoryEntryDto>>
+    ): Response<XpHistoryDto>
 
     @GET("leaderboard")
     suspend fun getLeaderboard(
