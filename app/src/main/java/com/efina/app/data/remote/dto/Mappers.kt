@@ -32,7 +32,7 @@ fun AccountDto.toDomain(): Account = Account(
 
 fun TransactionDto.toDomain(): Transaction = Transaction(
     id = id,
-    userId = userId,
+    userId = user_id,
     accountId = account_id,
     accountName = account_name,
     accountRole = AccountShareRole.from(account_role),
@@ -122,7 +122,7 @@ fun FamilyGroupDto.toDomain(): FamilyGroup = FamilyGroup(
 )
 
 fun FamilyMemberDto.toDomain(): FamilyMember = FamilyMember(
-    userId = userId,
+    userId = user_id,
     role = role,
     name = name ?: email?.substringBefore('@') ?: "Member",
     email = email,
@@ -130,7 +130,7 @@ fun FamilyMemberDto.toDomain(): FamilyMember = FamilyMember(
 )
 
 fun AccountMemberDto.toDomain(): AccountMember = AccountMember(
-    userId = userId,
+    userId = user_id,
     role = AccountShareRole.from(role) ?: AccountShareRole.MEMBER,
     name = name ?: email?.substringBefore('@') ?: "Member",
     email = email,
