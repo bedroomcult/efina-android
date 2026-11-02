@@ -168,7 +168,14 @@ data class Category(
     val parentName: String? = null,
     val isSystem: Boolean = false,
     /** "income" or "expense"; POST categories requires it. */
-    val type: String? = null
+    val type: String? = null,
+    /**
+     * Children of a root category, one level deep — the same shape the API returns.
+     * Kept as a tree rather than flattened because the picker expands parents and
+     * lets the parent itself be chosen, and because two branches commonly share a
+     * child name ("Other"), which a flat list cannot disambiguate.
+     */
+    val children: List<Category> = emptyList()
 )
 
 /**

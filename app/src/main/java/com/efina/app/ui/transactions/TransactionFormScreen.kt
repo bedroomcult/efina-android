@@ -35,6 +35,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import com.efina.app.ui.theme.LocalIsDarkTheme
 import com.efina.app.ui.theme.MoneyColors
+import com.efina.app.ui.components.CategoryPickerSheet
+import com.efina.app.ui.components.DateTimeField
 
 /**
  * Create / edit a transaction, or create a transfer pair.
@@ -77,6 +79,7 @@ fun TransactionFormScreen(
         mutableStateOf(existing?.date?.drop(11)?.take(8) ?: nowTime())
     }
     var localError by remember { mutableStateOf<String?>(null) }
+    var showCategoryPicker by remember { mutableStateOf(false) }
 
     val accounts = accountsState.accounts
     val writableAccounts = accounts.filter { it.canWrite }
@@ -162,18 +165,49 @@ fun TransactionFormScreen(
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 } else {
-                    // A dropdown rather than chips: chips capped the list at 12 and
-                    // the seeded tree has ~90 leaves, so most categories were
-                    // unreachable.
-                    PickerField(
-                        label = "Category",
-                        selectedLabel = categories.firstOrNull { it.id == categoryId }?.name
-                            ?: "Choose a category",
-                        options = categories
-                            .filter { it.type == null || it.type.equals(mode.value, true) }
-                            .map { it.id to it.name },
-                        onSelect = { categoryId = it }
-                    )
+                    // Two-level sheet, not a flat dropdown: parents expand and are
+                    // themselves selectable, children are indented, and search
+                    // flattens the tree. Mirrors the web's CategorySelectionModal.
+                    val selectable = categories
+                        .filter { it.type == null || it.type.equals(mode.value, true) }
+                    val chosen = selectable.firstNotNullOfOrNull { root ->
+                        when {
+                            root.id == categoryId -> root
+                            else -> root.children.firstOrNull { it.id == categoryId }
+                        }
+                    }
+
+                    OutlinedButton(
+                        onClick = { showCategoryPicker = true },
+                        shape = EfinaCorners.menu,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text(
+                            text = chosen?.let { pickerLabel(selectable, it) } ?: "Choose a category",
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = if (chosen == null) MaterialTheme.colorScheme.onSurfaceVariant
+                            else MaterialTheme.colorScheme.onSurface,
+                            maxLines = 1,
+                            modifier = Modifier.weight(1f)
+                        )
+                        Icon(
+                            imageVector = Icons.Filled.ArrowDropDown,
+                            contentDescription = "Show categories",
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+
+                    if (showCategoryPicker) {
+                        CategoryPickerSheet(
+                            roots = selectable,
+                            selectedId = categoryId,
+                            onSelect = {
+                                categoryId = it.id
+                                showCategoryPicker = false
+                            },
+                            onDismiss = { showCategoryPicker = false }
+                        )
+                    }
                 }
             }
 
@@ -186,27 +220,14 @@ fun TransactionFormScreen(
                 modifier = Modifier.fillMaxWidth()
             )
 
-            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                OutlinedTextField(
-                    value = date,
-                    onValueChange = { date = it },
-                    label = { Text("Date") },
-                    placeholder = { Text("YYYY-MM-DD") },
-                    shape = EfinaCorners.menu,
-                    singleLine = true,
-                    modifier = Modifier.weight(1.4f)
-                )
-                OutlinedTextField(
-                    value = time,
-                    onValueChange = { time = it },
-                    label = { Text("Time") },
-                    placeholder = { Text("HH:mm") },
-                    shape = EfinaCorners.menu,
-                    singleLine = true,
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    modifier = Modifier.weight(1f)
-                )
-            }
+            // Platform pickers rather than text fields: typed input let users submit
+            // impossible dates and times, which the API then rejected.
+            DateTimeField(
+                date = date,
+                time = time,
+                onDate = { date = it },
+                onTime = { time = it }
+            )
 
             localError?.let {
                 Text(it, color = MaterialTheme.colorScheme.error,
@@ -376,6 +397,14 @@ private fun normalizeDate(datePart: String, timePart: String): String {
  * unbounded, and categories were additionally capped at twelve, so most of the
  * seeded tree could not be selected at all.
  */
+/** "Food · Cafe" for a child, or the plain name for a root. */
+private fun pickerLabel(roots: List<com.efina.app.domain.model.Category>,
+                        chosen: com.efina.app.domain.model.Category): String {
+    if (chosen.parentId == null) return chosen.name
+    val parent = roots.firstOrNull { it.id == chosen.parentId }
+    return if (parent != null) "${parent.name} · ${chosen.name}" else chosen.name
+}
+
 @Composable
 private fun PickerField(
     label: String,

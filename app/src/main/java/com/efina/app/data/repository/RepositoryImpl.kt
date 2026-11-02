@@ -230,10 +230,9 @@ class CategoryRepositoryImpl @Inject constructor(
 
     override suspend fun getCategories(): Result<List<Category>> =
         safeCall { api.getCategories() }.map { roots ->
-            // GET categories returns roots with children nested one level deep.
-            // Flat screens show both, so every child is now reachable as a leaf.
-            roots.flatMap { root -> listOf(root) + root.subcategories }
-                .map { it.toDomain() }
+            // Keep the one-level tree the API returns: the picker expands parents and
+            // allows picking the parent itself, so flattening would lose that.
+            roots.map { it.toDomain() }
         }
 
     override suspend fun createCategory(request: CreateCategoryRequest): Result<Category> =
