@@ -71,6 +71,10 @@ jobs:
 
       # Debug only: no signing material required, so this is safe to run on every
       # push. Release signing lives in release.yml behind a tag and secrets.
+      # Unit tests run before assemble: they are fast and independent of packaging.
+      - name: Unit tests
+        run: ./gradlew testDebugUnitTest --no-daemon --stacktrace
+
       - name: Assemble debug
         run: ./gradlew assembleDebug --no-daemon --stacktrace
 
