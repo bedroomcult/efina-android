@@ -171,6 +171,33 @@ function checkRequestFields(dtos) {
 
 readSchema();
 
+// Self-check: the checker is the thing that proves every other claim, so verify
+// it still discriminates instead of quietly passing everything.
+if (process.argv.includes('--selftest')) {
+  const compat = (kotlin, sql) =>
+    (COMPAT[kotlin] || []).includes(sql);
+
+  const cases = [
+    // [description, expectedToPass, kotlinType, sqlType]
+    ['Int reading TEXT is a defect', false, 'Int', 'TEXT'],
+    ['String reading TEXT is fine', true, 'String', 'TEXT'],
+    ['Double reading REAL is fine', true, 'Double', 'REAL'],
+    ['Int reading INTEGER is fine', true, 'Int', 'INTEGER'],
+    ['Boolean reading INTEGER needs LenientBoolean', true, 'Boolean', 'INTEGER'],
+  ];
+
+  let bad = 0;
+  for (const [name, expected, kotlin, sql] of cases) {
+    const got = compat(kotlin, sql);
+    if (got !== expected) {
+      console.error(`SELFTEST FAIL: ${name} (expected ${expected}, got ${got})`);
+      bad++;
+    }
+  }
+  console.log(bad === 0 ? `selftest OK: ${cases.length} cases` : `selftest FAILED: ${bad}`);
+  process.exit(bad === 0 ? 0 : 1);
+}
+
 if (process.argv.includes('--emit-schema')) {
   const payload = {
     generatedFrom: 'bedroomcult/efina migrations',
