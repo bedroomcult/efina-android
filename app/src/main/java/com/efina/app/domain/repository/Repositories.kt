@@ -85,7 +85,7 @@ interface DebtRepository {
     suspend fun createDebt(request: CreateDebtRequest): Result<Debt>
     suspend fun updateDebt(id: Long, request: UpdateDebtRequest): Result<Debt>
     suspend fun deleteDebt(id: Long): Result<Unit>
-    suspend fun payDebt(id: Long, request: PayDebtRequest): Result<Debt>
+    suspend fun payDebt(id: Long, request: PayDebtRequest): Result<Unit>
 }
 
 interface ScheduledRepository {

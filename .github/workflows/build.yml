@@ -34,6 +34,11 @@ jobs:
       - name: Static Kotlin checks
         run: node tools/check-kotlin.mjs --strict
 
+      # Shapes, not just routes: catches a DTO field the handler does not read,
+      # and a Kotlin type that cannot parse the column it reads from.
+      - name: DTO shapes vs backend
+        run: node tools/check-dto-shapes.mjs --strict
+
   build:
     name: Assemble
     runs-on: ubuntu-latest

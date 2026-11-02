@@ -59,7 +59,13 @@ class HomeViewModel @Inject constructor(
             val txJob = async {
                 transactionRepository.getTransactions(
                     TransactionFilter(
-                        limit = 10,
+                        // Summed below for the monthly totals, so this must cover the
+                        // whole month, not just the rows the dashboard displays. At
+                        // limit = 10 any user with more than ten transactions in the
+                        // month saw understated income and expense.
+                        // ponytail: 1000-row month cap; paginate or add a backend
+                        // aggregate if a month can ever exceed it.
+                        limit = 1000,
                         offset = 0,
                         startDate = startDate,
                         endDate = endDate
@@ -98,7 +104,7 @@ class HomeViewModel @Inject constructor(
                 data = DashboardData(
                     totalBalance = accounts.sumOf { it.balance },
                     accounts = accounts,
-                    recentTransactions = transactions,
+                    recentTransactions = transactions.take(10),
                     budgets = budgets,
                     goals = goals,
                     monthlyIncome = income,

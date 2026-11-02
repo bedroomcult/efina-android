@@ -280,16 +280,16 @@ class DebtRepositoryImpl @Inject constructor(
 ) : DebtRepository {
 
     override suspend fun getDebts(): Result<List<Debt>> =
-        safeCall { api.getDebts() }.map { list -> list.map { it.toDomain() } }
+        safeCall { api.getDebts() }.map { response -> response.debts.map { it.toDomain() } }
 
     override suspend fun createDebt(request: CreateDebtRequest): Result<Debt> =
         safeCall { api.createDebt(
             CreateDebtRequestDto(
-                name = request.name,
+                person_name = request.name,
                 amount = request.amount,
                 due_date = request.dueDate,
                 type = request.type.value,
-                notes = request.notes
+                description = request.notes
             )
         ) }.announce(DataEvents.Domain.DEBTS).map { it.toDomain() }
 
@@ -297,18 +297,18 @@ class DebtRepositoryImpl @Inject constructor(
         safeCall { api.updateDebt(
             id,
             UpdateDebtRequestDto(
-                name = request.name,
+                person_name = request.name,
                 amount = request.amount,
                 due_date = request.dueDate,
                 type = request.type?.value,
-                notes = request.notes
+                description = request.notes
             )
         ) }.announce(DataEvents.Domain.DEBTS).map { it.toDomain() }
 
     override suspend fun deleteDebt(id: Long): Result<Unit> =
         safeCall { api.deleteDebt(id) }.announce(DataEvents.Domain.DEBTS).map { }
 
-    override suspend fun payDebt(id: Long, request: PayDebtRequest): Result<Debt> =
+    override suspend fun payDebt(id: Long, request: PayDebtRequest): Result<Unit> =
         safeCall { api.payDebt(
             id,
             PayDebtRequestDto(
@@ -317,7 +317,7 @@ class DebtRepositoryImpl @Inject constructor(
                 create_transaction = request.createTransaction,
                 date = request.date
             )
-        ) }.announce(DataEvents.Domain.DEBTS).map { it.toDomain() }
+        ) }.announce(DataEvents.Domain.DEBTS).map { }
 }
 
 @Singleton
@@ -337,7 +337,7 @@ class ScheduledRepositoryImpl @Inject constructor(
                 type = request.type.value,
                 description = request.description,
                 frequency = request.frequency,
-                next_date = request.nextDate
+                next_run_date = request.nextDate.orEmpty()
             )
         ) }.announce(DataEvents.Domain.SCHEDULED).map { it.toDomain() }
 

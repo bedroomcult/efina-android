@@ -192,7 +192,7 @@ interface EfinaApi {
     // ============ Debts ============
 
     @GET("debts")
-    suspend fun getDebts(): Response<List<DebtDto>>
+    suspend fun getDebts(@Query("status") status: String? = null): Response<DebtsResponseDto>
 
     @POST("debts")
     suspend fun createDebt(@Body request: CreateDebtRequestDto): Response<DebtDto>

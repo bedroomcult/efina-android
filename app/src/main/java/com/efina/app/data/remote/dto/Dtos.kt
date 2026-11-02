@@ -64,7 +64,9 @@ data class UserDto(
     val language: String? = null,
     val currency: String? = null,
     val timezone: String? = null,
+    @Serializable(with = LenientBoolean::class)
     val has_seen_tutorial: Boolean = false,
+    @Serializable(with = LenientBoolean::class)
     val force_onboarding: Boolean = false,
     val account_count: Int = 0
 )
@@ -365,8 +367,7 @@ data class UpdateGoalRequestDto(
     val target_amount: Double? = null,
     val current_amount: Double? = null,
     val target_date: String? = null,
-    val linked_account_id: Long? = null,
-    val icon: String? = null
+    val linked_account_id: Long? = null
 )
 
 @Serializable
@@ -377,15 +378,25 @@ data class AddGoalFundsRequestDto(
 
 // ─────────────────────────── Debts ───────────────────────────
 
+/** `GET debts` wraps the rows; POST and PUT return a bare row. */
+@Serializable
+data class DebtsResponseDto(
+    val debts: List<DebtDto> = emptyList()
+)
+
+/** Mirrors a `SELECT * FROM debts` row. Column names, not domain names. */
 @Serializable
 data class DebtDto(
     val id: Long,
     val user_id: Long = 0,
-    val name: String,
-    val amount: Double,
+    val person_name: String = "",
+    val total_amount: Double = 0.0,
     val remaining_amount: Double = 0.0,
+    val interest_rate: Double? = null,
+    val minimum_payment: Double? = null,
     val due_date: String? = null,
-    val type: String = "borrow",
+    val account_id: Long? = null,
+    val type: String = "debt",
     val status: String = "active",
     val notes: String? = null,
     val created_at: String? = null,
@@ -394,20 +405,31 @@ data class DebtDto(
 
 @Serializable
 data class CreateDebtRequestDto(
-    val name: String,
+    /** The handler requires person_name and reads description (into notes). */
+    val person_name: String,
     val amount: Double,
     val due_date: String? = null,
-    val type: String = "borrow",
-    val notes: String? = null
+    val type: String = "debt",
+    val description: String? = null
 )
 
 @Serializable
 data class UpdateDebtRequestDto(
-    val name: String? = null,
+    val person_name: String? = null,
     val amount: Double? = null,
+    val remaining_amount: Double? = null,
     val due_date: String? = null,
     val type: String? = null,
-    val notes: String? = null
+    val description: String? = null
+)
+
+/** `POST debts/{id}/pay` returns a summary, not a debt row. */
+@Serializable
+data class DebtPaymentResponseDto(
+    val success: Boolean = false,
+    val remaining_amount: Double = 0.0,
+    val status: String = "active",
+    val message: String? = null
 )
 
 @Serializable
@@ -430,8 +452,15 @@ data class ScheduledDto(
     val type: String,
     val description: String? = null,
     val frequency: String = "monthly",
-    val next_date: String? = null,
+    /** Column is next_run_date; the client previously sent next_date and got a 400. */
+    val next_run_date: String? = null,
+    val last_run_date: String? = null,
+    val interval_value: Int = 1,
+    val day_of_month: Int? = null,
     val is_active: Int = 1,
+    val is_recurring: Int = 1,
+    val total_occurrences: Int? = null,
+    val completed_occurrences: Int = 0,
     val created_at: String? = null
 )
 
@@ -443,7 +472,12 @@ data class CreateScheduledRequestDto(
     val type: String,
     val description: String? = null,
     val frequency: String = "monthly",
-    val next_date: String? = null
+    val interval_value: Int = 1,
+    val day_of_month: Int? = null,
+    /** Required by the handler; it rejects a body without it. */
+    val next_run_date: String,
+    val is_recurring: Int = 1,
+    val total_occurrences: Int? = null
 )
 
 @Serializable
@@ -454,8 +488,12 @@ data class UpdateScheduledRequestDto(
     val type: String? = null,
     val description: String? = null,
     val frequency: String? = null,
-    val next_date: String? = null,
-    val is_active: Int? = null
+    val interval_value: Int? = null,
+    val day_of_month: Int? = null,
+    val next_run_date: String? = null,
+    val is_active: Int? = null,
+    val is_recurring: Int? = null,
+    val total_occurrences: Int? = null
 )
 
 // ─────────────────────────── Notifications ───────────────────────────
@@ -484,7 +522,8 @@ data class UserSettingsDto(
     val theme: String = "light",
     val has_seen_tutorial: Int = 0,
     val animation_mode: String? = null,
-    val animation_level: Int = 1
+    /** D1 column is TEXT DEFAULT 'reduced'; values are full|reduced|disabled. */
+    val animation_level: String = "reduced"
 )
 
 @Serializable
@@ -495,7 +534,7 @@ data class UpdateSettingsRequestDto(
     val timezone: String? = null,
     val theme: String? = null,
     val animation_mode: String? = null,
-    val animation_level: Int? = null
+    val animation_level: String? = null
 )
 
 // ─────────────────────────── AI ───────────────────────────

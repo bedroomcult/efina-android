@@ -147,8 +147,8 @@ fun NotificationDto.toDomain(): AppNotification = AppNotification(
 
 fun DebtDto.toDomain(): Debt = Debt(
     id = id,
-    name = name,
-    amount = amount,
+    name = person_name,
+    amount = total_amount,
     remainingAmount = remaining_amount,
     dueDate = due_date,
     type = DebtType.from(type),
@@ -164,7 +164,7 @@ fun ScheduledDto.toDomain(): ScheduledTransaction = ScheduledTransaction(
     type = TransactionType.from(type),
     description = description,
     frequency = frequency,
-    nextDate = next_date,
+    nextDate = next_run_date,
     isActive = is_active == 1
 )
 

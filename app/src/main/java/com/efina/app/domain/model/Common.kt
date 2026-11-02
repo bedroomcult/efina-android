@@ -144,7 +144,8 @@ data class UserSettings(
     val theme: String,
     val hasSeenTutorial: Boolean,
     val animationMode: String?,
-    val animationLevel: Int
+    /** "full", "reduced" or "disabled". */
+    val animationLevel: String
 )
 
 data class UpdateSettingsRequest(
@@ -154,5 +155,5 @@ data class UpdateSettingsRequest(
     val timezone: String? = null,
     val theme: String? = null,
     val animationMode: String? = null,
-    val animationLevel: Int? = null
+    val animationLevel: String? = null
 )
