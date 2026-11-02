@@ -137,7 +137,6 @@ data class UpdateAccountRequestDto(
     val date: String? = null
 )
 
-@Serializable
 /**
  * PATCH accounts/{id} is polymorphic: sharing returns a full account row plus
  * account_role, unsharing returns only `{ is_shared: false, family_id: null }`.
@@ -281,7 +280,9 @@ data class CategoryDto(
     val family_id: Long? = null,
     val created_at: String? = null,
     /** Present on some list responses. */
-    val type: String? = null
+    val type: String? = null,
+    /** GET categories returns roots with their children nested one level deep. */
+    val subcategories: List<CategoryDto> = emptyList()
 )
 
 @Serializable
