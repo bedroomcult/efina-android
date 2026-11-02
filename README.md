@@ -33,7 +33,8 @@ implements it, and names what was deliberately skipped.
 ## API
 
 The client is matched to the real backend, not to an assumed one.
-`API_CONTRACT.md` records all 138 routes with method, path, body and response,
+`API_CONTRACT.md` records every route the client uses, with method, path, body
+and response; `PARITY.md` lists all 138 backend routes.
 and the ten defects in the previous API layer that made most screens fail.
 
 ```
@@ -44,7 +45,7 @@ Base URL is a `buildConfigField` in `app/build.gradle.kts`, set per build type.
 
 ## Build
 
-Requires JDK 17 and the Android SDK (compileSdk 36).
+Requires JDK 17 and the Android SDK (compileSdk 35).
 
 ```bash
 ./gradlew assembleDebug          # debug APK
