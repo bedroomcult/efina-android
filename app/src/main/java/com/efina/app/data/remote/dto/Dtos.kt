@@ -181,6 +181,21 @@ data class TransactionDto(
     val category_icon: String? = null
 )
 
+/**
+ * POST /api/transactions returns `{ transaction, gamification }`, not a bare
+ * transaction — functions/api/transactions/index.js returns that envelope at
+ * 201. PUT returns a flat row. The asymmetry is real, so it is modelled rather
+ * than papered over.
+ *
+ * `gamification` is kept as a generic map: the client does not act on it yet, and
+ * pinning its shape here would break the moment the backend adds a field.
+ */
+@Serializable
+data class CreatedTransactionDto(
+    val transaction: TransactionDto,
+    val gamification: Map<String, kotlinx.serialization.json.JsonElement> = emptyMap()
+)
+
 @Serializable
 data class CreateTransactionRequestDto(
     val account_id: Long,

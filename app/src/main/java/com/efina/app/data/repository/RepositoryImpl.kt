@@ -166,7 +166,9 @@ class TransactionRepositoryImpl @Inject constructor(
         }
 
     override suspend fun createTransaction(request: CreateTransactionRequest): Result<Transaction> =
-        api.createTransaction(request.toDto()).toResult().announce(DataEvents.Domain.TRANSACTIONS).map { it.toDomain() }
+        api.createTransaction(request.toDto()).toResult()
+            .announce(DataEvents.Domain.TRANSACTIONS)
+            .map { it.transaction.toDomain() }
 
     override suspend fun updateTransaction(id: Long, request: UpdateTransactionRequest): Result<Transaction> =
         api.updateTransaction(id, request.toDto()).toResult().announce(DataEvents.Domain.TRANSACTIONS).map { it.toDomain() }

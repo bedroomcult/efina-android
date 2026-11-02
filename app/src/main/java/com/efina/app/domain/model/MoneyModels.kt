@@ -166,12 +166,25 @@ data class Category(
     val isSystem: Boolean = false
 )
 
+/**
+ * `type` is required by POST /api/categories, which rejects a missing or invalid
+ * value with 400 ("Name and Type are required" / "Type must be either income or
+ * expense"). The categories table has no type column — the handler uses it only
+ * to validate and to decide budget applicability — but the client must still
+ * send it, so it is a required field here.
+ */
 data class CreateCategoryRequest(
     val name: String,
+    val type: CategoryType,
     val color: String,
     val icon: String? = null,
     val parentId: Long? = null
 )
+
+enum class CategoryType(val value: String, val label: String) {
+    INCOME("income", "Income"),
+    EXPENSE("expense", "Expense")
+}
 
 data class UpdateCategoryRequest(
     val name: String? = null,

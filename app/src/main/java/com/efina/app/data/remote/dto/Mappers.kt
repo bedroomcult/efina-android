@@ -231,6 +231,7 @@ fun UpdateTransactionRequest.toDto(): UpdateTransactionRequestDto = UpdateTransa
 
 fun CreateCategoryRequest.toDto(): CreateCategoryRequestDto = CreateCategoryRequestDto(
     name = name,
+    type = type.value,
     color = color,
     icon = icon,
     parent_id = parentId

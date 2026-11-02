@@ -22,7 +22,7 @@ import com.efina.app.ui.theme.LocalIsDarkTheme
 import com.efina.app.ui.theme.parseHexColor
 import com.efina.app.ui.theme.tonal
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
 @Composable
 fun CategoriesScreen(
     onNavigateBack: () -> Unit,
@@ -32,6 +32,7 @@ fun CategoriesScreen(
     val snackbar = remember { SnackbarHostState() }
     var creating by remember { mutableStateOf(false) }
     var newName by remember { mutableStateOf("") }
+    var newType by remember { mutableStateOf(com.efina.app.domain.model.CategoryType.EXPENSE) }
     var pendingDelete by remember { mutableStateOf<Category?>(null) }
 
     LaunchedEffect(state.error) {
@@ -80,19 +81,31 @@ fun CategoriesScreen(
             onDismissRequest = { creating = false; newName = "" },
             title = { Text("New category") },
             text = {
-                OutlinedTextField(
-                    value = newName,
-                    onValueChange = { newName = it },
-                    label = { Text("Name") },
-                    singleLine = true,
-                    shape = EfinaCorners.menu
-                )
+                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        com.efina.app.domain.model.CategoryType.entries.forEach { t ->
+                            FilterChip(
+                                selected = newType == t,
+                                onClick = { newType = t },
+                                label = { Text(t.label) },
+                                shape = EfinaCorners.pill
+                            )
+                        }
+                    }
+                    OutlinedTextField(
+                        value = newName,
+                        onValueChange = { newName = it },
+                        label = { Text("Name") },
+                        singleLine = true,
+                        shape = EfinaCorners.menu
+                    )
+                }
             },
             confirmButton = {
                 TextButton(
                     enabled = newName.isNotBlank() && !state.saving,
                     onClick = {
-                        viewModel.create(CreateCategoryRequest(newName.trim(), color = "#6366f1")) {
+                        viewModel.create(CreateCategoryRequest(newName.trim(), type = newType, color = "#6366f1")) {
                             creating = false
                             newName = ""
                         }

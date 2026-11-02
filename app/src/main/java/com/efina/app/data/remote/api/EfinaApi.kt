@@ -92,10 +92,11 @@ interface EfinaApi {
         @Query("include_subcategories") includeSubcategories: Boolean? = null
     ): Response<TransactionsPageDto>
 
+    /** Returns `{ transaction, gamification }` — see CreatedTransactionDto. */
     @POST("transactions")
     suspend fun createTransaction(
         @Body request: CreateTransactionRequestDto
-    ): Response<TransactionDto>
+    ): Response<CreatedTransactionDto>
 
     @PUT("transactions/{id}")
     suspend fun updateTransaction(
