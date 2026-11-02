@@ -9,10 +9,10 @@ plugins {
     kotlin("plugin.serialization")
 }
 
-// Release signing is driven by android/keystore.properties, which the release
+// Release signing is driven by keystore.properties at the repo root, which the release
 // workflow writes from repository secrets and deletes afterwards. Absent the file
 // (every push build, local dev) the release variant simply stays unsigned.
-val keystorePropsFile = rootProject.file("android/keystore.properties")
+val keystorePropsFile = rootProject.file("keystore.properties")
 val keystoreProps = Properties().apply {
     if (keystorePropsFile.exists()) keystorePropsFile.inputStream().use { load(it) }
 }

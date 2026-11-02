@@ -83,11 +83,10 @@ jobs:
             echo "keyAlias=${{ secrets.ANDROID_KEY_ALIAS }}"
             echo "keyPassword=${{ secrets.ANDROID_KEY_PASSWORD }}"
             echo "storeType=PKCS12"
-          } > android/keystore.properties
+          } > keystore.properties
           echo "signed=true" >> "$GITHUB_OUTPUT"
 
-      # app/build.gradle.kts reads android/keystore.properties when present and
-      # falls back to unsigned when it is not, so one task covers both cases.
+      # app/build.gradle.kts reads keystore.properties at the repo root when present.
       - name: Build release APK + AAB
         run: |
           ./gradlew assembleRelease bundleRelease --no-daemon --stacktrace \
@@ -128,4 +127,4 @@ jobs:
 
       - name: Remove signing material
         if: always()
-        run: rm -f android/keystore.properties "$RUNNER_TEMP/release.p12"
+        run: rm -f keystore.properties "$RUNNER_TEMP/release.p12"
