@@ -7,9 +7,9 @@ import androidx.compose.ui.graphics.toArgb
  * Palettes and semantic colours, following design.md sections 2.3 and 2.4.
  *
  * The reference app ships 14 palettes. Efina ships two — Orion (the default, per
- * design.md) and Mono — plus Material You on Android 12+. DESIGN-PARITY.md
- * records that reduction; the token names are identical so adding a palette is
- * one more object here.
+ * design.md) and Mono — plus Material You on Android 12+ (the `"dynamic"` theme
+ * value). DESIGN-PARITY.md records the reduction; the token names are identical, so
+ * adding a palette is one more object here.
  *
  * Money semantics are Efina-specific and don't exist in the design doc: income
  * and expense must be instantly distinguishable, so they get dedicated tokens

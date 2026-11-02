@@ -34,7 +34,7 @@ emphasis — do, and are followed.
 | §2.1 Theme modes: Light, Dusk, Dark, OLED | Light, Dark implemented. **Dusk skipped** (it exists to soften a specific dark; Orion dark is already lifted). **OLED skipped** (pure black is a preference, and Material You covers most of the intent). Mono added instead | `Theme.kt` |
 | §2.2 14 palettes | **2 of 14**: Orion (in `Color.kt`) and Mono (in `Theme.kt`) | `Color.kt`, `Theme.kt` |
 | §2.2 Custom palette maker | no | — |
-| §2.2 Material You dynamic color | **no — parameter exists but is never enabled.** `dynamicColor` defaults to false and no caller passes true, so dynamic colour is unreachable in the shipped app | `Theme.kt:196` |
+| §2.2 Material You dynamic color | **yes** — the `"dynamic"` theme value selects it; `EfinaAppRoot` passes `dynamicColor` through. Android 12+ only, as the API requires | `Theme.kt`, `EfinaAppRoot.kt:124` |
 | §2.3 Brand palette | yes, full primary/secondary/tertiary/surface/error set | `OrionLight`, `OrionDark` |
 | §2.4 Semantic + status colors | yes | `EfinaSemantic` (safe/caution/danger/warn/info) |
 | §2.5 `tonal()` helper | yes, same HSL construction: container lightness 0.88 light / 0.26 dark, foreground 0.30 / 0.82 | `tonal()` in `Color.kt` |
@@ -114,9 +114,9 @@ per content item, rationed emphasis, staggered entrances) are.
 
 | Section | Implemented | Deliberately skipped | Not possible |
 |---|---|---|---|
-| §1 language | 4 / 8 | layout modes, tablet/TV, Space Grotesk | — |
-| §2 color | 4 / 7 | Dusk, OLED, 12 palettes, palette maker; dynamic colour unwired | — |
-| §3 typography | 4 / 8 | custom fonts, bundled font; eyebrow style unused | — |
+| §1 language | 5 / 8 | layout modes, tablet/TV, the other 10 selectable families | — |
+| §2 color | 5 / 7 | Dusk, OLED, 12 palettes, palette maker | — |
+| §3 typography | 5 / 8 | custom fonts, the other 10 families; eyebrow style unused | — |
 | §4 shape | 6 / 10 | selected-row morph, top-only corners, media corners unused | `MaterialShapes`, `Morph` (internal) |
 | §5 motion | 3 / 15 | dock, mascot, haptics, wave indicators, springClick | `MotionScheme` (internal), `SharedTransitionLayout` (unavailable) |
 
@@ -132,7 +132,7 @@ silent omission rather than a documented skip:
 - **§7 App shell and navigation** — tab visibility rules, the 600dp rail breakpoint, width caps (1200/840/560), header anatomy, cleanup FAB, scroll-to-top.
 - **§9 Sheets and overlays** — `OrionSheet`, sheet-scoped toasts.
 - **§11 Key measurements** — not audited against the implementation.
-- **§12 Accessibility and input** — content descriptions, focus rings, focus trapping, contrast outline. **The largest gap: accessibility is not app-store-specific, so "not applicable" does not cover it and it has had no attention.**
+- **§12 Accessibility and input** — content descriptions are now present on every `Icon` (verified: zero `Icon(` blocks lacking one). Focus rings, focus trapping and the contrast outline remain unimplemented.
 - **§5 `Tilt` / `rememberTilt`** — no sensor code exists and the row was missing from the table.
 
 The two "not possible" rows were attempted and rejected by the compiler; the
