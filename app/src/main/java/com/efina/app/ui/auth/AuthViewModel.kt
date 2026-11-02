@@ -17,10 +17,17 @@ data class AuthUiState(
     val loading: Boolean = false,
     val user: User? = null,
     val error: String? = null,
-    /** null while the stored session is still being checked. */
-    val checked: Boolean = false
+    /** null while the stored session is being checked. */
+    val checked: Boolean = false,
+    /**
+     * True when a token is stored, regardless of whether the profile has loaded.
+     * The start destination keys off this, not off `user`: offline, the profile
+     * call fails but the session is still valid, and sending the user to the login
+     * form would discard a working token.
+     */
+    val hasSession: Boolean = false
 ) {
-    val isLoggedIn: Boolean get() = user != null
+    val isLoggedIn: Boolean get() = hasSession
 }
 
 @HiltViewModel
@@ -82,10 +89,10 @@ class AuthViewModel @Inject constructor(
             _state.value = AuthUiState(checked = true)
             return
         }
-        _state.value = AuthUiState(checked = true, loading = true)
+        _state.value = AuthUiState(checked = true, loading = true, hasSession = true)
         viewModelScope.launch {
             repository.refreshCurrentUser()
-                .onSuccess { _state.value = AuthUiState(checked = true, user = it) }
+                .onSuccess { _state.value = AuthUiState(checked = true, user = it, hasSession = true) }
                 .onFailure {
                     // A 401 already cleared the session via SessionEvents; anything
                     // else (offline, 500) must not destroy a valid token.
@@ -96,7 +103,14 @@ class AuthViewModel @Inject constructor(
                             error = "Session expired, please sign in again."
                         )
                     } else {
-                        _state.value = AuthUiState(checked = true, user = null, error = it.message)
+                        // Keep the session: the token is still good, only the
+                        // profile refresh failed. Screens will surface the error.
+                        _state.value = AuthUiState(
+                            checked = true,
+                            user = null,
+                            hasSession = true,
+                            error = it.message
+                        )
                     }
                 }
         }
@@ -107,7 +121,7 @@ class AuthViewModel @Inject constructor(
         _state.value = _state.value.copy(loading = true, error = null)
         viewModelScope.launch {
             repository.login(email, password)
-                .onSuccess { _state.value = AuthUiState(checked = true, user = it) }
+                .onSuccess { _state.value = AuthUiState(checked = true, user = it, hasSession = true) }
                 .onFailure { _state.value = _state.value.copy(loading = false, error = it.message) }
         }
     }
@@ -117,7 +131,7 @@ class AuthViewModel @Inject constructor(
         _state.value = _state.value.copy(loading = true, error = null)
         viewModelScope.launch {
             repository.register(name, email, password)
-                .onSuccess { _state.value = AuthUiState(checked = true, user = it) }
+                .onSuccess { _state.value = AuthUiState(checked = true, user = it, hasSession = true) }
                 .onFailure { _state.value = _state.value.copy(loading = false, error = it.message) }
         }
     }
