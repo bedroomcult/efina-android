@@ -118,7 +118,11 @@ fun EfinaAppRoot(
     val (themeName, darkTheme) = ThemePreference.current()
 
     if (!authState.checked) {
-        EfinaTheme(themeName = themeName, darkTheme = darkTheme) {
+        EfinaTheme(
+            themeName = themeName,
+            darkTheme = darkTheme,
+            dynamicColor = themeName == "dynamic"
+        ) {
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 CircularProgressIndicator()
             }

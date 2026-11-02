@@ -2,22 +2,36 @@ package com.efina.app.ui.theme
 
 import androidx.compose.material3.Typography
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
+import com.efina.app.R
 
 /**
  * Type scale from design.md section 3.
  *
- * The doc specifies Space Grotesk for the reference app and the standard M3 scale
- * plus "Emphasized" variants. Efina uses the platform default family (no font
- * download, no first-frame flash) and reproduces the scale and the emphatic
- * variants as named extras. DESIGN-PARITY.md records the font substitution.
+ * design.md specifies Space Grotesk as the default family. It is bundled as a
+ * variable-weight TTF in res/font rather than downloaded at runtime: the doc's
+ * download-once-into-filesDir scheme needs a network round trip before the first
+ * frame, which is exactly the flash it claims to avoid. A bundled font resolves
+ * synchronously and works offline, which is what the app actually wants.
+ *
+ * The doc's other ten selectable families and the custom upload are recorded as
+ * not implemented in DESIGN-PARITY.md.
  *
  * Money amounts use [tabular] so digits do not jitter when a balance updates.
  */
 
-private val Default = FontFamily.Default
+private val SpaceGrotesk = FontFamily(
+    Font(R.font.space_grotesk, FontWeight.Normal),
+    Font(R.font.space_grotesk, FontWeight.Medium),
+    Font(R.font.space_grotesk, FontWeight.SemiBold),
+    Font(R.font.space_grotesk, FontWeight.Bold)
+)
+
+private val Default = SpaceGrotesk
 
 val Typography = Typography(
     displayLarge = TextStyle(fontFamily = Default, fontWeight = FontWeight.Bold, fontSize = 57.sp, lineHeight = 64.sp, letterSpacing = (-0.25).sp),

@@ -179,6 +179,7 @@ object ThemePreference {
             "dark", "mono-dark" -> (if (stored == "mono-dark") "mono" else "orion") to true
             "light", "mono" -> (if (stored == "mono") "mono" else "orion") to false
             "system" -> "orion" to isSystemInDarkTheme()
+            "dynamic" -> "dynamic" to isSystemInDarkTheme()
             // Older/unknown values fall back to following the system.
             else -> "orion" to isSystemInDarkTheme()
         }
