@@ -556,7 +556,8 @@ data class XpHistoryEntryDto(
 data class LeaderboardPageDto(
     val leaderboard: List<LeaderboardEntryDto> = emptyList(),
     val total: Int = 0,
-    val currentUserRank: Int? = null
+    /** The backend sends `userRank`; `currentUserRank` never existed. */
+    @SerialName("userRank") val userRank: Int? = null
 )
 
 @Serializable
