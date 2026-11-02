@@ -281,8 +281,9 @@ class GoalRepositoryImpl @Inject constructor(
     override suspend fun deleteGoal(id: Long): Result<Unit> =
         safeCall { api.deleteGoal(id) }.announce(DataEvents.Domain.GOALS).map { }
 
-    override suspend fun addFunds(id: Long, amount: Double, accountId: Long): Result<Goal> =
-        safeCall { api.addGoalFunds(id, AddGoalFundsRequestDto(amount, accountId)) }.map { it.toDomain() }
+    override suspend fun addFunds(id: Long, amount: Double, accountId: Long): Result<Unit> =
+        safeCall { api.addGoalFunds(id, AddGoalFundsRequestDto(amount, accountId)) }
+            .announce(DataEvents.Domain.GOALS).map { }
 }
 
 @Singleton

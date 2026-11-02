@@ -77,7 +77,7 @@ interface GoalRepository {
     suspend fun createGoal(request: CreateGoalRequest): Result<Goal>
     suspend fun updateGoal(id: Long, request: UpdateGoalRequest): Result<Goal>
     suspend fun deleteGoal(id: Long): Result<Unit>
-    suspend fun addFunds(id: Long, amount: Double, accountId: Long): Result<Goal>
+    suspend fun addFunds(id: Long, amount: Double, accountId: Long): Result<Unit>
 }
 
 interface DebtRepository {

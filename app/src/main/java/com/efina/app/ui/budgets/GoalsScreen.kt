@@ -129,7 +129,13 @@ fun GoalsScreen(viewModel: GoalsViewModel = hiltViewModel()) {
                             g.id,
                             com.efina.app.domain.model.UpdateGoalRequest(
                                 name = editName.trim(),
-                                targetAmount = editTarget.toDouble()
+                                targetAmount = editTarget.toDouble(),
+                                // goals/[id].js binds these straight into the UPDATE;
+                                // leaving them null makes D1 reject the statement (500).
+                                startDate = g.startDate,
+                                targetDate = g.targetDate,
+                                periodType = g.periodType,
+                                linkedAccountId = g.linkedAccountId
                             )
                         ) { editing = null }
                     }
@@ -309,8 +315,11 @@ private fun CreateGoalDialog(
                         CreateGoalRequest(
                             name = name.trim(),
                             targetAmount = target.toDouble(),
-                            startDate = "${start}T00:00:00",
-                            targetDate = "${targetDate}T00:00:00"
+                            // goals/index.js validates /^\d{4}-\d{2}-\d{2}$/, so a
+                            // time component makes every create fail with 400.
+                            startDate = start,
+                            targetDate = targetDate,
+                            periodType = "monthly"
                         )
                     )
                 }

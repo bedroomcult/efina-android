@@ -187,7 +187,7 @@ interface EfinaApi {
     suspend fun addGoalFunds(
         @Path("id") id: Long,
         @Body request: AddGoalFundsRequestDto
-    ): Response<GoalDto>
+    ): Response<GoalFundsResultDto>
 
     // ============ Debts ============
 

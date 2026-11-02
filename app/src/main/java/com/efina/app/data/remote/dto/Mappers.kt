@@ -82,7 +82,8 @@ fun GoalDto.toDomain(): Goal = Goal(
     targetDate = target_date,
     periodType = period_type,
     linkedAccountId = linked_account_id,
-    icon = icon
+    icon = icon,
+    accountName = account_name
 )
 
 fun UserDto.toDomain(): User = User(
@@ -255,7 +256,6 @@ fun CreateBudgetRequest.toDto(): CreateBudgetRequestDto = CreateBudgetRequestDto
 )
 
 fun UpdateBudgetRequest.toDto(): UpdateBudgetRequestDto = UpdateBudgetRequestDto(
-    category_id = categoryId,
     amount = amount,
     period_type = periodType?.value
 )
@@ -274,7 +274,9 @@ fun UpdateGoalRequest.toDto(): UpdateGoalRequestDto = UpdateGoalRequestDto(
     name = name,
     target_amount = targetAmount,
     current_amount = currentAmount,
+    start_date = startDate,
     target_date = targetDate,
+    period_type = periodType,
     linked_account_id = linkedAccountId
 )
 

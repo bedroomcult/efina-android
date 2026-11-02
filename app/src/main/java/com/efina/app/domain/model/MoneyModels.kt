@@ -261,9 +261,10 @@ data class CreateGoalRequest(
     val name: String,
     val targetAmount: Double,
     val currentAmount: Double = 0.0,
-    val startDate: String? = null,
-    val targetDate: String? = null,
-    val periodType: String? = null,
+    /** Both dates are required, and the handler accepts only YYYY-MM-DD. */
+    val startDate: String,
+    val targetDate: String,
+    val periodType: String = "monthly",
     val linkedAccountId: Long? = null,
     val icon: String? = null
 )
@@ -272,7 +273,10 @@ data class UpdateGoalRequest(
     val name: String? = null,
     val targetAmount: Double? = null,
     val currentAmount: Double? = null,
+    /** Bound straight into the UPDATE: a null here makes D1 reject the row. */
+    val startDate: String? = null,
     val targetDate: String? = null,
+    val periodType: String? = null,
     val linkedAccountId: Long? = null,
     val icon: String? = null
 )

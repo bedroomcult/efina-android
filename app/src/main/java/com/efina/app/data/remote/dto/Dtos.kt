@@ -330,7 +330,7 @@ data class CreateBudgetRequestDto(
 
 @Serializable
 data class UpdateBudgetRequestDto(
-    val category_id: Long? = null,
+    /** budgets/[id].js PUT reads only these two; category_id is ignored server-side. */
     val amount: Double? = null,
     val period_type: String? = null
 )
@@ -369,7 +369,9 @@ data class GoalDto(
     val created_at: String? = null,
     val updated_at: String? = null,
     val start_date: String? = null,
-    val period_type: String? = null
+    val period_type: String? = null,
+    /** The backend joins accounts and returns this; it was being dropped. */
+    val account_name: String? = null
 )
 
 @Serializable
@@ -377,9 +379,10 @@ data class CreateGoalRequestDto(
     val name: String,
     val target_amount: Double,
     val current_amount: Double = 0.0,
-    val start_date: String? = null,
-    val target_date: String? = null,
-    val period_type: String? = null,
+    /** Required by the handler, and only YYYY-MM-DD is accepted. */
+    val start_date: String,
+    val target_date: String,
+    val period_type: String = "monthly",
     val linked_account_id: Long? = null
     // functions/api/goals/index.js destructures exactly these seven; it does not
     // read an icon, so sending one would be silently discarded.
@@ -390,8 +393,21 @@ data class UpdateGoalRequestDto(
     val name: String? = null,
     val target_amount: Double? = null,
     val current_amount: Double? = null,
+    /** goals/[id].js binds these straight into the UPDATE, so null means a D1 type error. */
+    val start_date: String? = null,
     val target_date: String? = null,
+    val period_type: String? = null,
     val linked_account_id: Long? = null
+)
+
+/** `POST goals/{id}/add-funds` returns a summary, not a goal row. */
+@Serializable
+data class GoalFundsResultDto(
+    val success: Boolean = false,
+    val current_amount: Double = 0.0,
+    val progress: Double = 0.0,
+    val status: String = "active",
+    val message: String? = null
 )
 
 @Serializable
