@@ -78,6 +78,7 @@ class StatsViewModel @Inject constructor(
                 .map { (name, list) -> CategorySlice(name, list.sumOf { it.amount }) }
                 .sortedByDescending { it.total }
 
+            val failed = txPage == null && transactions.isEmpty()
             _state.value = StatsUiState(
                 loading = false,
                 income = income,
@@ -86,7 +87,11 @@ class StatsViewModel @Inject constructor(
                 forecast = forecastJob.await().getOrNull(),
                 health = healthJob.await().getOrNull(),
                 achievements = achievementsJob.await().getOrDefault(emptyList()),
-                leaderboard = leaderboardJob.await().getOrDefault(emptyList())
+                leaderboard = leaderboardJob.await().getOrDefault(emptyList()),
+                error = if (failed) {
+                    txJob.await().exceptionOrNull()?.message
+                        ?: "Could not load statistics."
+                } else null
             )
         }
     }

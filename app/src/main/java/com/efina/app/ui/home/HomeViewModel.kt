@@ -82,6 +82,16 @@ class HomeViewModel @Inject constructor(
             val expense = transactions.filter { it.type == TransactionType.EXPENSE }
                 .sumOf { it.amount }
 
+            // Surface a total failure: previously every panel used
+            // getOrDefault(emptyList()), so offline rendered as zeros and "no
+            // transactions", indistinguishable from a real empty account.
+            val allFailed = accounts.isEmpty() && txPage == null &&
+                budgets.isEmpty() && goals.isEmpty()
+            val failureMessage = if (allFailed) {
+                (accountsJob.await().exceptionOrNull() ?: txJob.await().exceptionOrNull())
+                    ?.message ?: "Could not load your data. Pull to retry."
+            } else null
+
             _state.value = HomeUiState(
                 loading = false,
                 refreshing = false,
@@ -95,7 +105,7 @@ class HomeViewModel @Inject constructor(
                     monthlyExpense = expense
                 ),
                 healthScore = health,
-                error = null
+                error = failureMessage
             )
         }
     }

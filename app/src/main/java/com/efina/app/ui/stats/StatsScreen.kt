@@ -28,6 +28,13 @@ fun StatsScreen(viewModel: StatsViewModel = hiltViewModel()) {
             )
         }
     ) { padding ->
+        if (state.error != null) {
+            Column(Modifier.fillMaxSize().padding(16.dp)) {
+                ErrorState(message = state.error!!, onRetry = { viewModel.load() })
+            }
+            return@Scaffold
+        }
+
         if (state.loading) {
             LoadingList(rows = 6, modifier = Modifier.padding(padding).padding(16.dp))
             return@Scaffold

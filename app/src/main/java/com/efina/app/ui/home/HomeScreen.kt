@@ -51,6 +51,13 @@ fun HomeScreen(
             onRefresh = { viewModel.refresh() },
             modifier = Modifier.fillMaxSize().padding(padding)
         ) {
+            if (state.error != null) {
+                Column(Modifier.fillMaxSize().padding(16.dp)) {
+                    ErrorState(message = state.error!!, onRetry = { viewModel.load() })
+                }
+                return@PullToRefreshBox
+            }
+
             if (state.loading) {
                 Column(Modifier.padding(16.dp)) {
                     Box(

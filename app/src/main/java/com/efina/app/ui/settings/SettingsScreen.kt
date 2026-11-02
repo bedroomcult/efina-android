@@ -147,15 +147,6 @@ fun SettingsScreen(
                         last = true, onClick = onNavigateToFamily)
                 }
 
-                HorizontalDivider()
-
-                Text("Account", style = MaterialTheme.typography.titleMedium)
-                SegmentedColumn {
-                    SettingRow("Change password", "Update your sign-in password",
-                        first = true, onClick = { showPasswordDialog = true })
-                    SettingRow("Sign out", "End this session",
-                        last = true, destructive = true, onClick = { confirmLogout = true })
-                }
 
                 Text(
                     "efina ${com.efina.app.BuildConfig.VERSION_NAME}",
@@ -163,6 +154,17 @@ fun SettingsScreen(
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.fillMaxWidth().padding(top = 8.dp)
                 )
+            }
+
+            // Outside the settings != null guard on purpose: if GET /settings
+            // fails (offline), the user must still be able to sign out.
+            HorizontalDivider()
+            Text("Account", style = MaterialTheme.typography.titleMedium)
+            SegmentedColumn {
+                SettingRow("Change password", "Update your sign-in password",
+                    first = true, onClick = { showPasswordDialog = true })
+                SettingRow("Sign out", "End this session",
+                    last = true, destructive = true, onClick = { confirmLogout = true })
             }
         }
     }
