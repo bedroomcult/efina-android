@@ -25,9 +25,9 @@ Generated for the rebuild described in API_CONTRACT.md. Static checks:
 | Transactions list | `TransactionsScreen` | `GET transactions` | envelope + pagination + type filter + search |
 | Transaction create/edit/delete | `TransactionFormScreen` | `POST`, `PUT`, `DELETE transactions/{id}` | |
 | Transfers | `TransactionFormScreen` | `POST transfers` | routed to the transfer endpoint, not `type=transfer` |
-| Categories | `CategoriesScreen` | `GET/POST/PUT/DELETE categories` | type is chosen per category; the endpoint requires it |
-| Budgets | `BudgetsScreen` | `GET/POST/PUT/DELETE budgets` | progress, over-limit warning, create dialog |
-| Goals | `GoalsScreen` | `GET/POST/PUT/DELETE goals`, `POST goals/{id}/add-funds` | fund-from-account flow |
+| Categories | `CategoriesScreen` | `GET/POST/PUT/DELETE categories` | create, list, rename (tap a row), delete; type chosen per category |
+| Budgets | `BudgetsScreen` | `GET/POST/PUT/DELETE budgets` | progress, over-limit warning, create dialog, edit limit/period by tapping a card |
+| Goals | `GoalsScreen` | `GET/POST/PUT/DELETE goals`, `POST goals/{id}/add-funds` | fund-from-account, edit name/target by tapping a card |
 | Statistics | `StatsScreen` | `GET transactions` + `forecast` + `health-score` + `achievements` + `leaderboard` | derived client-side |
 | Settings | `SettingsScreen` | `GET/PUT settings`, `POST user/change-password` | currency, language, theme, password, sign out |
 | Family | `FamilyScreen` | `families`, `families/{id}`, `families/{id}/members`, `families/invites/accept` | invite code + 72h expiry surfaced |

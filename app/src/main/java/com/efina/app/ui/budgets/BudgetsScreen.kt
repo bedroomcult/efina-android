@@ -32,6 +32,9 @@ fun BudgetsScreen(
     val snackbar = remember { SnackbarHostState() }
     var creating by remember { mutableStateOf(false) }
     var pendingDelete by remember { mutableStateOf<Budget?>(null) }
+    var editing by remember { mutableStateOf<Budget?>(null) }
+    var editAmount by remember { mutableStateOf("") }
+    var editPeriod by remember { mutableStateOf(com.efina.app.domain.model.PeriodType.MONTHLY) }
 
     LaunchedEffect(state.error) {
         state.error?.let { snackbar.showSnackbar(it); viewModel.clearError() }
@@ -78,7 +81,12 @@ fun BudgetsScreen(
                     BudgetCard(
                         budget = budget,
                         modifier = revealModifier(index),
-                        onDelete = { pendingDelete = budget }
+                        onDelete = { pendingDelete = budget },
+                        onEdit = {
+                            editing = budget
+                            editAmount = budget.amount.toString()
+                            editPeriod = budget.periodType
+                        }
                     )
                 }
             }
@@ -93,6 +101,52 @@ fun BudgetsScreen(
             onCreate = { request ->
                 viewModel.create(request) { creating = false }
             }
+        )
+    }
+
+    editing?.let { b ->
+        AlertDialog(
+            onDismissRequest = { editing = null },
+            title = { Text("Edit budget") },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    OutlinedTextField(
+                        value = editAmount,
+                        onValueChange = { input ->
+                            if (input.isEmpty() || input.matches(Regex("^\\d{0,15}(\\.\\d{0,2})?$"))) editAmount = input
+                        },
+                        label = { Text("Limit") },
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                        shape = EfinaCorners.menu
+                    )
+                    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        com.efina.app.domain.model.PeriodType.entries.forEach { p ->
+                            FilterChip(
+                                selected = editPeriod == p,
+                                onClick = { editPeriod = p },
+                                label = { Text(p.label) },
+                                shape = EfinaCorners.pill
+                            )
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(
+                    enabled = !state.saving && (editAmount.toDoubleOrNull() ?: 0.0) > 0.0,
+                    onClick = {
+                        viewModel.update(
+                            b.id,
+                            com.efina.app.domain.model.UpdateBudgetRequest(
+                                amount = editAmount.toDouble(),
+                                periodType = editPeriod
+                            )
+                        ) { editing = null }
+                    }
+                ) { Text("Save") }
+            },
+            dismissButton = { TextButton(onClick = { editing = null }) { Text("Cancel") } }
         )
     }
 
@@ -155,7 +209,8 @@ private fun BudgetSummaryCard(total: Double, spent: Double, over: Int) {
 private fun BudgetCard(
     budget: Budget,
     modifier: Modifier = Modifier,
-    onDelete: () -> Unit
+    onDelete: () -> Unit,
+    onEdit: () -> Unit
 ) {
     val pct = budget.percentage / 100f
     val barColor = when {
@@ -167,7 +222,8 @@ private fun BudgetCard(
     Surface(
         modifier = modifier.fillMaxWidth(),
         shape = EfinaCorners.menu,
-        color = MaterialTheme.colorScheme.surfaceContainerLow
+        color = MaterialTheme.colorScheme.surfaceContainerLow,
+        onClick = onEdit
     ) {
         Column(Modifier.padding(16.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {

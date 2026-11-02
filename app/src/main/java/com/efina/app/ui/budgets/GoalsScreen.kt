@@ -33,6 +33,9 @@ fun GoalsScreen(viewModel: GoalsViewModel = hiltViewModel()) {
     var creating by remember { mutableStateOf(false) }
     var funding by remember { mutableStateOf<Goal?>(null) }
     var pendingDelete by remember { mutableStateOf<Goal?>(null) }
+    var editing by remember { mutableStateOf<Goal?>(null) }
+    var editName by remember { mutableStateOf("") }
+    var editTarget by remember { mutableStateOf("") }
 
     LaunchedEffect(state.error) {
         state.error?.let { snackbar.showSnackbar(it); viewModel.clearError() }
@@ -76,7 +79,12 @@ fun GoalsScreen(viewModel: GoalsViewModel = hiltViewModel()) {
                         goal = goal,
                         modifier = revealModifier(index),
                         onFund = { funding = goal },
-                        onDelete = { pendingDelete = goal }
+                        onDelete = { pendingDelete = goal },
+                        onEdit = {
+                            editing = goal
+                            editName = goal.name
+                            editTarget = goal.targetAmount.toString()
+                        }
                     )
                 }
             }
@@ -88,6 +96,46 @@ fun GoalsScreen(viewModel: GoalsViewModel = hiltViewModel()) {
             saving = state.saving,
             onDismiss = { creating = false },
             onCreate = { viewModel.create(it) { creating = false } }
+        )
+    }
+
+    editing?.let { g ->
+        AlertDialog(
+            onDismissRequest = { editing = null },
+            title = { Text("Edit goal") },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    OutlinedTextField(
+                        value = editName, onValueChange = { editName = it },
+                        label = { Text("Name") }, singleLine = true, shape = EfinaCorners.menu
+                    )
+                    OutlinedTextField(
+                        value = editTarget,
+                        onValueChange = {
+                            if (it.isEmpty() || it.matches(Regex("^\\d{0,15}(\\.\\d{0,2})?$"))) editTarget = it
+                        },
+                        label = { Text("Target amount") }, singleLine = true,
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                        shape = EfinaCorners.menu
+                    )
+                }
+            },
+            confirmButton = {
+                TextButton(
+                    enabled = !state.saving && editName.isNotBlank() &&
+                        (editTarget.toDoubleOrNull() ?: 0.0) > 0.0,
+                    onClick = {
+                        viewModel.update(
+                            g.id,
+                            com.efina.app.domain.model.UpdateGoalRequest(
+                                name = editName.trim(),
+                                targetAmount = editTarget.toDouble()
+                            )
+                        ) { editing = null }
+                    }
+                ) { Text("Save") }
+            },
+            dismissButton = { TextButton(onClick = { editing = null }) { Text("Cancel") } }
         )
     }
 
@@ -154,12 +202,14 @@ private fun GoalCard(
     goal: Goal,
     modifier: Modifier = Modifier,
     onFund: () -> Unit,
-    onDelete: () -> Unit
+    onDelete: () -> Unit,
+    onEdit: () -> Unit
 ) {
     Surface(
         modifier = modifier.fillMaxWidth(),
         shape = EfinaCorners.menu,
-        color = MaterialTheme.colorScheme.surfaceContainerLow
+        color = MaterialTheme.colorScheme.surfaceContainerLow,
+        onClick = onEdit
     ) {
         Column(Modifier.padding(16.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {

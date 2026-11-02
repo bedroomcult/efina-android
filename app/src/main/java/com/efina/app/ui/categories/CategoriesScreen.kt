@@ -34,6 +34,8 @@ fun CategoriesScreen(
     var newName by remember { mutableStateOf("") }
     var newType by remember { mutableStateOf(com.efina.app.domain.model.CategoryType.EXPENSE) }
     var pendingDelete by remember { mutableStateOf<Category?>(null) }
+    var editing by remember { mutableStateOf<Category?>(null) }
+    var editName by remember { mutableStateOf("") }
 
     LaunchedEffect(state.error) {
         state.error?.let { snackbar.showSnackbar(it); viewModel.clearError() }
@@ -69,7 +71,11 @@ fun CategoriesScreen(
                         category = category,
                         first = index == 0,
                         last = index == state.categories.lastIndex,
-                        onDelete = { pendingDelete = category }
+                        onDelete = { pendingDelete = category },
+                        onEdit = {
+                            editing = category
+                            editName = category.name
+                        }
                     )
                 }
             }
@@ -118,6 +124,33 @@ fun CategoriesScreen(
         )
     }
 
+    editing?.let { cat ->
+        AlertDialog(
+            onDismissRequest = { editing = null },
+            title = { Text("Rename category") },
+            text = {
+                OutlinedTextField(
+                    value = editName,
+                    onValueChange = { editName = it },
+                    label = { Text("Name") },
+                    singleLine = true,
+                    shape = EfinaCorners.menu
+                )
+            },
+            confirmButton = {
+                TextButton(
+                    enabled = editName.isNotBlank() && !state.saving,
+                    onClick = {
+                        viewModel.update(cat.id, com.efina.app.domain.model.UpdateCategoryRequest(name = editName.trim())) {
+                            editing = null
+                        }
+                    }
+                ) { Text("Save") }
+            },
+            dismissButton = { TextButton(onClick = { editing = null }) { Text("Cancel") } }
+        )
+    }
+
     pendingDelete?.let { cat ->
         AlertDialog(
             onDismissRequest = { pendingDelete = null },
@@ -140,7 +173,8 @@ private fun CategoryRow(
     category: Category,
     first: Boolean,
     last: Boolean,
-    onDelete: () -> Unit
+    onDelete: () -> Unit,
+    onEdit: () -> Unit
 ) {
     val dark = LocalIsDarkTheme.current
     val accent = parseHexColor(category.color, MaterialTheme.colorScheme.primary)
@@ -148,6 +182,7 @@ private fun CategoryRow(
 
     Surface(
         modifier = Modifier.fillMaxWidth(),
+        onClick = onEdit,
         color = MaterialTheme.colorScheme.surfaceContainerLow,
         shape = when {
             first && last -> EfinaCorners.groupOuter

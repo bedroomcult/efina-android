@@ -58,6 +58,15 @@ class GoalsViewModel @Inject constructor(
         }
     }
 
+    fun update(id: Long, request: UpdateGoalRequest, onDone: () -> Unit) {
+        _state.value = _state.value.copy(saving = true, error = null)
+        viewModelScope.launch {
+            repository.updateGoal(id, request)
+                .onSuccess { _state.value = _state.value.copy(saving = false); load(); onDone() }
+                .onFailure { _state.value = _state.value.copy(saving = false, error = it.message) }
+        }
+    }
+
     fun delete(id: Long) {
         viewModelScope.launch {
             repository.deleteGoal(id)
