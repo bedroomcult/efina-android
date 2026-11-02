@@ -80,6 +80,12 @@ jobs:
       - name: Assemble debug
         run: ./gradlew assembleDebug --no-daemon --stacktrace
 
+      # Release builds are only produced on a tag, so R8 shrinking and the
+      # serializer/Tink keep rules were never exercised on a normal push. A broken
+      # rule would surface only at release time, after the tag is public.
+      - name: Verify release build (R8 + keep rules, unsigned)
+        run: ./gradlew assembleRelease --no-daemon --stacktrace
+
       - name: Upload APK
         if: success()
         uses: actions/upload-artifact@v4
