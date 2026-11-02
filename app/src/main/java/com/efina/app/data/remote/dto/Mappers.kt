@@ -32,7 +32,7 @@ fun AccountDto.toDomain(): Account = Account(
 
 fun TransactionDto.toDomain(): Transaction = Transaction(
     id = id,
-    userId = user_id,
+    userId = userId,
     accountId = account_id,
     accountName = account_name,
     accountRole = AccountShareRole.from(account_role),
@@ -122,7 +122,7 @@ fun FamilyGroupDto.toDomain(): FamilyGroup = FamilyGroup(
 )
 
 fun FamilyMemberDto.toDomain(): FamilyMember = FamilyMember(
-    userId = user_id,
+    userId = userId,
     role = role,
     name = name ?: email?.substringBefore('@') ?: "Member",
     email = email,
@@ -130,7 +130,7 @@ fun FamilyMemberDto.toDomain(): FamilyMember = FamilyMember(
 )
 
 fun AccountMemberDto.toDomain(): AccountMember = AccountMember(
-    userId = user_id,
+    userId = userId,
     role = AccountShareRole.from(role) ?: AccountShareRole.MEMBER,
     name = name ?: email?.substringBefore('@') ?: "Member",
     email = email,
@@ -140,7 +140,7 @@ fun AccountMemberDto.toDomain(): AccountMember = AccountMember(
 fun NotificationDto.toDomain(): AppNotification = AppNotification(
     id = id,
     title = title,
-    body = body,
+    body = message,
     type = type,
     link = link,
     isRead = is_read == 1,
@@ -183,7 +183,7 @@ fun UserSettingsDto.toDomain(): UserSettings = UserSettings(
 
 fun LeaderboardEntryDto.toDomain(): LeaderboardEntry = LeaderboardEntry(
     rank = rank,
-    userId = user_id,
+    userId = userId,
     name = name ?: "User",
     xp = xp,
     level = level,

@@ -19,7 +19,8 @@ data class User(
 }
 
 data class Achievement(
-    val id: Long,
+    /** `achievements.id` is TEXT (e.g. "first_transaction"), not an integer. */
+    val id: String,
     val name: String,
     val description: String?,
     val icon: String?,
