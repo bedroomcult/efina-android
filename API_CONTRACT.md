@@ -46,9 +46,12 @@ Additional shape mismatches corrected:
 
 - `GET transactions` returns `{ transactions, total, limit, offset }`, not an array.
 - `accounts.type` values are `Cash | Bank | E-Wallet | Credit | Other`; the old
-  enum used `checking | savings | investment | credit | cash | other`.
-- `categories` has **no `type` column**. Income/expense is a property of the
-  transaction, not the category, so `Category` carries no type.
+  enum used `checking | savings | investment | credit | cash | other`. Only
+  `Cash`, `Bank` and `E-Wallet` are named in the backend
+  (`functions/api/health-score/index.js:209`); the rest are accepted as free text.
+- `categories` **has** a `type` column and `POST categories` requires it
+  (`functions/api/categories/index.js:172,193`). The seeded defaults are all
+  `expense`. `Category.type` is sent on create.
 - `POST transfers` returns `{ transfer_pair_id, from_transaction, to_transaction }`,
   not a single `Transaction`.
 

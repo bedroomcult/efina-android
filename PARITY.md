@@ -31,8 +31,8 @@ Generated for the rebuild described in API_CONTRACT.md. Static checks:
 | Statistics | `StatsScreen` | `GET transactions` + `forecast` + `health-score` + `achievements` + `leaderboard` | derived client-side |
 | Settings | `SettingsScreen` | `GET/PUT settings`, `POST user/change-password` | currency, language, theme, password, sign out |
 | Family | `FamilyScreen` | `families`, `families/{id}`, `families/{id}/members`, `families/invites/accept` | invite code + 72h expiry surfaced |
-| Debts | `DebtsScreen` | `GET/POST/PUT/DELETE debts`, `POST debts/{id}/pay` | borrow vs lend, payment books against an account |
-| Scheduled | `ScheduledScreen` | `GET/POST/DELETE scheduled` | recurring create + cancel |
+| Debts | `DebtsScreen` | `GET/POST/PUT/DELETE debts`, `POST debts/{id}/pay` | borrow vs lend, payment books against an account; row uses person_name/total_amount, list is wrapped in `{debts:[...]}` |
+| Scheduled | `ScheduledScreen` | `GET/POST/DELETE scheduled` | recurring create + cancel; send `next_run_date`, not `next_date` |
 
 ---
 
@@ -429,4 +429,9 @@ Each row names the reason so nothing is silently missing.
 | Profile page (gamification detail) | Stats shows the summary | level/XP/tier detail screen |
 | PWA install prompt | not applicable | — |
 | Offline cache | Room is declared but unused | see "Known gaps" |
+| Notifications screen | `GET notifications`, `PUT notifications/read-all` are in the API layer | a bell/inbox surface with unread state; the web app has `NotificationBell.jsx` |
+| Transaction split | `POST transactions/{id}/split` exists on the backend | a split editor and the resulting line items |
+| User data export | `GET user/export` exists on the backend | an export/share intent flow |
+| Heatmap | the web dashboard renders a contribution heatmap | a calendar heat grid on Stats |
+| Monthly stats | the web shows a month-over-month breakdown | a period summary screen |
 
