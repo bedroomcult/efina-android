@@ -32,13 +32,13 @@ emphasis — do, and are followed.
 | Item | Status | Where |
 |---|---|---|
 | §2.1 Theme modes: Light, Dusk, Dark, OLED | Light, Dark implemented. **Dusk skipped** (it exists to soften a specific dark; Orion dark is already lifted). **OLED skipped** (pure black is a preference, and Material You covers most of the intent). Mono added instead | `Theme.kt` |
-| §2.2 14 palettes | **2 of 14**: Orion (default) and Mono | `Color.kt` |
+| §2.2 14 palettes | **2 of 14**: Orion (in `Color.kt`) and Mono (in `Theme.kt`) | `Color.kt`, `Theme.kt` |
 | §2.2 Custom palette maker | no | — |
-| §2.2 Material You dynamic color | yes, Android 12+ | `Theme.kt` `dynamicColor` parameter |
+| §2.2 Material You dynamic color | **no — parameter exists but is never enabled.** `dynamicColor` defaults to false and no caller passes true, so dynamic colour is unreachable in the shipped app | `Theme.kt:196` |
 | §2.3 Brand palette | yes, full primary/secondary/tertiary/surface/error set | `OrionLight`, `OrionDark` |
 | §2.4 Semantic + status colors | yes | `EfinaSemantic` (safe/caution/danger/warn/info) |
 | §2.5 `tonal()` helper | yes, same HSL construction: container lightness 0.88 light / 0.26 dark, foreground 0.30 / 0.82 | `tonal()` in `Color.kt` |
-| §2.6 Install-state colors | **n/a** — app-store install states have no finance analogue. `MoneyColors` (income/expense/transfer) takes the same structural role: per-state container+foreground pairs that recolour with the theme | `Color.kt` |
+| §2.6 Install-state colors | **n/a** — no finance analogue. `MoneyColors` supplies income/expense/transfer pairs, but they are **hardcoded hex, light and dark only** and do not follow the palette | `Color.kt:99-116` |
 
 Deliberate divergence: `MoneyColors` is kept out of the M3 scheme on purpose. A
 palette swap must never turn an expense green.
@@ -52,8 +52,8 @@ palette swap must never turn an expense green.
 | Google Fonts TTF download + cache | **no** | — |
 | Standard M3 scale | yes, all 15 slots | `Typography` in `Type.kt` |
 | Expressive "Emphasized" variants | yes, as named extras (`displaySmallEmphasized`, `headlineSmallEmphasized`, `titleLargeEmphasized`, `titleMediumEmphasized`, `bodyMediumEmphasized`) | `EfinaType` |
-| Emphasized type rationed to headlines/selected/primary actions | yes — enforced by convention: only `SectionHeader`, screen titles and primary buttons use `EfinaType` | — |
-| Eyebrow labels: `labelLarge`, primary, uppercase, black weight | yes | `EfinaType.eyebrow` |
+| Emphasized type rationed to headlines/selected/primary actions | **no** — `AmountText` defaults to `EfinaType.amountSmall`, so every list amount is emphasised; `EfinaType` reaches 8 screens | `Components.kt:206` |
+| Eyebrow labels | **defined but unused** — zero call sites | `Type.kt:57` |
 | Monospace for code/package strings | yes, repurposed for account numbers | `EfinaType.code` |
 
 Why the font is not bundled: a downloaded variable font causes a first-frame
@@ -67,11 +67,11 @@ tracking, so money figures are visually distinct from body text.
 
 | Item | Status | Where |
 |---|---|---|
-| M3 corner scale 4/8/12/16/20/28/full | yes | `EfinaShapes` in `Shape.kt` |
+| M3 corner scale 4/8/12/16/20/28/full | **partial** — 4/8/12/16/28 present; no 20 slot and no full radius | `EfinaShapes`, `Shape.kt:17-23` |
 | Hero / carousel / deck cards: 28dp | yes | `EfinaCorners.hero` |
 | Dropdown menus: 20dp | yes | `EfinaCorners.menu` |
-| Screenshots: 16–20dp | yes | `EfinaCorners.media` |
-| Bottom action bar: 28dp top corners | not needed yet; `hero` covers it | — |
+| Screenshots: 16–20dp | **defined but unused** — zero call sites | `Shape.kt:35` |
+| Bottom action bar: 28dp top corners | **no** — no top-only shape exists; `hero` rounds all four corners | `Shape.kt:25` |
 | Search pill / chips / tags / badges: full | yes | `EfinaCorners.pill` |
 | App icon corner: 24% of size | yes, repurposed for account/category tiles | `EfinaCorners.icon(size)` |
 | Segmented lists: 20dp outer, 4dp inner, 2dp gaps | yes | `SegmentedColumn` / `SegmentedRow` in `Components.kt` |
@@ -89,7 +89,7 @@ building, not assumed — see `PARITY.md` §"Material 3 Expressive".
 | `MotionScheme.expressive()` | **no — API is internal.** Approximated with spring specs (damping 0.72, medium-low stiffness for spatial; no-bounce low stiffness for effects) | `EfinaMotion` in `Motion.kt` |
 | "Disable Animations" → instant scheme | yes, `EfinaMotion.enabled` returns `snap()` | `Motion.kt` |
 | "Calm" setting stopping ambient loops | no — no ambient loops exist | — |
-| `springClick`: 0.94 press scale, selection haptic | scale yes; **haptic no** (no haptics dependency) | `Modifier.springClick` |
+| `springClick`: 0.94 press scale | **not implemented** — every tappable row is `Surface(onClick)`, which keeps its InteractionSource private, so no press stream is observable. The helper was dead code and has been removed | — |
 | `reveal(index)`: 28dp rise + fade, 45 ms stagger, first 9 items | yes, all four numbers | `revealModifier` |
 | Shared-element icon transition | **no** — `SharedTransitionLayout` is newer than the pinned Compose | — |
 | Tab change: fade-through, 0.98 scale-in, scroll state per tab | partly — nav preserves state via `saveState`/`restoreState`; no scale-in | `EfinaAppRoot.kt` |
@@ -114,11 +114,26 @@ per content item, rationed emphasis, staggered entrances) are.
 
 | Section | Implemented | Deliberately skipped | Not possible |
 |---|---|---|---|
-| §1 language | 5 / 9 | layout modes, tablet/TV, font | — |
-| §2 color | 5 / 7 | Dusk, OLED, 12 palettes, palette maker | — |
-| §3 typography | 5 / 8 | custom fonts, font download | — |
-| §4 shape | 8 / 10 | selected-row morph | `MaterialShapes`, `Morph` (internal) |
-| §5 motion | 6 / 15 | dock, mascot, haptics, wave indicators | `MotionScheme` (internal), `SharedTransitionLayout` (unavailable) |
+| §1 language | 4 / 8 | layout modes, tablet/TV, Space Grotesk | — |
+| §2 color | 4 / 7 | Dusk, OLED, 12 palettes, palette maker; dynamic colour unwired | — |
+| §3 typography | 4 / 8 | custom fonts, bundled font; eyebrow style unused | — |
+| §4 shape | 6 / 10 | selected-row morph, top-only corners, media corners unused | `MaterialShapes`, `Morph` (internal) |
+| §5 motion | 3 / 15 | dock, mascot, haptics, wave indicators, springClick | `MotionScheme` (internal), `SharedTransitionLayout` (unavailable) |
+
+Corrected after an independent audit found 9 of 30 claim rows false. The earlier
+counters overstated §1 (8 rows, not 9), §4 and §5.
+
+## Not disclosed before the audit
+
+These design.md sections were absent from this document entirely, which is a
+silent omission rather than a documented skip:
+
+- **§6 Iconography and imagery** — Material Symbols mapping, Coil, avatars, brand mark.
+- **§7 App shell and navigation** — tab visibility rules, the 600dp rail breakpoint, width caps (1200/840/560), header anatomy, cleanup FAB, scroll-to-top.
+- **§9 Sheets and overlays** — `OrionSheet`, sheet-scoped toasts.
+- **§11 Key measurements** — not audited against the implementation.
+- **§12 Accessibility and input** — content descriptions, focus rings, focus trapping, contrast outline. **The largest gap: accessibility is not app-store-specific, so "not applicable" does not cover it and it has had no attention.**
+- **§5 `Tilt` / `rememberTilt`** — no sensor code exists and the row was missing from the table.
 
 The two "not possible" rows were attempted and rejected by the compiler; the exact
 error is in `PARITY.md`.

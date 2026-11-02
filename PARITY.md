@@ -305,9 +305,13 @@ compiler-verified impossibilities recorded.
    APK, which proves the code type-checks and links. No emulator or device has
    executed it, so runtime behaviour (navigation, network, layout) is unproven.
 
-6. **Compose BOM is 2024.02.00.** Several design.md APIs (Material 3 Expressive,
-   `MaterialShapes`, `SharedTransitionLayout`) require newer versions. Bumping the
-   BOM is the single highest-value follow-up for design fidelity.
+6. **Compose BOM is 2025.04.01 (material3 1.4.x).** An earlier version of this
+   note said 2024.02.00, which was wrong and contradicted DESIGN-PARITY.md.
+   The real constraint is not the BOM: `MotionScheme` and
+   `MaterialExpressiveTheme` are declared `internal` in material3 1.4.0 — the
+   newest STABLE release, since 1.5.0 is unreleased — so application code cannot
+   call them. Verified by compiling; the exact error is quoted below.
+   `SharedTransitionLayout` is unrelated and separately unavailable in this BOM.
 
 ---
 

@@ -4,8 +4,6 @@ import androidx.compose.animation.core.FiniteAnimationSpec
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.interaction.PressInteraction
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -13,7 +11,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.composed
 import androidx.compose.ui.graphics.graphicsLayer
 
 /**
@@ -34,6 +31,12 @@ object EfinaMotion {
     /** Global switch, set from the theme/settings layer. "Disable animations". */
     var enabled: Boolean = true
 
+    /**
+     * design.md asks for an instant MotionScheme where every spec is snap().
+     * A zero-duration tween is equivalent here and works for every call site;
+     * `snap()` only satisfies DurationBasedAnimationSpec, so using it directly
+     * would not type-check against the FiniteAnimationSpec return type.
+     */
     private fun <T> spec(expressive: FiniteAnimationSpec<T>): FiniteAnimationSpec<T> =
         if (enabled) expressive else tween(durationMillis = 0)
 
@@ -56,40 +59,16 @@ object EfinaMotion {
 }
 
 /**
- * `springClick` from design.md: scale to 0.94 while pressed, paired with a
- * selection haptic. Applied to cards and tiles.
+ * design.md's `springClick` (0.94 press scale) is NOT implemented.
+ *
+ * Every tappable surface in this app is `Surface(onClick = ...)`, which keeps its
+ * InteractionSource private and exposes no hook for an external modifier. The
+ * helper that existed here had zero call sites for exactly that reason, so it was
+ * deleted rather than left as dead code that reads like a feature.
+ *
+ * To add it later, the rows must move to `Modifier.clickable(interactionSource =
+ * remember { MutableInteractionSource() })` so the press stream can be observed.
  */
-fun Modifier.springClick(
-    interactionSource: MutableInteractionSource,
-    pressedScale: Float = 0.94f,
-    onPress: (() -> Unit)? = null
-): Modifier = composed {
-    var pressed by remember { mutableStateOf(false) }
-
-    LaunchedEffect(interactionSource) {
-        interactionSource.interactions.collect { interaction ->
-            when (interaction) {
-                is PressInteraction.Press -> {
-                    pressed = true
-                    onPress?.invoke()
-                }
-                is PressInteraction.Release,
-                is PressInteraction.Cancel -> pressed = false
-            }
-        }
-    }
-
-    val scale by androidx.compose.animation.core.animateFloatAsState(
-        targetValue = if (pressed && EfinaMotion.enabled) pressedScale else 1f,
-        animationSpec = EfinaMotion.spatial(),
-        label = "springClickScale"
-    )
-
-    graphicsLayer {
-        scaleX = scale
-        scaleY = scale
-    }
-}
 
 /**
  * `reveal(index)` from design.md: 28dp rise plus fade in, staggered.
