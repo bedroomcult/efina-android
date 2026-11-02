@@ -8,7 +8,6 @@ import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
 import kotlinx.serialization.json.JsonDecoder
 import kotlinx.serialization.json.JsonPrimitive
-import kotlinx.serialization.json.JsonUnquotedLiteral
 
 /**
  * Accepts `true`/`false`, `"true"`/`"false"`, and D1's `0`/`1`.
@@ -33,8 +32,6 @@ object LenientBoolean : KSerializer<Boolean> {
     }
 
     internal fun parse(primitive: JsonPrimitive): Boolean {
-        if (primitive is JsonUnquotedLiteral) return primitive.content != "0"
-        primitive.booleanOrNull?.let { return it }
         val raw = primitive.content
         return when {
             raw.equals("true", ignoreCase = true) -> true

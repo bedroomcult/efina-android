@@ -271,8 +271,7 @@ fun UpdateGoalRequest.toDto(): UpdateGoalRequestDto = UpdateGoalRequestDto(
     target_amount = targetAmount,
     current_amount = currentAmount,
     target_date = targetDate,
-    linked_account_id = linkedAccountId,
-    icon = icon
+    linked_account_id = linkedAccountId
 )
 
 fun TransactionFilter.toDto(): Map<String, String> {
