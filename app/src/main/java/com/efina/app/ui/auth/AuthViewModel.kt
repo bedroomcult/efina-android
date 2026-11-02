@@ -36,6 +36,7 @@ class AuthViewModel @Inject constructor(
         // before anyone is listening would be dropped (SharedFlow with replay=0
         // and no subscriber). Order here is load-bearing.
         observeUnauthorized()
+        observeCsrfExpiry()
         restore()
     }
 
@@ -43,6 +44,19 @@ class AuthViewModel @Inject constructor(
      * Any 401 from any repository logs out, mirroring the web client's
      * auth:unauthorized event. Collected for the whole ViewModel lifetime.
      */
+    /**
+     * CSRF tokens expire after 24 h while the session lives 7 days. Without a
+     * refresh every write starts returning 403 after a day and the only way back
+     * is to sign out. Refreshed on start and whenever the server rejects one.
+     */
+    private fun observeCsrfExpiry() {
+        viewModelScope.launch {
+            SessionEvents.csrfExpired.collect {
+                if (_state.value.isLoggedIn) repository.refreshCsrfToken()
+            }
+        }
+    }
+
     private fun observeUnauthorized() {
         viewModelScope.launch {
             SessionEvents.unauthorized.collect {

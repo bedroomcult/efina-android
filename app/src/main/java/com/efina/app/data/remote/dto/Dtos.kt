@@ -31,6 +31,9 @@ data class RegisterRequestDto(
 )
 
 @Serializable
+data class CsrfTokenDto(val csrfToken: String)
+
+@Serializable
 data class GoogleLoginRequestDto(
     val credential: String
 )

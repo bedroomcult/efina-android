@@ -39,6 +39,13 @@ interface EfinaApi {
     @GET("user")
     suspend fun getCurrentUser(): Response<UserDto>
 
+    /**
+     * Issues a fresh CSRF token. CSRF JWTs expire in 24 h while the session lives
+     * 7 days, so without this every write starts returning 403 after a day.
+     */
+    @GET("auth/csrf")
+    suspend fun refreshCsrfToken(): Response<CsrfTokenDto>
+
     @POST("auth/google")
     suspend fun loginWithGoogle(@Body request: GoogleLoginRequestDto): Response<AuthResponseDto>
 

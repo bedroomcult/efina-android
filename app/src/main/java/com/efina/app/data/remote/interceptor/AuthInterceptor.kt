@@ -88,6 +88,11 @@ class TokenManager @Inject constructor(
 
     fun getCsrfToken(): String? = store.getString(Constants.KEY_CSRF_TOKEN, null)
 
+    /** Called after a refresh, and whenever login returns a new token. */
+    fun saveCsrfToken(token: String) {
+        store.edit().putString(Constants.KEY_CSRF_TOKEN, token).apply()
+    }
+
     fun saveUserId(userId: Long) {
         store.edit().putLong(Constants.KEY_USER_ID, userId).apply()
     }

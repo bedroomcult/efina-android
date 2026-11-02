@@ -16,6 +16,28 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 /**
+ * Runs a network call and converts transport failures into a Result.
+ *
+ * `Response<T>.toResult()` can only map an HTTP response; Retrofit still THROWS
+ * IOException on connect failure, timeout or DNS error, and every caller was a
+ * bare `viewModelScope.launch { repo.x().onSuccess{} }`. An uncaught exception in
+ * viewModelScope reaches the default handler and kills the process, so a cold
+ * start with no network crashed the app instead of showing an error.
+ *
+ * Every repository method now goes through here, so no call site can forget.
+ */
+internal suspend fun <T> safeCall(block: suspend () -> Response<T>): Result<T> =
+    try {
+        block().toResult()
+    } catch (io: java.io.IOException) {
+        Result.failure(
+            ApiException(0, "No connection. Check your network and try again.")
+        )
+    } catch (e: Exception) {
+        Result.failure(ApiException(0, e.message ?: "Unexpected error"))
+    }
+
+/**
  * Turns a Retrofit response into a Result, surfacing the backend's `error` string.
  * Every handler in functions/api/ returns `{ error: "..." }` on failure, so the
  * user sees the real reason instead of "HTTP 400".
@@ -33,6 +55,11 @@ internal fun <T> Response<T>.toResult(): Result<T> {
         else Result.failure(ApiException(code(), "Empty response"))
     }
     val raw = errorBody()?.string().orEmpty()
+    // The middleware answers a stale CSRF token with 403 "CSRF token invalid".
+    // That is recoverable: refresh the token rather than making the user sign out.
+    if (code() == 403 && raw.contains("CSRF", ignoreCase = true)) {
+        SessionEvents.emitCsrfExpired()
+    }
     val message = runCatching {
         errorJson.decodeFromString<ErrorResponseDto>(raw).error
     }.getOrNull() ?: raw.takeIf { it.isNotBlank() } ?: "Request failed (${code()})"
@@ -61,14 +88,12 @@ class AuthRepositoryImpl @Inject constructor(
     private val userState = MutableStateFlow<User?>(null)
 
     override suspend fun login(email: String, password: String): Result<User> =
-        api.login(LoginRequestDto(email.trim(), password))
-            .toResult()
+        safeCall { api.login(LoginRequestDto(email.trim(), password)) }
             .onSuccess { persist(it) }
             .map { it.user.toDomain() }
 
     override suspend fun register(name: String, email: String, password: String): Result<User> =
-        api.register(RegisterRequestDto(email.trim(), password, name.ifBlank { null }))
-            .toResult()
+        safeCall { api.register(RegisterRequestDto(email.trim(), password, name.ifBlank { null })) }
             .onSuccess { persist(it) }
             .map { it.user.toDomain() }
 
@@ -85,8 +110,13 @@ class AuthRepositoryImpl @Inject constructor(
     override fun currentUserFlow(): Flow<User?> = userState.asStateFlow()
 
     override suspend fun refreshCurrentUser(): Result<User> =
-        api.getCurrentUser().toResult().map { it.toDomain() }
+        safeCall { api.getCurrentUser() }.map { it.toDomain() }
             .onSuccess { userState.value = it }
+
+    override suspend fun refreshCsrfToken(): Result<Unit> =
+        safeCall { api.refreshCsrfToken() }
+            .onSuccess { tokenManager.saveCsrfToken(it.csrfToken) }
+            .map { }
 
     override suspend fun logout(): Result<Unit> {
         // DELETE auth/sessions invalidates the session row; ignore failures so a
@@ -107,23 +137,22 @@ class AccountRepositoryImpl @Inject constructor(
 ) : AccountRepository {
 
     override suspend fun getAccounts(): Result<List<Account>> =
-        api.getAccounts().toResult().map { list -> list.map { it.toDomain() } }
+        safeCall { api.getAccounts() }.map { list -> list.map { it.toDomain() } }
 
     override suspend fun createAccount(request: CreateAccountRequest): Result<Account> =
-        api.createAccount(request.toDto()).toResult().announce(DataEvents.Domain.ACCOUNTS).map { it.toDomain() }
+        safeCall { api.createAccount(request.toDto()) }.announce(DataEvents.Domain.ACCOUNTS).map { it.toDomain() }
 
     override suspend fun updateAccount(id: Long, request: UpdateAccountRequest): Result<Account> =
-        api.updateAccount(id, request.toDto()).toResult().announce(DataEvents.Domain.ACCOUNTS).map { it.toDomain() }
+        safeCall { api.updateAccount(id, request.toDto()) }.announce(DataEvents.Domain.ACCOUNTS).map { it.toDomain() }
 
     override suspend fun deleteAccount(id: Long): Result<Unit> =
-        api.deleteAccount(id).toResult().announce(DataEvents.Domain.ACCOUNTS).map { }
+        safeCall { api.deleteAccount(id) }.announce(DataEvents.Domain.ACCOUNTS).map { }
 
     override suspend fun setShared(id: Long, familyId: Long?): Result<Account> =
-        api.updateAccountSharing(id, UpdateAccountSharingRequestDto(familyId))
-            .toResult().map { it.toDomain() }
+        safeCall { api.updateAccountSharing(id, UpdateAccountSharingRequestDto(familyId)) }.map { it.toDomain() }
 
     override suspend fun getMembers(id: Long): Result<AccountMembers> =
-        api.getAccountMembers(id).toResult().map { dto ->
+        safeCall { api.getAccountMembers(id) }.map { dto ->
             AccountMembers(
                 role = AccountShareRole.from(dto.account_role),
                 owner = dto.owner?.let {
@@ -134,10 +163,10 @@ class AccountRepositoryImpl @Inject constructor(
         }
 
     override suspend fun shareWith(id: Long, userId: Long, role: AccountShareRole): Result<Unit> =
-        api.shareAccount(id, ShareAccountRequestDto(userId, role.value)).toResult().map { }
+        safeCall { api.shareAccount(id, ShareAccountRequestDto(userId, role.value)) }.map { }
 
     override suspend fun removeMember(id: Long, userId: Long): Result<Unit> =
-        api.unshareAccount(id, RemoveMemberRequestDto(userId)).toResult().map { }
+        safeCall { api.unshareAccount(id, RemoveMemberRequestDto(userId)) }.map { }
 }
 
 @Singleton
@@ -146,7 +175,7 @@ class TransactionRepositoryImpl @Inject constructor(
 ) : TransactionRepository {
 
     override suspend fun getTransactions(filter: TransactionFilter): Result<TransactionPage> =
-        api.getTransactions(
+        safeCall { api.getTransactions(
             limit = filter.limit,
             offset = filter.offset,
             type = filter.type?.value,
@@ -156,7 +185,7 @@ class TransactionRepositoryImpl @Inject constructor(
             endDate = filter.endDate,
             search = filter.search?.takeIf { it.isNotBlank() },
             includeSubcategories = filter.includeSubcategories
-        ).toResult().map { page ->
+        ) }.map { page ->
             TransactionPage(
                 transactions = page.transactions.map { it.toDomain() },
                 total = page.total,
@@ -166,18 +195,18 @@ class TransactionRepositoryImpl @Inject constructor(
         }
 
     override suspend fun createTransaction(request: CreateTransactionRequest): Result<Transaction> =
-        api.createTransaction(request.toDto()).toResult()
+        safeCall { api.createTransaction(request.toDto()) }
             .announce(DataEvents.Domain.TRANSACTIONS)
             .map { it.transaction.toDomain() }
 
     override suspend fun updateTransaction(id: Long, request: UpdateTransactionRequest): Result<Transaction> =
-        api.updateTransaction(id, request.toDto()).toResult().announce(DataEvents.Domain.TRANSACTIONS).map { it.toDomain() }
+        safeCall { api.updateTransaction(id, request.toDto()) }.announce(DataEvents.Domain.TRANSACTIONS).map { it.toDomain() }
 
     override suspend fun deleteTransaction(id: Long): Result<Unit> =
-        api.deleteTransaction(id).toResult().announce(DataEvents.Domain.TRANSACTIONS).map { }
+        safeCall { api.deleteTransaction(id) }.announce(DataEvents.Domain.TRANSACTIONS).map { }
 
     override suspend fun createTransfer(request: CreateTransferRequest): Result<Unit> =
-        api.createTransfer(
+        safeCall { api.createTransfer(
             CreateTransferRequestDto(
                 from_account_id = request.fromAccountId,
                 to_account_id = request.toAccountId,
@@ -185,7 +214,7 @@ class TransactionRepositoryImpl @Inject constructor(
                 date = request.date,
                 description = request.description
             )
-        ).toResult().map { }
+        ) }.map { }
 }
 
 @Singleton
@@ -194,16 +223,16 @@ class CategoryRepositoryImpl @Inject constructor(
 ) : CategoryRepository {
 
     override suspend fun getCategories(): Result<List<Category>> =
-        api.getCategories().toResult().map { list -> list.map { it.toDomain() } }
+        safeCall { api.getCategories() }.map { list -> list.map { it.toDomain() } }
 
     override suspend fun createCategory(request: CreateCategoryRequest): Result<Category> =
-        api.createCategory(request.toDto()).toResult().announce(DataEvents.Domain.CATEGORIES).map { it.toDomain() }
+        safeCall { api.createCategory(request.toDto()) }.announce(DataEvents.Domain.CATEGORIES).map { it.toDomain() }
 
     override suspend fun updateCategory(id: Long, request: UpdateCategoryRequest): Result<Category> =
-        api.updateCategory(id, request.toDto()).toResult().announce(DataEvents.Domain.CATEGORIES).map { it.toDomain() }
+        safeCall { api.updateCategory(id, request.toDto()) }.announce(DataEvents.Domain.CATEGORIES).map { it.toDomain() }
 
     override suspend fun deleteCategory(id: Long): Result<Unit> =
-        api.deleteCategory(id).toResult().announce(DataEvents.Domain.CATEGORIES).map { }
+        safeCall { api.deleteCategory(id) }.announce(DataEvents.Domain.CATEGORIES).map { }
 }
 
 @Singleton
@@ -212,16 +241,16 @@ class BudgetRepositoryImpl @Inject constructor(
 ) : BudgetRepository {
 
     override suspend fun getBudgets(): Result<List<Budget>> =
-        api.getBudgets().toResult().map { list -> list.map { it.toDomain() } }
+        safeCall { api.getBudgets() }.map { list -> list.map { it.toDomain() } }
 
     override suspend fun createBudget(request: CreateBudgetRequest): Result<Budget> =
-        api.createBudget(request.toDto()).toResult().announce(DataEvents.Domain.BUDGETS).map { it.toDomain() }
+        safeCall { api.createBudget(request.toDto()) }.announce(DataEvents.Domain.BUDGETS).map { it.toDomain() }
 
     override suspend fun updateBudget(id: Long, request: UpdateBudgetRequest): Result<Budget> =
-        api.updateBudget(id, request.toDto()).toResult().announce(DataEvents.Domain.BUDGETS).map { it.toDomain() }
+        safeCall { api.updateBudget(id, request.toDto()) }.announce(DataEvents.Domain.BUDGETS).map { it.toDomain() }
 
     override suspend fun deleteBudget(id: Long): Result<Unit> =
-        api.deleteBudget(id).toResult().announce(DataEvents.Domain.BUDGETS).map { }
+        safeCall { api.deleteBudget(id) }.announce(DataEvents.Domain.BUDGETS).map { }
 }
 
 @Singleton
@@ -230,20 +259,19 @@ class GoalRepositoryImpl @Inject constructor(
 ) : GoalRepository {
 
     override suspend fun getGoals(): Result<List<Goal>> =
-        api.getGoals().toResult().map { list -> list.map { it.toDomain() } }
+        safeCall { api.getGoals() }.map { list -> list.map { it.toDomain() } }
 
     override suspend fun createGoal(request: CreateGoalRequest): Result<Goal> =
-        api.createGoal(request.toDto()).toResult().announce(DataEvents.Domain.GOALS).map { it.toDomain() }
+        safeCall { api.createGoal(request.toDto()) }.announce(DataEvents.Domain.GOALS).map { it.toDomain() }
 
     override suspend fun updateGoal(id: Long, request: UpdateGoalRequest): Result<Goal> =
-        api.updateGoal(id, request.toDto()).toResult().announce(DataEvents.Domain.GOALS).map { it.toDomain() }
+        safeCall { api.updateGoal(id, request.toDto()) }.announce(DataEvents.Domain.GOALS).map { it.toDomain() }
 
     override suspend fun deleteGoal(id: Long): Result<Unit> =
-        api.deleteGoal(id).toResult().announce(DataEvents.Domain.GOALS).map { }
+        safeCall { api.deleteGoal(id) }.announce(DataEvents.Domain.GOALS).map { }
 
     override suspend fun addFunds(id: Long, amount: Double, accountId: Long): Result<Goal> =
-        api.addGoalFunds(id, AddGoalFundsRequestDto(amount, accountId))
-            .toResult().map { it.toDomain() }
+        safeCall { api.addGoalFunds(id, AddGoalFundsRequestDto(amount, accountId)) }.map { it.toDomain() }
 }
 
 @Singleton
@@ -252,10 +280,10 @@ class DebtRepositoryImpl @Inject constructor(
 ) : DebtRepository {
 
     override suspend fun getDebts(): Result<List<Debt>> =
-        api.getDebts().toResult().map { list -> list.map { it.toDomain() } }
+        safeCall { api.getDebts() }.map { list -> list.map { it.toDomain() } }
 
     override suspend fun createDebt(request: CreateDebtRequest): Result<Debt> =
-        api.createDebt(
+        safeCall { api.createDebt(
             CreateDebtRequestDto(
                 name = request.name,
                 amount = request.amount,
@@ -263,10 +291,10 @@ class DebtRepositoryImpl @Inject constructor(
                 type = request.type.value,
                 notes = request.notes
             )
-        ).toResult().map { it.toDomain() }
+        ) }.map { it.toDomain() }
 
     override suspend fun updateDebt(id: Long, request: UpdateDebtRequest): Result<Debt> =
-        api.updateDebt(
+        safeCall { api.updateDebt(
             id,
             UpdateDebtRequestDto(
                 name = request.name,
@@ -275,13 +303,13 @@ class DebtRepositoryImpl @Inject constructor(
                 type = request.type?.value,
                 notes = request.notes
             )
-        ).toResult().map { it.toDomain() }
+        ) }.map { it.toDomain() }
 
     override suspend fun deleteDebt(id: Long): Result<Unit> =
-        api.deleteDebt(id).toResult().map { }
+        safeCall { api.deleteDebt(id) }.map { }
 
     override suspend fun payDebt(id: Long, request: PayDebtRequest): Result<Debt> =
-        api.payDebt(
+        safeCall { api.payDebt(
             id,
             PayDebtRequestDto(
                 amount = request.amount,
@@ -289,7 +317,7 @@ class DebtRepositoryImpl @Inject constructor(
                 create_transaction = request.createTransaction,
                 date = request.date
             )
-        ).toResult().map { it.toDomain() }
+        ) }.map { it.toDomain() }
 }
 
 @Singleton
@@ -298,10 +326,10 @@ class ScheduledRepositoryImpl @Inject constructor(
 ) : ScheduledRepository {
 
     override suspend fun getScheduled(): Result<List<ScheduledTransaction>> =
-        api.getScheduled().toResult().map { list -> list.map { it.toDomain() } }
+        safeCall { api.getScheduled() }.map { list -> list.map { it.toDomain() } }
 
     override suspend fun createScheduled(request: CreateScheduledRequest): Result<ScheduledTransaction> =
-        api.createScheduled(
+        safeCall { api.createScheduled(
             CreateScheduledRequestDto(
                 account_id = request.accountId,
                 category_id = request.categoryId,
@@ -311,10 +339,10 @@ class ScheduledRepositoryImpl @Inject constructor(
                 frequency = request.frequency,
                 next_date = request.nextDate
             )
-        ).toResult().map { it.toDomain() }
+        ) }.map { it.toDomain() }
 
     override suspend fun deleteScheduled(id: Long): Result<Unit> =
-        api.deleteScheduled(id).toResult().map { }
+        safeCall { api.deleteScheduled(id) }.map { }
 }
 
 @Singleton
@@ -323,10 +351,10 @@ class SettingsRepositoryImpl @Inject constructor(
 ) : SettingsRepository {
 
     override suspend fun getSettings(): Result<UserSettings> =
-        api.getSettings().toResult().map { it.toDomain() }
+        safeCall { api.getSettings() }.map { it.toDomain() }
 
     override suspend fun updateSettings(request: UpdateSettingsRequest): Result<UserSettings> =
-        api.updateSettings(
+        safeCall { api.updateSettings(
             UpdateSettingsRequestDto(
                 currency = request.currency,
                 date_format = request.dateFormat,
@@ -336,10 +364,10 @@ class SettingsRepositoryImpl @Inject constructor(
                 animation_mode = request.animationMode,
                 animation_level = request.animationLevel
             )
-        ).toResult().map { it.toDomain() }
+        ) }.map { it.toDomain() }
 
     override suspend fun changePassword(current: String, next: String): Result<Unit> =
-        api.changePassword(ChangePasswordRequestDto(current, next)).toResult().map { }
+        safeCall { api.changePassword(ChangePasswordRequestDto(current, next)) }.map { }
 }
 
 @Singleton
@@ -348,14 +376,14 @@ class InsightsRepositoryImpl @Inject constructor(
 ) : InsightsRepository {
 
     override suspend fun getAchievements(): Result<List<Achievement>> =
-        api.getAchievements().toResult().map { list -> list.map { it.toDomain() } }
+        safeCall { api.getAchievements() }.map { list -> list.map { it.toDomain() } }
 
     override suspend fun getLeaderboard(limit: Int): Result<List<LeaderboardEntry>> =
-        api.getLeaderboard(limit = limit).toResult()
+        safeCall { api.getLeaderboard(limit = limit) }
             .map { page -> page.leaderboard.map { it.toDomain() } }
 
     override suspend fun getForecast(): Result<Forecast> =
-        api.getForecast().toResult().map { dto ->
+        safeCall { api.getForecast() }.map { dto ->
             Forecast(
                 points = dto.forecast.map {
                     ForecastPoint(it.month, it.predicted_expense.takeIf { p -> p != 0.0 }
@@ -367,7 +395,7 @@ class InsightsRepositoryImpl @Inject constructor(
         }
 
     override suspend fun getHealthScore(): Result<HealthScore> =
-        api.getHealthScore().toResult().map { dto ->
+        safeCall { api.getHealthScore() }.map { dto ->
             HealthScore(
                 score = dto.score,
                 factors = dto.factors.mapValues { (_, f) ->
@@ -383,23 +411,22 @@ class FamilyRepositoryImpl @Inject constructor(
 ) : FamilyRepository {
 
     override suspend fun getFamilies(): Result<List<FamilyGroup>> =
-        api.getFamilies().toResult().map { list -> list.map { it.toDomain() } }
+        safeCall { api.getFamilies() }.map { list -> list.map { it.toDomain() } }
 
     override suspend fun createFamily(name: String): Result<FamilyGroup> =
-        api.createFamily(CreateFamilyRequestDto(name)).toResult().map { it.toDomain() }
+        safeCall { api.createFamily(CreateFamilyRequestDto(name)) }.map { it.toDomain() }
 
     override suspend fun getFamily(id: Long): Result<FamilyGroup> =
-        api.getFamily(id).toResult().map { it.toDomain() }
+        safeCall { api.getFamily(id) }.map { it.toDomain() }
 
     override suspend fun createInvite(id: Long): Result<String> =
-        api.inviteFamilyMember(id, InviteFamilyMemberRequestDto()).toResult().map { it.code }
+        safeCall { api.inviteFamilyMember(id, InviteFamilyMemberRequestDto()) }.map { it.code }
 
     override suspend fun acceptInvite(code: String): Result<FamilyGroup> =
-        api.acceptFamilyInvite(AcceptInviteRequestDto(code.trim().uppercase()))
-            .toResult().map { it.toDomain() }
+        safeCall { api.acceptFamilyInvite(AcceptInviteRequestDto(code.trim().uppercase())) }.map { it.toDomain() }
 
     override suspend fun removeMember(id: Long, userId: Long): Result<Unit> =
-        api.removeFamilyMember(id, RemoveMemberRequestDto(userId)).toResult().map { }
+        safeCall { api.removeFamilyMember(id, RemoveMemberRequestDto(userId)) }.map { }
 }
 
 @Singleton
@@ -408,12 +435,12 @@ class ChatRepositoryImpl @Inject constructor(
 ) : ChatRepository {
 
     override suspend fun send(message: String, history: List<ChatMessage>): Result<ChatResponse> =
-        api.chat(
+        safeCall { api.chat(
             ChatRequestDto(
                 message = message,
                 history = history.map { ChatMessageDto(it.role, it.content) }
             )
-        ).toResult().map { dto ->
+        ) }.map { dto ->
             ChatResponse(
                 text = dto.response.ifBlank { dto.reply.orEmpty() },
                 actions = dto.actions.map { SuggestedAction(it.type, it.data) }

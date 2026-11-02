@@ -14,6 +14,12 @@ interface AuthRepository {
     /** Restores the session from encrypted storage without a network call. */
     fun currentUserFlow(): Flow<User?>
     suspend fun refreshCurrentUser(): Result<User>
+
+    /**
+     * Re-issues the CSRF token. Required because CSRF JWTs expire in 24 h while
+     * the session lasts 7 days; without it every write 403s after a day.
+     */
+    suspend fun refreshCsrfToken(): Result<Unit>
     suspend fun logout(): Result<Unit>
     fun isLoggedIn(): Boolean
 }

@@ -35,4 +35,13 @@ object SessionEvents {
     fun emitUnauthorized() {
         _unauthorized.tryEmit(Unit)
     }
+
+    private val _csrfExpired = MutableSharedFlow<Unit>(replay = 1, extraBufferCapacity = 1)
+
+    /** A 403 the client believes is a stale CSRF token. Handled by AuthViewModel. */
+    val csrfExpired: SharedFlow<Unit> = _csrfExpired.asSharedFlow()
+
+    fun emitCsrfExpired() {
+        _csrfExpired.tryEmit(Unit)
+    }
 }
