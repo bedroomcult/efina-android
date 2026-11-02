@@ -25,7 +25,7 @@ Generated for the rebuild described in API_CONTRACT.md. Static checks:
 | Transactions list | `TransactionsScreen` | `GET transactions` | envelope + pagination + type filter + search |
 | Transaction create/edit/delete | `TransactionFormScreen` | `POST`, `PUT`, `DELETE transactions/{id}` | |
 | Transfers | `TransactionFormScreen` | `POST transfers` | routed to the transfer endpoint, not `type=transfer` |
-| Categories | `CategoriesScreen` | `GET/POST/PUT/DELETE categories` | no income/expense typing, matching the schema |
+| Categories | `CategoriesScreen` | `GET/POST/PUT/DELETE categories` | type is chosen per category; the endpoint requires it |
 | Budgets | `BudgetsScreen` | `GET/POST/PUT/DELETE budgets` | progress, over-limit warning, create dialog |
 | Goals | `GoalsScreen` | `GET/POST/PUT/DELETE goals`, `POST goals/{id}/add-funds` | fund-from-account flow |
 | Statistics | `StatsScreen` | `GET transactions` + `forecast` + `health-score` + `achievements` + `leaderboard` | derived client-side |
@@ -55,7 +55,7 @@ Six wrong verbs and three nonexistent paths, each found by reading
 | 9 | `PATCH settings` | `PUT settings` | `functions/api/settings/index.js` |
 | 10 | `GET ai/xp-summary` | **no such route** — XP history is `gamification/history` | `functions/api/gamification/history.js` |
 
-Rows 1–3 and 10 are the nonexistent paths; rows 4–9 are the six wrong verbs.
+Rows 1–3 and 10 are the four nonexistent paths; rows 4–9 are the six wrong verbs.
 `API_BASE_URL` also pointed at `efina.11112021.xyz` (curl returns 000) instead of
 `efina.himz.my.id` (curl returns 200).
 
@@ -281,8 +281,7 @@ All 138 routes, extracted from the backend source by tools/check-api-contract.mj
 ## Design parity
 
 See **DESIGN-PARITY.md** — a section-by-section table mapping design.md to the
-Kotlin file implementing it, with every omission named and the two
-compiler-verified impossibilities recorded.
+Kotlin file implementing it, with every omission named and the two impossibilities recorded.
 
 ## Known gaps and risks
 
@@ -321,7 +320,7 @@ compiler-verified impossibilities recorded.
 |---|---|---|
 | API contract | `node tools/check-api-contract.mjs --strict` | exit 0 |
 | Kotlin static | `node tools/check-kotlin.mjs --strict` | exit 0 |
-| Compile | CI `./gradlew assembleDebug` | **success** — 22.1 MB debug APK, green across three runs |
+| Compile | CI `./gradlew assembleDebug` | **success** — assembleDebug passes on every push |
 | Signed release | `.github/workflows/release.yml` on a `v*` tag | not yet exercised; needs `ANDROID_KEYSTORE_*` secrets |
 
 The static checks cover bracket balance, project-import resolution, and absence of

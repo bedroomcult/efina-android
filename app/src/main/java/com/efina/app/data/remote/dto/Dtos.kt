@@ -77,8 +77,9 @@ data class UpdateUserRequestDto(
 
 @Serializable
 data class ChangePasswordRequestDto(
-    val current_password: String,
-    val new_password: String
+    /** functions/api/user/change-password.js destructures oldPassword/newPassword. */
+    val oldPassword: String,
+    val newPassword: String
 )
 
 // ─────────────────────────── Accounts ───────────────────────────

@@ -12,7 +12,7 @@ Cloudflare Pages API — no separate backend.
 | | |
 |---|---|
 | CI | [![Build](https://github.com/bedroomcult/efina-android/actions/workflows/build.yml/badge.svg)](https://github.com/bedroomcult/efina-android/actions/workflows/build.yml) |
-| Compiles | yes — debug and signed release both build in CI |
+| Compiles | yes — debug builds on every push; signed release builds on a v* tag |
 | Has it been run? | **no** — verified by compiler only, never executed on a device |
 
 That last row matters more than the others. Everything below is proven by
@@ -100,4 +100,5 @@ app/src/main/java/com/efina/app/
 
 ## License
 
-MIT
+No license file is present. Until one is added, the code is
+"all rights reserved" by default.

@@ -1,9 +1,9 @@
 # API Contract — efina-android
 
 Every route the Android client calls, verified against the backend source by
-`tools/check-api-contract.mjs`. CI runs it in `--strict` mode against a fresh
-clone of `bedroomcult/efina`, so a mistake here fails the build rather than the
-app.
+`tools/check-api-contract.mjs`. CI runs it in `--strict` mode against a committed snapshot of the backend routes
+(`tools/backend-routes.json`), because the backend repository is private and
+cannot be cloned by CI. Regenerate the snapshot with `--emit-manifest`.
 
 ```
 node tools/check-api-contract.mjs --strict   # exit 0
@@ -75,7 +75,7 @@ call sends `Authorization: Bearer` **and** `X-CSRF-Token` on state-changing verb
 |---|---|---|
 | GET | `user` | full profile; replaces the nonexistent `auth/me` |
 | PUT | `user` | `{name?, force_onboarding?}` |
-| POST | `user/change-password` | `{current_password, new_password}` — **POST**, not PUT |
+| POST | `user/change-password` | `{oldPassword, newPassword}` — **POST**, not PUT |
 | GET | `settings` | settings row |
 | PUT | `settings` | partial body, COALESCEd server-side |
 | GET | `user/heatmap` | contribution heatmap |

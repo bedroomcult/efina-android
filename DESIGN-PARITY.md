@@ -6,7 +6,7 @@ file that implements it, or to the reason it is not implemented.
 Referenced from `Color.kt`, `Type.kt`, `Theme.kt` and `Motion.kt`, which each cite
 this file for the parts they deliberately omit.
 
-Source document: `/storage/emulated/0/git/efina/design.md` (440 lines, 6 sections).
+Source document: `/storage/emulated/0/git/efina/design.md` (440 lines, 13 sections).
 
 ---
 
@@ -52,9 +52,9 @@ palette swap must never turn an expense green.
 | Google Fonts TTF download + cache | **no** | — |
 | Standard M3 scale | yes, all 15 slots | `Typography` in `Type.kt` |
 | Expressive "Emphasized" variants | yes, as named extras (`displaySmallEmphasized`, `headlineSmallEmphasized`, `titleLargeEmphasized`, `titleMediumEmphasized`, `bodyMediumEmphasized`) | `EfinaType` |
-| Emphasized type rationed to headlines/selected/primary actions | **no** — `AmountText` defaults to `EfinaType.amountSmall`, so every list amount is emphasised; `EfinaType` reaches 8 screens | `Components.kt:206` |
+| Emphasized type rationed to headlines/selected/primary actions | **no** — `AmountText` defaults to `EfinaType.amountSmall`, so every list amount is emphasised; `EfinaType` is referenced by 15 screen files | `Components.kt:206` |
 | Eyebrow labels | **defined but unused** — zero call sites | `Type.kt:57` |
-| Monospace for code/package strings | yes, repurposed for account numbers | `EfinaType.code` |
+| Monospace for code/package strings | yes, used for the invite code | `EfinaType.code`, `FamilyScreen.kt` |
 
 Why the font is not bundled: a downloaded variable font causes a first-frame
 flash and a network dependency at startup. A financial app opening on its balance
@@ -87,7 +87,7 @@ building, not assumed — see `PARITY.md` §"Material 3 Expressive".
 | Item | Status | Where |
 |---|---|---|
 | `MotionScheme.expressive()` | **no — API is internal.** Approximated with spring specs (damping 0.72, medium-low stiffness for spatial; no-bounce low stiffness for effects) | `EfinaMotion` in `Motion.kt` |
-| "Disable Animations" → instant scheme | yes, `EfinaMotion.enabled` returns `snap()` | `Motion.kt` |
+| "Disable Animations" → instant scheme | yes, `EfinaMotion.enabled` swaps every spec for a zero-duration tween. `snap()` was not used because it does not satisfy the `FiniteAnimationSpec` return type | `Motion.kt:37-39` |
 | "Calm" setting stopping ambient loops | no — no ambient loops exist | — |
 | `springClick`: 0.94 press scale | **not implemented** — every tappable row is `Surface(onClick)`, which keeps its InteractionSource private, so no press stream is observable. The helper was dead code and has been removed | — |
 | `reveal(index)`: 28dp rise + fade, 45 ms stagger, first 9 items | yes, all four numbers | `revealModifier` |
@@ -135,5 +135,5 @@ silent omission rather than a documented skip:
 - **§12 Accessibility and input** — content descriptions, focus rings, focus trapping, contrast outline. **The largest gap: accessibility is not app-store-specific, so "not applicable" does not cover it and it has had no attention.**
 - **§5 `Tilt` / `rememberTilt`** — no sensor code exists and the row was missing from the table.
 
-The two "not possible" rows were attempted and rejected by the compiler; the exact
-error is in `PARITY.md`.
+The two "not possible" rows were attempted and rejected by the compiler; the
+error was `Cannot access interface MotionScheme: it is internal in file`.
