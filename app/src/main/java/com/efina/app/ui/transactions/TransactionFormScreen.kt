@@ -47,14 +47,14 @@ fun TransactionFormScreen(
 
     val isEdit = existing != null
     var mode by remember { mutableStateOf(TransactionType.EXPENSE) }
-    var amount by remember {
+    var amount by remember(existing?.id) {
         mutableStateOf(existing?.amount?.toString().orEmpty())
     }
-    var accountId by remember { mutableStateOf(existing?.accountId) }
-    var toAccountId by remember { mutableStateOf<Long?>(null) }
-    var categoryId by remember { mutableStateOf(existing?.categoryId) }
-    var description by remember { mutableStateOf(existing?.description.orEmpty()) }
-    var date by remember {
+    var accountId by remember(existing?.id) { mutableStateOf(existing?.accountId) }
+    var toAccountId by remember(existing?.id) { mutableStateOf<Long?>(null) }
+    var categoryId by remember(existing?.id) { mutableStateOf(existing?.categoryId) }
+    var description by remember(existing?.id) { mutableStateOf(existing?.description.orEmpty()) }
+    var date by remember(existing?.id) {
         mutableStateOf(existing?.date?.take(10) ?: today())
     }
     var localError by remember { mutableStateOf<String?>(null) }

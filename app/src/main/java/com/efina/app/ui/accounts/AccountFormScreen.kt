@@ -36,13 +36,17 @@ fun AccountFormScreen(
     val state by viewModel.state.collectAsState()
     val isEdit = account != null
 
-    var name by remember { mutableStateOf(account?.name.orEmpty()) }
-    var type by remember { mutableStateOf(account?.type ?: AccountType.BANK) }
-    var balance by remember {
+    // Keyed on the id: the account arrives asynchronously, so a plain `remember`
+    // captured null on first composition and never re-initialised. Editing then
+    // submitted empty fields, and because the blank balance parsed to 0.0 the PUT
+    // silently zeroed the account's balance.
+    var name by remember(account?.id) { mutableStateOf(account?.name.orEmpty()) }
+    var type by remember(account?.id) { mutableStateOf(account?.type ?: AccountType.BANK) }
+    var balance by remember(account?.id) {
         mutableStateOf(account?.balance?.let { if (it == 0.0) "" else it.toString() }.orEmpty())
     }
-    var currency by remember { mutableStateOf(account?.currency ?: "IDR") }
-    var description by remember { mutableStateOf(account?.description.orEmpty()) }
+    var currency by remember(account?.id) { mutableStateOf(account?.currency ?: "IDR") }
+    var description by remember(account?.id) { mutableStateOf(account?.description.orEmpty()) }
     var localError by remember { mutableStateOf<String?>(null) }
 
     val currencies = listOf("IDR", "USD", "EUR", "GBP", "SGD", "MYR", "JPY")
@@ -146,6 +150,9 @@ fun AccountFormScreen(
                         name.isBlank() -> "Name is required"
                         balance.isNotBlank() && balance.toDoubleOrNull() == null ->
                             "Balance must be a number"
+                        // An empty field must not be coerced to 0.0 on save: a PUT
+                        // with balance 0 silently wipes the account's money.
+                        isEdit && balance.isBlank() -> "Enter a balance"
                         else -> null
                     }
                     if (localError == null) {
