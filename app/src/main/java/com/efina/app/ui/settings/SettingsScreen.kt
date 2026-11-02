@@ -123,7 +123,14 @@ fun SettingsScreen(
 
                 Text("Theme", style = MaterialTheme.typography.labelLarge)
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    listOf("light" to "Light", "dark" to "Dark").forEach { (code, label) ->
+                    // `mono` and `dynamic` are handled by EfinaTheme; the twelve
+                    // seeded palettes derive their scheme from a single accent.
+                    val themes = listOf("light" to "Light", "dark" to "Dark", "mono" to "Mono") +
+                        com.efina.app.ui.theme.PaletteSeeds.keys.map {
+                            it to it.replaceFirstChar(Char::uppercase)
+                        }
+
+                    themes.forEach { (code, label) ->
                         FilterChip(
                             selected = settings.theme == code,
                             onClick = { viewModel.update(UpdateSettingsRequest(theme = code)) },

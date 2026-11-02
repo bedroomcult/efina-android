@@ -17,6 +17,8 @@ import kotlinx.coroutines.flow.asStateFlow
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.core.graphics.ColorUtils
+import androidx.compose.ui.graphics.toArgb
 
 /**
  * Theme, following design.md section 2.1.
@@ -117,6 +119,45 @@ private fun orionDarkScheme(): ColorScheme = darkColorScheme(
     onErrorContainer = OrionDark.onErrorContainer
 )
 
+/**
+ * Builds a complete scheme from one seed accent, so design.md's 14 palettes cost a
+ * hex value each rather than a hand-written block. Container pairs come from
+ * [tonal], which is the same lightness rule the rest of the app already uses.
+ */
+private fun seededScheme(seed: Color, dark: Boolean): ColorScheme {
+    val (primaryContainer, onPrimaryContainer) = tonal(seed, dark)
+    val secondary = Color.hsl(
+        seed.toHslHue(),
+        (seed.toHslSaturation() * 0.35f).coerceIn(0.02f, 0.3f),
+        if (dark) 0.78f else 0.36f
+    )
+    val base = if (dark) darkColorScheme() else lightColorScheme()
+    return base.copy(
+        // In dark mode the seed is too dark to sit on a dark surface, so the
+        // lighter container foreground doubles as the primary.
+        primary = if (dark) onPrimaryContainer else seed,
+        onPrimary = if (dark) Color(0xFF101014) else Color(0xFFFFFFFF),
+        primaryContainer = primaryContainer,
+        onPrimaryContainer = onPrimaryContainer,
+        secondary = secondary,
+        onSecondary = if (dark) Color(0xFF101014) else Color(0xFFFFFFFF),
+        secondaryContainer = tonal(secondary, dark).first,
+        onSecondaryContainer = tonal(secondary, dark).second
+    )
+}
+
+private fun Color.toHslHue(): Float {
+    val hsl = FloatArray(3)
+    ColorUtils.colorToHSL(this.toArgb(), hsl)
+    return hsl[0]
+}
+
+private fun Color.toHslSaturation(): Float {
+    val hsl = FloatArray(3)
+    ColorUtils.colorToHSL(this.toArgb(), hsl)
+    return hsl[1]
+}
+
 /** Neutral palette: same structure, zero chroma, for users who want no colour. */
 private fun monoScheme(dark: Boolean): ColorScheme =
     if (dark) darkColorScheme(
@@ -180,8 +221,13 @@ object ThemePreference {
             "light", "mono" -> (if (stored == "mono") "mono" else "orion") to false
             "system" -> "orion" to isSystemInDarkTheme()
             "dynamic" -> "dynamic" to isSystemInDarkTheme()
-            // Older/unknown values fall back to following the system.
-            else -> "orion" to isSystemInDarkTheme()
+            // A seeded palette name: keep both the name and the chosen lightness.
+            else -> if (PaletteSeeds.containsKey(stored)) {
+                stored to stored.endsWith("-dark")
+            } else {
+                // Older/unknown values fall back to following the system.
+                "orion" to isSystemInDarkTheme()
+            }
         }
     }
 
@@ -225,6 +271,8 @@ fun EfinaTheme(
         dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S ->
             if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
         themeName == "mono" -> monoScheme(darkTheme)
+        // The twelve derived palettes: one seed, a full scheme via tonal().
+        PaletteSeeds[themeName] != null -> seededScheme(PaletteSeeds.getValue(themeName), darkTheme)
         else -> if (darkTheme) orionDarkScheme() else orionLightScheme()
     }
 
