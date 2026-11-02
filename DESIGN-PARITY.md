@@ -31,7 +31,7 @@ emphasis — do, and are followed.
 
 | Item | Status | Where |
 |---|---|---|
-| §2.1 Theme modes: Light, Dusk, Dark, OLED | Light, Dark implemented. **Dusk skipped** (it exists to soften a specific dark; Orion dark is already lifted). **OLED skipped** (pure black is a preference, and Material You covers most of the intent). Mono added instead | `Theme.kt` |
+| §2.1 Theme modes: Light, Dusk, Dark, OLED | All four implemented, plus Mono and Material You. Dusk lifts Orion's dark surfaces (`liftedDarkScheme`), OLED uses true black (`oledScheme`) | `Theme.kt` |
 | §2.2 14 palettes | **14 of 14**: Orion and Mono hand-tuned; the other twelve derived from a seed accent through `tonal()`, which is the doc's own one-seed-to-full-scheme generator idea | `Color.kt` (`PaletteSeeds`), `Theme.kt` (`seededScheme`) |
 | §2.2 Custom palette maker | no | — |
 | §2.2 Material You dynamic color | **yes** — the `"dynamic"` theme value selects it; `EfinaAppRoot` passes `dynamicColor` through. Android 12+ only, as the API requires | `Theme.kt`, `EfinaAppRoot.kt:124` |
@@ -115,7 +115,7 @@ per content item, rationed emphasis, staggered entrances) are.
 | Section | Implemented | Deliberately skipped | Not possible |
 |---|---|---|---|
 | §1 language | 5 / 8 | layout modes, tablet/TV, the other 10 selectable families | — |
-| §2 color | 6 / 7 | Dusk, OLED, custom palette maker | — |
+| §2 color | 7 / 8 | custom palette maker, install-state colours (no finance analogue) | — |
 | §3 typography | 5 / 8 | custom fonts, the other 10 families; eyebrow style unused | — |
 | §4 shape | 6 / 10 | selected-row morph, top-only corners, media corners unused | `MaterialShapes`, `Morph` (internal) |
 | §5 motion | 3 / 15 | dock, mascot, haptics, wave indicators, springClick | `MotionScheme` (internal), `SharedTransitionLayout` (unavailable) |
