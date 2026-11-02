@@ -72,8 +72,10 @@ jobs:
       # Debug only: no signing material required, so this is safe to run on every
       # push. Release signing lives in release.yml behind a tag and secrets.
       # Unit tests run before assemble: they are fast and independent of packaging.
+      # --tests makes "no tests found" a build failure. Without it Gradle happily
+      # reports success when the source set is misconfigured and runs nothing.
       - name: Unit tests
-        run: ./gradlew testDebugUnitTest --no-daemon --stacktrace
+        run: ./gradlew testDebugUnitTest --no-daemon --stacktrace --tests '*LenientBooleanTest*' 
 
       - name: Assemble debug
         run: ./gradlew assembleDebug --no-daemon --stacktrace
