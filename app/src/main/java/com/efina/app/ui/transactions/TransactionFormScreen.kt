@@ -258,7 +258,7 @@ fun TransactionFormScreen(
                                     amount = parsed!!,
                                     type = mode,
                                     description = description.ifBlank { null },
-                                    date = normalizeDate(date)
+                                    date = normalizeDate(date, time)
                                 )
                             ) { onSaved() }
                         }
@@ -302,6 +302,8 @@ private fun SegmentedButtonRow(
         TransactionType.INCOME -> if (isDark) MoneyColors.incomeDark else MoneyColors.incomeLight
         TransactionType.EXPENSE -> if (isDark) MoneyColors.expenseDark else MoneyColors.expenseLight
         TransactionType.TRANSFER -> if (isDark) MoneyColors.transferDark else MoneyColors.transferLight
+        // ADJUSTMENT is a reconciliation entry, not a direction of money.
+        TransactionType.ADJUSTMENT -> MaterialTheme.colorScheme.surfaceContainerHighest
     }
 
     SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
