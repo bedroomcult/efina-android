@@ -97,6 +97,25 @@ class DtoShapeTest {
     }
 
     @Test
+    fun `account balance edit always sends update_strategy`() {
+        // accounts/[id].js only writes the reconciliation transaction when
+        // update_strategy is present; without it the PUT takes the plain-UPDATE
+        // fallback and the edit silently skips the ledger, leaving initial_balance
+        // stale and the account out of step with its transactions.
+        val body = json.encodeToString(
+            UpdateAccountRequestDto.serializer(),
+            com.efina.app.domain.model.UpdateAccountRequest(
+                name = "Cash",
+                type = com.efina.app.domain.model.AccountType.CASH,
+                balance = 100.0,
+                currency = "IDR"
+            ).toDto()
+        )
+        assertTrue("update_strategy missing from $body", body.contains("\"update_strategy\""))
+        assertTrue(body.contains("adjustment"))
+    }
+
+    @Test
     fun `sharing result parses both PATCH branches`() {
         // Share returns a full row with is_shared as SQLite 1; unshare returns a stub.
         val shared = json.decodeFromString(
