@@ -120,6 +120,37 @@ private fun orionDarkScheme(): ColorScheme = darkColorScheme(
 )
 
 /**
+ * design.md §2.1 "Dusk": a gentler dark than Orion's, surfaces lifted a step so the
+ * app reads softer in low light without going grey.
+ */
+private fun liftedDarkScheme(): ColorScheme {
+    val base = orionDarkScheme()
+    return base.copy(
+        background = Color(0xFF1E1E2E),
+        surface = Color(0xFF1E1E2E),
+        surfaceContainerLowest = Color(0xFF16161F),
+        surfaceContainerLow = Color(0xFF232333),
+        surfaceContainer = Color(0xFF272738),
+        surfaceContainerHigh = Color(0xFF2C2C3E),
+        surfaceContainerHighest = Color(0xFF323245)
+    )
+}
+
+/** design.md §2.1 "OLED": true black surfaces, for users who want no backlight. */
+private fun oledScheme(): ColorScheme {
+    val base = orionDarkScheme()
+    return base.copy(
+        background = Color(0xFF000000),
+        surface = Color(0xFF000000),
+        surfaceContainerLowest = Color(0xFF000000),
+        surfaceContainerLow = Color(0xFF0A0A0C),
+        surfaceContainer = Color(0xFF101013),
+        surfaceContainerHigh = Color(0xFF16161A),
+        surfaceContainerHighest = Color(0xFF1C1C21)
+    )
+}
+
+/**
  * Builds a complete scheme from one seed accent, so design.md's 14 palettes cost a
  * hex value each rather than a hand-written block. Container pairs come from
  * [tonal], which is the same lightness rule the rest of the app already uses.
@@ -221,6 +252,8 @@ object ThemePreference {
             "light", "mono" -> (if (stored == "mono") "mono" else "orion") to false
             "system" -> "orion" to isSystemInDarkTheme()
             "dynamic" -> "dynamic" to isSystemInDarkTheme()
+            "dusk" -> "dusk" to true
+            "oled" -> "oled" to true
             // A seeded palette name: keep both the name and the chosen lightness.
             else -> if (PaletteSeeds.containsKey(stored)) {
                 stored to stored.endsWith("-dark")
@@ -271,6 +304,9 @@ fun EfinaTheme(
         dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S ->
             if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
         themeName == "mono" -> monoScheme(darkTheme)
+        // design.md §2.1: Dusk is a lifted dark, OLED is true black.
+        themeName == "dusk" -> liftedDarkScheme()
+        themeName == "oled" -> oledScheme()
         // The twelve derived palettes: one seed, a full scheme via tonal().
         PaletteSeeds[themeName] != null -> seededScheme(PaletteSeeds.getValue(themeName), darkTheme)
         else -> if (darkTheme) orionDarkScheme() else orionLightScheme()
