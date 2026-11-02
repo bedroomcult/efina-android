@@ -17,6 +17,9 @@
     "active_streak": [
       "INTEGER"
     ],
+    "after_snapshot": [
+      "TEXT"
+    ],
     "amount": [
       "INTEGER",
       "REAL"
@@ -30,11 +33,26 @@
     "avatar_url": [
       "TEXT"
     ],
+    "average_amount": [
+      "REAL"
+    ],
     "average_mood": [
       "REAL"
     ],
     "balance": [
       "REAL"
+    ],
+    "before_snapshot": [
+      "TEXT"
+    ],
+    "button_text": [
+      "TEXT"
+    ],
+    "button_variant": [
+      "TEXT"
+    ],
+    "calculated_at": [
+      "DATETIME"
     ],
     "capital_price": [
       "REAL"
@@ -60,6 +78,12 @@
     "completed_occurrences": [
       "INTEGER"
     ],
+    "component_scores": [
+      "TEXT"
+    ],
+    "confidence": [
+      "REAL"
+    ],
     "context": [
       "TEXT"
     ],
@@ -75,9 +99,19 @@
       "TEXT"
     ],
     "current_amount": [
+      "DECIMAL",
       "REAL"
     ],
     "customer_name": [
+      "TEXT"
+    ],
+    "daily_summary_enabled": [
+      "INTEGER"
+    ],
+    "daily_summary_time": [
+      "TEXT"
+    ],
+    "dashboard_layout": [
       "TEXT"
     ],
     "date": [
@@ -101,13 +135,23 @@
     "description": [
       "TEXT"
     ],
+    "description_hash": [
+      "TEXT"
+    ],
+    "details": [
+      "TEXT"
+    ],
     "device_info": [
       "TEXT"
     ],
     "disabled": [
       "INTEGER"
     ],
+    "display_order": [
+      "INTEGER"
+    ],
     "due_date": [
+      "DATETIME",
       "TEXT"
     ],
     "email": [
@@ -131,11 +175,20 @@
     "family_id": [
       "INTEGER"
     ],
+    "features": [
+      "TEXT"
+    ],
     "first_name": [
       "TEXT"
     ],
     "force_onboarding": [
       "INTEGER"
+    ],
+    "forecast_data": [
+      "TEXT"
+    ],
+    "forecast_type": [
+      "TEXT"
     ],
     "frequency": [
       "TEXT"
@@ -143,10 +196,16 @@
     "future_payments_count": [
       "INTEGER"
     ],
+    "generated_at": [
+      "DATETIME"
+    ],
     "goal_id": [
       "INTEGER"
     ],
     "google_id": [
+      "TEXT"
+    ],
+    "grade": [
       "TEXT"
     ],
     "group_id": [
@@ -164,6 +223,9 @@
     ],
     "initial_balance": [
       "REAL"
+    ],
+    "insight_text": [
+      "TEXT"
     ],
     "instructions": [
       "TEXT"
@@ -204,13 +266,23 @@
     "is_clearable": [
       "INTEGER"
     ],
+    "is_default": [
+      "BOOLEAN"
+    ],
+    "is_dismissible": [
+      "BOOLEAN"
+    ],
     "is_enabled": [
+      "BOOLEAN",
       "INTEGER"
     ],
     "is_read": [
       "INTEGER"
     ],
     "is_recurring": [
+      "INTEGER"
+    ],
+    "is_shared": [
       "INTEGER"
     ],
     "is_system": [
@@ -243,6 +315,9 @@
     "last_message_at": [
       "DATETIME"
     ],
+    "last_occurrence": [
+      "DATE"
+    ],
     "last_paid_amount": [
       "REAL"
     ],
@@ -268,6 +343,9 @@
       "INTEGER",
       "TEXT"
     ],
+    "link": [
+      "TEXT"
+    ],
     "link_code": [
       "TEXT"
     ],
@@ -284,6 +362,12 @@
       "REAL"
     ],
     "month": [
+      "TEXT"
+    ],
+    "monthly_report_enabled": [
+      "INTEGER"
+    ],
+    "monthly_report_time": [
       "TEXT"
     ],
     "monthly_review_count": [
@@ -303,6 +387,9 @@
     ],
     "next_billing_date": [
       "TEXT"
+    ],
+    "next_expected": [
+      "DATE"
     ],
     "next_run_date": [
       "DATETIME"
@@ -337,6 +424,16 @@
     "pending_action_data": [
       "TEXT"
     ],
+    "period_end": [
+      "DATE"
+    ],
+    "period_start": [
+      "DATE",
+      "DATETIME"
+    ],
+    "period_type": [
+      "TEXT"
+    ],
     "person_name": [
       "TEXT"
     ],
@@ -349,10 +446,19 @@
     "plan_id": [
       "TEXT"
     ],
+    "popular": [
+      "INTEGER"
+    ],
     "prefix": [
       "TEXT"
     ],
     "previous_data": [
+      "TEXT"
+    ],
+    "price_monthly": [
+      "TEXT"
+    ],
+    "price_yearly": [
       "TEXT"
     ],
     "product_id": [
@@ -367,6 +473,9 @@
     "quantity": [
       "REAL"
     ],
+    "recorded_at": [
+      "DATETIME"
+    ],
     "reference_id": [
       "INTEGER"
     ],
@@ -375,6 +484,9 @@
     ],
     "remaining_amount": [
       "REAL"
+    ],
+    "request_count": [
+      "INTEGER"
     ],
     "required_count": [
       "INTEGER"
@@ -394,6 +506,9 @@
     "scopes": [
       "TEXT"
     ],
+    "score": [
+      "INTEGER"
+    ],
     "seen_at": [
       "TEXT"
     ],
@@ -406,6 +521,9 @@
     "stack": [
       "TEXT"
     ],
+    "start_date": [
+      "DATE"
+    ],
     "state": [
       "TEXT"
     ],
@@ -413,9 +531,11 @@
       "TEXT"
     ],
     "target_amount": [
+      "DECIMAL",
       "REAL"
     ],
     "target_date": [
+      "DATE",
       "TEXT"
     ],
     "target_value": [
@@ -425,6 +545,9 @@
       "TEXT"
     ],
     "tier": [
+      "TEXT"
+    ],
+    "tier_colors": [
       "TEXT"
     ],
     "timestamp": [
@@ -451,11 +574,20 @@
     "total_price": [
       "REAL"
     ],
+    "total_score": [
+      "INTEGER"
+    ],
     "total_transactions": [
       "INTEGER"
     ],
     "transaction_id": [
       "INTEGER"
+    ],
+    "transaction_reminder_enabled": [
+      "INTEGER"
+    ],
+    "transaction_reminder_time": [
+      "TEXT"
     ],
     "transfer_pair_id": [
       "TEXT"
@@ -468,6 +600,9 @@
     ],
     "updated_at": [
       "DATETIME"
+    ],
+    "updated_by": [
+      "TEXT"
     ],
     "url": [
       "TEXT"
@@ -493,6 +628,15 @@
     ],
     "wallet_id": [
       "INTEGER"
+    ],
+    "wallet_mirror": [
+      "INTEGER"
+    ],
+    "wallet_tx_type": [
+      "TEXT"
+    ],
+    "window_start": [
+      "TEXT"
     ],
     "xp": [
       "INTEGER"

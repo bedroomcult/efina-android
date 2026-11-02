@@ -49,8 +49,24 @@ function readSchema() {
     }
     return;
   }
-  for (const file of fs.readdirSync(MIGRATIONS).filter((f) => f.endsWith('.sql'))) {
-    const sql = fs.readFileSync(path.join(MIGRATIONS, file), 'utf8');
+  const files = [];
+  for (const dir of [MIGRATIONS, path.join(MIGRATIONS, '_archive')]) {
+    if (!fs.existsSync(dir)) continue;
+    for (const f of fs.readdirSync(dir).filter((f) => f.endsWith('.sql'))) {
+      files.push(path.join(dir, f));
+    }
+  }
+  // ALTER TABLE ... ADD COLUMN is how several live columns are declared, including
+  // accounts.display_order and accounts.is_shared. Ignoring these files made the
+  // snapshot blind to them, which let a real defect through.
+  for (const file of files) {
+    const sql = fs.readFileSync(file, 'utf8');
+    for (const m of sql.matchAll(/ALTER\s+TABLE\s+\w+\s+ADD\s+COLUMN\s+([a-z_][a-z0-9_]*)\s+([A-Za-z]+)/gi)) {
+      const col = m[1];
+      const upper = m[2].toUpperCase().replace(/\(.*\)/, '');
+      if (!columnTypes.has(col)) columnTypes.set(col, new Set());
+      columnTypes.get(col).add(upper);
+    }
     for (const block of sql.matchAll(/CREATE\s+TABLE(?:\s+IF\s+NOT\s+EXISTS)?\s+\w+\s*\(([\s\S]*?)\n\)/gi)) {
       for (const line of block[1].split('\n')) {
         const m = line.trim().match(/^([a-z_][a-z0-9_]*)\s+([A-Za-z]+)/i);
@@ -103,17 +119,19 @@ function checkColumnTypes(dtos) {
       const base = kotlinType.replace('?', '');
       const allowed = COMPAT[base];
       if (!allowed) continue;
-      const matches = [...sqlTypes].some((t) => allowed.includes(t));
-      if (matches) continue;
-      // A Boolean backed by a SQLite integer is fine only with the lenient
-      // serializer; a plain Boolean throws on 0/1 at runtime.
-      if (base === 'Boolean' && [...sqlTypes].some((t) => t === 'INTEGER') && !lenient) {
+      // A Boolean backed by a SQLite integer column is ALWAYS suspect: D1 returns
+      // 0/1 and kotlinx rejects that for a plain Boolean. This has to be checked
+      // before the compatibility table, because INTEGER counts as compatible.
+      if (base === 'Boolean' && [...sqlTypes].some((t) => t === 'INTEGER') && !lenient &&
+          !REAL_BOOLEANS.has(`${dtoName}.${field}`)) {
         problems.push(
           `${dtoName}.${field}: Boolean reads a SQLite INTEGER column — needs ` +
           `@Serializable(with = LenientBoolean::class) or the deserializer throws on 0/1`
         );
         continue;
       }
+      const matches = [...sqlTypes].some((t) => allowed.includes(t));
+      if (matches) continue;
       problems.push(
         `${dtoName}.${field}: Kotlin ${kotlinType} vs column ${[...sqlTypes].join('|')} (${dto.file})`
       );
@@ -124,6 +142,15 @@ function checkColumnTypes(dtos) {
 // ── Check B: request fields exist in the receiving handler ─────────────────
 /** Fields that are intentional client-side aliases and never sent literally. */
 const ALIASES = new Set([]);
+
+/**
+ * Booleans the backend computes as real JSON booleans (`!!x`) rather than
+ * returning the raw SQLite integer. Each entry names the handler that proves it.
+ */
+const REAL_BOOLEANS = new Set([
+  // accounts/[id]/members.js:49 -> `is_shared: !!account?.is_shared`
+  'AccountMembersDto.is_shared',
+]);
 
 function checkRequestFields(dtos) {
   if (!fs.existsSync(API_DIR)) {

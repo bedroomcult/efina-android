@@ -19,7 +19,7 @@ fun AccountDto.toDomain(): Account = Account(
     currency = currency,
     description = description,
     color = color,
-    displayOrder = order_index,
+    displayOrder = display_order,
     disabled = disabled == 1,
     initialBalance = initial_balance,
     createdAt = created_at,

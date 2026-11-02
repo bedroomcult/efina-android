@@ -97,7 +97,8 @@ data class AccountDto(
     val currency: String = "IDR",
     val description: String? = null,
     val initial_balance: Double = 0.0,
-    val order_index: Int = 0,
+    /** accounts are ordered by display_order; order_index is always 0. */
+    val display_order: Int = 0,
     val disabled: Int = 0,
     val color: String? = null,
     val created_at: String? = null,
@@ -148,6 +149,8 @@ data class UpdateAccountRequestDto(
 data class SharingResultDto(
     val id: Long? = null,
     val name: String? = null,
+    /** SQLite 1 on the share branch, `false` on the unshare branch. */
+    @Serializable(with = LenientBoolean::class)
     val is_shared: Boolean = false,
     val family_id: Long? = null,
     val account_role: String? = null
