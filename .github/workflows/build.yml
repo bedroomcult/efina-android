@@ -75,7 +75,7 @@ jobs:
       # --tests makes "no tests found" a build failure. Without it Gradle happily
       # reports success when the source set is misconfigured and runs nothing.
       - name: Unit tests
-        run: ./gradlew testDebugUnitTest --no-daemon --stacktrace --tests '*LenientBooleanTest*' 
+        run: ./gradlew testDebugUnitTest --no-daemon --stacktrace --tests '*DtoShapeTest*' --tests '*LenientBooleanTest*' 
 
       - name: Assemble debug
         run: ./gradlew assembleDebug --no-daemon --stacktrace
