@@ -149,7 +149,13 @@ class AccountRepositoryImpl @Inject constructor(
         safeCall { api.deleteAccount(id) }.announce(DataEvents.Domain.ACCOUNTS).map { }
 
     override suspend fun setShared(id: Long, familyId: Long?): Result<Account> =
-        safeCall { api.updateAccountSharing(id, UpdateAccountSharingRequestDto(familyId)) }.map { it.toDomain() }
+        safeCall { api.updateAccountSharing(id, UpdateAccountSharingRequestDto(familyId)) }
+            .fold(
+                // PATCH answers with a stub when unsharing, so re-read the row.
+                onSuccess = { safeCall { api.getAccount(id) }.map { it.toDomain() } },
+                onFailure = { Result.failure(it) }
+            )
+            .announce(DataEvents.Domain.ACCOUNTS)
 
     override suspend fun getMembers(id: Long): Result<AccountMembers> =
         safeCall { api.getAccountMembers(id) }.map { dto ->
@@ -223,7 +229,12 @@ class CategoryRepositoryImpl @Inject constructor(
 ) : CategoryRepository {
 
     override suspend fun getCategories(): Result<List<Category>> =
-        safeCall { api.getCategories() }.map { list -> list.map { it.toDomain() } }
+        safeCall { api.getCategories() }.map { roots ->
+            // GET categories returns roots with children nested one level deep.
+            // Flat screens show both, so every child is now reachable as a leaf.
+            roots.flatMap { root -> listOf(root) + root.subcategories }
+                .map { it.toDomain() }
+        }
 
     override suspend fun createCategory(request: CreateCategoryRequest): Result<Category> =
         safeCall { api.createCategory(request.toDto()) }.announce(DataEvents.Domain.CATEGORIES).map { it.toDomain() }
@@ -423,7 +434,8 @@ class FamilyRepositoryImpl @Inject constructor(
         safeCall { api.inviteFamilyMember(id, InviteFamilyMemberRequestDto()) }.map { it.code }
 
     override suspend fun acceptInvite(code: String): Result<FamilyGroup> =
-        safeCall { api.acceptFamilyInvite(AcceptInviteRequestDto(code.trim().uppercase())) }.map { it.toDomain() }
+        safeCall { api.acceptFamilyInvite(AcceptInviteRequestDto(code.trim().uppercase())) }
+            .map { it.family?.toDomain() ?: error("Invite accepted but no family returned") }
 
     override suspend fun removeMember(id: Long, userId: Long): Result<Unit> =
         safeCall { api.removeFamilyMember(id, RemoveMemberRequestDto(userId)) }.map { }

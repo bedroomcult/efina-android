@@ -81,7 +81,10 @@ data class UpdateAccountRequest(
     val balance: Double,
     val currency: String,
     val description: String? = null,
-    val color: String? = null
+    val color: String? = null,
+    /** "adjustment" writes a reconciling transaction; "starting_balance" shifts initial_balance. */
+    val updateStrategy: String = "adjustment",
+    val date: String? = null
 )
 
 // ─────────────────────────── Transactions ───────────────────────────

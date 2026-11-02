@@ -75,7 +75,7 @@ interface EfinaApi {
     suspend fun updateAccountSharing(
         @Path("id") id: Long,
         @Body request: UpdateAccountSharingRequestDto
-    ): Response<AccountDto>
+    ): Response<SharingResultDto>
 
     @DELETE("accounts/{id}")
     suspend fun deleteAccount(@Path("id") id: Long): Response<Unit>
@@ -322,7 +322,7 @@ interface EfinaApi {
     @POST("families/invites/accept")
     suspend fun acceptFamilyInvite(
         @Body request: AcceptInviteRequestDto
-    ): Response<FamilyGroupDto>
+    ): Response<AcceptInviteResponseDto>
 
     // ============ Shared accounts ============
 

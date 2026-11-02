@@ -127,7 +127,30 @@ data class UpdateAccountRequestDto(
     val balance: Double,
     val currency: String,
     val description: String? = null,
-    val color: String? = null
+    val color: String? = null,
+    /**
+     * "adjustment" or "starting_balance". accounts/[id].js only writes the
+     * reconciliation transaction, or shifts initial_balance, when this is set;
+     * omitting it silently takes the plain-UPDATE branch.
+     */
+    val update_strategy: String? = null,
+    val date: String? = null
+)
+
+@Serializable
+/**
+ * PATCH accounts/{id} is polymorphic: sharing returns a full account row plus
+ * account_role, unsharing returns only `{ is_shared: false, family_id: null }`.
+ * Every field is optional so either branch parses; callers reload the account
+ * rather than trusting this payload.
+ */
+@Serializable
+data class SharingResultDto(
+    val id: Long? = null,
+    val name: String? = null,
+    val is_shared: Boolean = false,
+    val family_id: Long? = null,
+    val account_role: String? = null
 )
 
 @Serializable
@@ -695,6 +718,13 @@ data class InviteFamilyMemberRequestDto(
 data class FamilyInviteDto(
     val code: String,
     val expires_at: String? = null
+)
+
+/** `POST families/invites/accept` returns { family: {id,name}, member_role }. */
+@Serializable
+data class AcceptInviteResponseDto(
+    val family: FamilyGroupDto? = null,
+    val member_role: String = "member"
 )
 
 @Serializable

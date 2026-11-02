@@ -206,7 +206,11 @@ fun UpdateAccountRequest.toDto(): UpdateAccountRequestDto = UpdateAccountRequest
     balance = balance,
     currency = currency,
     description = description,
-    color = color
+    color = color,
+    // Without a strategy the backend takes a plain UPDATE: no reconciliation
+    // transaction and initial_balance is left stale.
+    update_strategy = updateStrategy,
+    date = date
 )
 
 fun CreateTransactionRequest.toDto(): CreateTransactionRequestDto = CreateTransactionRequestDto(
