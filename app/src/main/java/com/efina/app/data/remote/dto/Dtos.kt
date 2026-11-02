@@ -588,9 +588,57 @@ data class UpdateSettingsRequestDto(
 data class ChatRequestDto(
     val message: String,
     val history: List<ChatMessageDto> = emptyList(),
-    /** ai/chat.js only builds the financial prompt when this is present. */
-    val context: String? = null
+    /**
+     * ai/chat.js only builds the financial prompt when this object is present, and
+     * reads it field by field (totalBalance, accountCount, activeGoals, accounts[],
+     * categories[], budgets[], planned[], trends). It was typed String here, which
+     * the server could never read. No chat screen calls this yet, so the shape is
+     * declared correctly rather than left wrong for whoever wires it up.
+     */
+    val context: ChatFinancialContextDto? = null
 )
+
+/** The fields functions/api/ai/chat.js actually reads off `context`. */
+@Serializable
+data class ChatFinancialContextDto(
+    val totalBalance: Double = 0.0,
+    val accountCount: Int = 0,
+    val activeGoals: Int = 0,
+    val accounts: List<ChatContextAccountDto> = emptyList(),
+    val categories: List<ChatContextCategoryDto> = emptyList(),
+    val budgets: List<ChatContextBudgetDto> = emptyList(),
+    val planned: List<ChatContextPlannedDto> = emptyList(),
+    val trends: ChatContextTrendsDto? = null
+)
+
+@Serializable
+data class ChatContextAccountDto(val id: Long, val name: String, val balance: Double = 0.0)
+
+@Serializable
+data class ChatContextCategoryDto(
+    val id: Long,
+    val name: String,
+    val subcategories: List<ChatContextCategoryDto> = emptyList()
+)
+
+@Serializable
+data class ChatContextBudgetDto(
+    val category: String,
+    val spent: Double = 0.0,
+    val limit: Double = 0.0,
+    val percent: Double = 0.0
+)
+
+@Serializable
+data class ChatContextPlannedDto(
+    val description: String,
+    val amount: Double = 0.0,
+    val frequency: String = "",
+    val nextDate: String = ""
+)
+
+@Serializable
+data class ChatContextTrendsDto(val avgDailyExpense: Double = 0.0)
 
 @Serializable
 data class ChatMessageDto(
