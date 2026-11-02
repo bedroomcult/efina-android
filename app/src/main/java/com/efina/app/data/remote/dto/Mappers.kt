@@ -59,7 +59,8 @@ fun CategoryDto.toDomain(): Category = Category(
     color = color ?: "blue",
     icon = icon,
     parentId = parent_id,
-    isSystem = is_system == 1
+    isSystem = is_system == 1,
+    type = type
 )
 
 fun BudgetDto.toDomain(): Budget = Budget(

@@ -105,7 +105,11 @@ fun PillTag(
 /** Marks a shared account, and says what the caller may do with it. */
 @Composable
 fun SharedAccountBadge(account: Account, modifier: Modifier = Modifier) {
-    if (!account.isShared && account.role == null) return
+    // The backend computes account_role for EVERY account: 'admin' when you own it
+    // (ACCOUNT_ROLE_SQL in accountAccess.js). Keying off role != null therefore
+    // badged every account as "Family", including personal ones. Only a genuinely
+    // shared account earns a badge.
+    if (!account.isShared) return
     val isViewer = account.role == AccountShareRole.VIEWER
     PillTag(
         text = if (isViewer) "View only" else "Family",
@@ -117,7 +121,13 @@ fun SharedAccountBadge(account: Account, modifier: Modifier = Modifier) {
     )
 }
 
-/** Tonal icon tile: colour derived from the accent, per design.md `tonal()`. */
+/**
+ * Tonal icon tile: colour derived from the accent, per design.md `tonal()`.
+ *
+ * When the caller passes an explicit tint (transaction type), the tile carries the
+ * money colour so income, expense and transfer read apart in a list — the web app
+ * does the same with its `bg-emerald-500/10` / `bg-red-500/10` wrappers.
+ */
 @Composable
 fun AccountIconTile(
     account: Account,

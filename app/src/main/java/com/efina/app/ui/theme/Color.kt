@@ -97,20 +97,33 @@ object EfinaSemantic {
  * turn an expense green. These are tuned to stay legible on both light and dark
  * surfaces, and are paired with a foreground for text drawn on the container.
  */
+/**
+ * Income, expense and transfer hues, matched to the web app.
+ *
+ * The web client uses Tailwind's emerald-500 / red-500 / blue-500 for exactly these
+ * three states (TransactionModal.jsx: income `bg-emerald-500`, expense
+ * `bg-red-500`, transfer `bg-blue-500`), so the phone uses the same hues rather than
+ * a separately-chosen palette. The *-500 values are too light for text on a light
+ * surface, so light mode uses the -600 tone and dark mode the -400 tone.
+ */
 object MoneyColors {
-    val incomeLight = Color(0xFF0E7C5A)
-    val incomeOnLight = Color(0xFFD7FBE8)
-    val expenseLight = Color(0xFFB3261E)
-    val expenseOnLight = Color(0xFFFFDAD6)
-    val transferLight = Color(0xFF2A5EA8)
-    val transferOnLight = Color(0xFFD8E5FF)
+    // emerald-600 / emerald-400
+    val incomeLight = Color(0xFF059669)
+    val incomeOnLight = Color(0xFFD1FAE5)
+    val incomeDark = Color(0xFF34D399)
+    val incomeOnDark = Color(0xFF022C22)
 
-    val incomeDark = Color(0xFF6FDCAF)
-    val incomeOnDark = Color(0xFF00382A)
-    val expenseDark = Color(0xFFFFB4AB)
-    val expenseOnDark = Color(0xFF690005)
-    val transferDark = Color(0xFFA8C8FF)
-    val transferOnDark = Color(0xFF002F66)
+    // red-600 / red-400
+    val expenseLight = Color(0xFFDC2626)
+    val expenseOnLight = Color(0xFFFEE2E2)
+    val expenseDark = Color(0xFFF87171)
+    val expenseOnDark = Color(0xFF450A0A)
+
+    // blue-600 / blue-400
+    val transferLight = Color(0xFF2563EB)
+    val transferOnLight = Color(0xFFDBEAFE)
+    val transferDark = Color(0xFF60A5FA)
+    val transferOnDark = Color(0xFF172554)
 }
 
 /**
@@ -169,4 +182,14 @@ fun parseHexColor(value: String?, fallback: Color): Color {
             else -> fallback
         }
     }.getOrDefault(fallback)
+}
+
+/** The money colour for a transaction type, paired with its container tint. */
+fun moneyTintFor(type: String?, dark: Boolean): Pair<Color, Color> = when (type) {
+    "income" -> (if (dark) MoneyColors.incomeDark else MoneyColors.incomeLight) to
+        (if (dark) MoneyColors.incomeOnDark else MoneyColors.incomeOnLight)
+    "transfer" -> (if (dark) MoneyColors.transferDark else MoneyColors.transferLight) to
+        (if (dark) MoneyColors.transferOnDark else MoneyColors.transferOnLight)
+    else -> (if (dark) MoneyColors.expenseDark else MoneyColors.expenseLight) to
+        (if (dark) MoneyColors.expenseOnDark else MoneyColors.expenseOnLight)
 }

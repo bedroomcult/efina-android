@@ -22,6 +22,19 @@ import com.efina.app.ui.categories.CategoriesViewModel
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import androidx.compose.foundation.layout.Box
+import androidx.compose.material.icons.filled.ArrowDropDown
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.Icon
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
+import com.efina.app.ui.theme.LocalIsDarkTheme
+import com.efina.app.ui.theme.MoneyColors
 
 /**
  * Create / edit a transaction, or create a transfer pair.
@@ -56,6 +69,12 @@ fun TransactionFormScreen(
     var description by remember(existing?.id) { mutableStateOf(existing?.description.orEmpty()) }
     var date by remember(existing?.id) {
         mutableStateOf(existing?.date?.take(10) ?: today())
+    }
+    // transactions.date is a DATETIME and the API accepts YYYY-MM-DDTHH:mm:ss, but
+    // the form only ever sent a date and hardcoded midnight. Editing an existing
+    // transaction now preserves its recorded time instead of resetting it.
+    var time by remember(existing?.id) {
+        mutableStateOf(existing?.date?.drop(11)?.take(8) ?: nowTime())
     }
     var localError by remember { mutableStateOf<String?>(null) }
 
@@ -114,30 +133,24 @@ fun TransactionFormScreen(
                     color = MaterialTheme.colorScheme.error
                 )
             } else {
-                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    writableAccounts.forEach { acc ->
-                        FilterChip(
-                            selected = accountId == acc.id,
-                            onClick = { accountId = acc.id },
-                            label = { Text(acc.name) },
-                            shape = EfinaCorners.pill
-                        )
-                    }
-                }
+                PickerField(
+                    label = "Account",
+                    selectedLabel = writableAccounts.firstOrNull { it.id == accountId }?.name
+                        ?: "Choose an account",
+                    options = writableAccounts.map { it.id to it.name },
+                    onSelect = { accountId = it }
+                )
             }
 
             if (mode == TransactionType.TRANSFER && !isEdit) {
-                Text("To account", style = MaterialTheme.typography.labelLarge)
-                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    writableAccounts.filter { it.id != accountId }.forEach { acc ->
-                        FilterChip(
-                            selected = toAccountId == acc.id,
-                            onClick = { toAccountId = acc.id },
-                            label = { Text(acc.name) },
-                            shape = EfinaCorners.pill
-                        )
-                    }
-                }
+                PickerField(
+                    label = "To account",
+                    selectedLabel = writableAccounts.firstOrNull { it.id == toAccountId }?.name
+                        ?: "Choose a destination",
+                    options = writableAccounts.filter { it.id != accountId }
+                        .map { it.id to it.name },
+                    onSelect = { toAccountId = it }
+                )
             }
 
             if (mode != TransactionType.TRANSFER) {
@@ -149,16 +162,18 @@ fun TransactionFormScreen(
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 } else {
-                    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        categories.take(12).forEach { cat ->
-                            FilterChip(
-                                selected = categoryId == cat.id,
-                                onClick = { categoryId = cat.id },
-                                label = { Text(cat.name) },
-                                shape = EfinaCorners.pill
-                            )
-                        }
-                    }
+                    // A dropdown rather than chips: chips capped the list at 12 and
+                    // the seeded tree has ~90 leaves, so most categories were
+                    // unreachable.
+                    PickerField(
+                        label = "Category",
+                        selectedLabel = categories.firstOrNull { it.id == categoryId }?.name
+                            ?: "Choose a category",
+                        options = categories
+                            .filter { it.type == null || it.type.equals(mode.value, true) }
+                            .map { it.id to it.name },
+                        onSelect = { categoryId = it }
+                    )
                 }
             }
 
@@ -171,14 +186,27 @@ fun TransactionFormScreen(
                 modifier = Modifier.fillMaxWidth()
             )
 
-            OutlinedTextField(
-                value = date,
-                onValueChange = { date = it },
-                label = { Text("Date (YYYY-MM-DD)") },
-                shape = EfinaCorners.menu,
-                singleLine = true,
-                modifier = Modifier.fillMaxWidth()
-            )
+            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                OutlinedTextField(
+                    value = date,
+                    onValueChange = { date = it },
+                    label = { Text("Date") },
+                    placeholder = { Text("YYYY-MM-DD") },
+                    shape = EfinaCorners.menu,
+                    singleLine = true,
+                    modifier = Modifier.weight(1.4f)
+                )
+                OutlinedTextField(
+                    value = time,
+                    onValueChange = { time = it },
+                    label = { Text("Time") },
+                    placeholder = { Text("HH:mm") },
+                    shape = EfinaCorners.menu,
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    modifier = Modifier.weight(1f)
+                )
+            }
 
             localError?.let {
                 Text(it, color = MaterialTheme.colorScheme.error,
@@ -205,7 +233,7 @@ fun TransactionFormScreen(
                                     fromAccountId = acc,
                                     toAccountId = toAccountId!!,
                                     amount = parsed!!,
-                                    date = normalizeDate(date),
+                                    date = normalizeDate(date, time),
                                     description = description.ifBlank { null }
                                 )
                             ) { onSaved() }
@@ -218,7 +246,7 @@ fun TransactionFormScreen(
                                     amount = parsed!!,
                                     type = existing.type,
                                     description = description.ifBlank { null },
-                                    date = normalizeDate(date),
+                                    date = normalizeDate(date, time),
                                     mood = existing.mood
                                 )
                             ) { onSaved() }
@@ -266,13 +294,31 @@ private fun SegmentedButtonRow(
         TransactionType.INCOME to "Income",
         TransactionType.TRANSFER to "Transfer"
     )
+    val isDark = LocalIsDarkTheme.current
+    // The web app fills these three buttons with emerald/red/blue and white text
+    // (TransactionModal.jsx). Match that: the selected chip carries the money colour
+    // for its type, so income and expense are distinguishable at a glance.
+    fun accentFor(type: TransactionType) = when (type) {
+        TransactionType.INCOME -> if (isDark) MoneyColors.incomeDark else MoneyColors.incomeLight
+        TransactionType.EXPENSE -> if (isDark) MoneyColors.expenseDark else MoneyColors.expenseLight
+        TransactionType.TRANSFER -> if (isDark) MoneyColors.transferDark else MoneyColors.transferLight
+    }
+
     SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
         options.forEachIndexed { index, (type, label) ->
+            val accent = accentFor(type)
+            val isSelected = selected == type
             SegmentedButton(
-                selected = selected == type,
+                selected = isSelected,
                 onClick = { onSelect(type) },
-                shape = SegmentedButtonDefaults.itemShape(index, options.size)
-            ) { Text(label) }
+                shape = SegmentedButtonDefaults.itemShape(index, options.size),
+                colors = SegmentedButtonDefaults.colors(
+                    activeContainerColor = accent,
+                    activeContentColor = Color.White,
+                    inactiveContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                    inactiveContentColor = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            ) { Text(label, fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium) }
         }
     }
 }
@@ -298,7 +344,83 @@ private fun today(): String =
  * The backend validates the date as ISO 8601 (`YYYY-MM-DDTHH:mm:ss`); a bare date
  * is accepted by `new Date()`, but normalising keeps list sorting stable.
  */
-private fun normalizeDate(input: String): String {
-    val trimmed = input.trim()
-    return if (trimmed.length == 10) "${trimmed}T00:00:00" else trimmed
+private fun nowTime(): String =
+    SimpleDateFormat("HH:mm:ss", Locale.US).format(Date())
+
+/**
+ * Joins the date and time fields into the ISO 8601 form the backend validates
+ * (`/^\d{4}-\d{2}-\d{2}(T\d{2}:\d{2}:\d{2})?$/`). A missing or malformed time
+ * falls back to midnight rather than sending a string the server will reject.
+ */
+private fun normalizeDate(datePart: String, timePart: String): String {
+    val d = datePart.trim()
+    if (d.length != 10) return d
+    val raw = timePart.trim()
+    val withSeconds = when {
+        raw.matches(Regex("^\\d{2}:\\d{2}$")) -> "$raw:00"
+        raw.matches(Regex("^\\d{2}:\\d{2}:\\d{2}$")) -> raw
+        else -> "00:00:00"
+    }
+    return "${d}T$withSeconds"
+}
+
+/**
+ * A dropdown for picking one value from a list.
+ *
+ * Chips were used before and did not scale: the account and category lists are
+ * unbounded, and categories were additionally capped at twelve, so most of the
+ * seeded tree could not be selected at all.
+ */
+@Composable
+private fun PickerField(
+    label: String,
+    selectedLabel: String,
+    options: List<Pair<Long, String>>,
+    onSelect: (Long) -> Unit
+) {
+    var expanded by remember { mutableStateOf(false) }
+
+    Box(Modifier.fillMaxWidth()) {
+        OutlinedButton(
+            onClick = { expanded = true },
+            shape = EfinaCorners.menu,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text(
+                text = selectedLabel,
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onSurface,
+                maxLines = 1,
+                modifier = Modifier.weight(1f)
+            )
+            Icon(
+                imageVector = Icons.Filled.ArrowDropDown,
+                contentDescription = "Show $label options",
+                tint = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+
+        DropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false },
+            modifier = Modifier.fillMaxWidth(0.9f)
+        ) {
+            if (options.isEmpty()) {
+                DropdownMenuItem(
+                    text = { Text("Nothing available") },
+                    onClick = { expanded = false },
+                    enabled = false
+                )
+            }
+            options.forEach { (id, text) ->
+                DropdownMenuItem(
+                    text = { Text(text) },
+                    onClick = {
+                        onSelect(id)
+                        expanded = false
+                    }
+                )
+            }
+        }
+    }
 }

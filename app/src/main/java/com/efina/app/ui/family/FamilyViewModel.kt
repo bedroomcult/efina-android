@@ -36,7 +36,15 @@ class FamilyViewModel @Inject constructor(
         _state.value = _state.value.copy(loading = true, error = null)
         viewModelScope.launch {
             repository.getFamilies()
-                .onSuccess { _state.value = _state.value.copy(loading = false, families = it) }
+                .onSuccess { families ->
+                    // GET families returns member_count but no member list, so every
+                    // family rendered "0 members". Fetch each one's detail to get the
+                    // actual roster; a failure keeps the summary rather than the sum.
+                    val detailed = families.map { family ->
+                        repository.getFamily(family.id).getOrDefault(family)
+                    }
+                    _state.value = _state.value.copy(loading = false, families = detailed)
+                }
                 .onFailure { _state.value = _state.value.copy(loading = false, error = it.message) }
         }
     }

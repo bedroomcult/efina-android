@@ -166,7 +166,9 @@ data class Category(
     val icon: String?,
     val parentId: Long?,
     val parentName: String? = null,
-    val isSystem: Boolean = false
+    val isSystem: Boolean = false,
+    /** "income" or "expense"; POST categories requires it. */
+    val type: String? = null
 )
 
 /**
