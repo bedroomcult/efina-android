@@ -45,6 +45,12 @@ object NetworkModule {
         // ponytail: global rather than per-field @EncodeDefault; revisit if a request
         // ever needs to distinguish "absent" from "default".
         encodeDefaults = true
+        // KNOWN LIMIT: explicitNulls = false plus encodeDefaults means a null field is
+        // dropped from the body entirely, so this client cannot send "clear this
+        // value". categories/[id].js tests `parent_id !== undefined` to allow exactly
+        // that, so re-parenting a category to top level is not expressible yet. No
+        // current caller needs it (the category edit form only renames); send an
+        // explicit JSON null through a raw body if that changes.
     }
 
     @Provides
