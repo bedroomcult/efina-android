@@ -37,6 +37,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.LazyColumn
 import com.efina.app.ui.components.PickerOption
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.material3.ModalBottomSheet
