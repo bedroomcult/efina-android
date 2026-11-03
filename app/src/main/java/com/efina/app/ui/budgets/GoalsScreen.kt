@@ -89,7 +89,7 @@ fun GoalsScreen(viewModel: GoalsViewModel = hiltViewModel()) {
             )
             else -> LazyColumn(
                 state = listState,
-                Modifier.padding(padding),
+                modifier = Modifier.padding(padding),
                 contentPadding = PaddingValues(16.dp, 8.dp, 16.dp, 96.dp),
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {

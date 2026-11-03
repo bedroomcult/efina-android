@@ -84,7 +84,7 @@ fun CategoriesScreen(
             )
             else -> LazyColumn(
                 state = listState,
-                Modifier.padding(padding),
+                modifier = Modifier.padding(padding),
                 contentPadding = PaddingValues(16.dp),
                 verticalArrangement = Arrangement.spacedBy(2.dp)
             ) {
