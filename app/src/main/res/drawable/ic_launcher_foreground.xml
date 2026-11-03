@@ -1,24 +1,36 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+  Efina mark: an upward trend arrow over a bar chart, inside a rounded speech-bubble
+  frame — the same mark the web app ships in public/icon-512.png, redrawn as a vector so
+  it stays sharp at every density and can be tinted by the adaptive icon.
+
+  The glyph sits inside the 72dp safe zone of the 108dp adaptive canvas: the launcher
+  may mask the outer third, so nothing meaningful is drawn past 54dp from centre.
+-->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="108dp"
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
-    <group android:scaleX="0.4"
-        android:scaleY="0.4"
-        android:translateX="32.4"
-        android:translateY="32.4">
-        <path
-            android:fillColor="#D4AF37"
-            android:pathData="M54,27C36.3,27 22,41.3 22,59C22,76.7 36.3,91 54,91C71.7,91 86,76.7 86,59C86,41.3 71.7,27 54,27ZM54,31C69.5,31 82,43.5 82,59C82,74.5 69.5,87 54,87C38.5,87 26,74.5 26,59C26,43.5 38.5,31 54,31Z"/>
-        <path
-            android:fillColor="#D4AF37"
-            android:pathData="M54,39C45.2,39 38,46.2 38,55L38,63C38,71.8 45.2,79 54,79C62.8,79 70,71.8 70,63L70,55C70,46.2 62.8,39 54,39ZM54,43C60.6,43 66,48.4 66,55L66,63C66,69.6 60.6,75 54,75C47.4,75 42,69.6 42,63L42,55C42,48.4 47.4,43 54,43Z"/>
-        <path
-            android:fillColor="#D4AF37"
-            android:pathData="M50,51L50,59L58,59L58,51Z"/>
-        <path
-            android:fillColor="#D4AF37"
-            android:pathData="M50,63L50,67L58,67L58,63Z"/>
-    </group>
+
+    <!-- Bar chart: three rising bars on a baseline. -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M38,64h7v13h-7z" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M50.5,57h7v20h-7z" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M63,50h7v27h-7z" />
+
+    <!-- Baseline. -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M34,77h40v4h-40z" />
+
+    <!-- Trend arrow, rising left to right, head at the top right. -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M33,68.5l12,-11l8,6.5l11,-13.5l-6,-1.5l14,-6l-2,15l-3,-5.5l-14,17l-8,-6.5l-9,8.5z" />
 </vector>
