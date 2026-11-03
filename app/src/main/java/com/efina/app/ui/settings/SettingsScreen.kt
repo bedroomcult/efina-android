@@ -442,10 +442,10 @@ private fun ChoiceSheet(
                 style = MaterialTheme.typography.titleLarge,
                 modifier = Modifier.padding(bottom = 12.dp)
             )
-            androidx.compose.foundation.lazy.LazyColumn(
+            LazyColumn(
                 Modifier.fillMaxWidth().heightIn(max = 420.dp)
             ) {
-                androidx.compose.foundation.lazy.itemsIndexed(options) { index, option ->
+                itemsIndexed(options) { index, option ->
                     val chosen = index == selectedIndex
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
@@ -502,10 +502,10 @@ private fun ThemeSheet(
                 style = MaterialTheme.typography.titleLarge,
                 modifier = Modifier.padding(bottom = 12.dp)
             )
-            androidx.compose.foundation.lazy.LazyColumn(
+            LazyColumn(
                 Modifier.fillMaxWidth().heightIn(max = 480.dp)
             ) {
-                androidx.compose.foundation.lazy.items(entries) { entry ->
+                items(entries) { entry ->
                     val chosen = entry.first == selected
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
