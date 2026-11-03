@@ -26,6 +26,8 @@ import com.efina.app.ui.theme.LocalMoneyPalette
 import com.efina.app.ui.components.ContentWidth
 import com.efina.app.ui.components.WidthCapped
 import com.efina.app.ui.theme.RevealLatch
+import com.efina.app.ui.theme.Haptic
+import com.efina.app.ui.theme.rememberHaptics
 
 /**
  * Debts and receivables.
@@ -41,6 +43,7 @@ fun DebtsScreen(
     viewModel: DebtsViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsState()
+    val haptics = rememberHaptics()
     // Marks this screen as having played its entrance, so returning to the tab
     // does not replay the staggered reveal.
     RevealLatch.currentScreen = "debts"
@@ -50,7 +53,13 @@ fun DebtsScreen(
     var pendingDelete by remember { mutableStateOf<Debt?>(null) }
 
     LaunchedEffect(state.error) {
-        state.error?.let { snackbar.showSnackbar(it); viewModel.clearError() }
+        state.error?.let {
+            // A failed save is the one moment a user needs to notice without
+            // reading; the snackbar alone is easy to miss mid-scroll.
+            haptics(Haptic.Reject)
+            snackbar.showSnackbar(it)
+            viewModel.clearError()
+        }
     }
 
     Scaffold(
@@ -141,7 +150,7 @@ fun DebtsScreen(
             title = { Text("Delete ${d.name}?") },
             text = { Text("Payment history on this debt is removed with it.") },
             confirmButton = {
-                TextButton(onClick = { viewModel.delete(d.id); pendingDelete = null }) {
+                TextButton(onClick = { viewModel.delete(d.id); haptics(Haptic.Confirm); pendingDelete = null }) {
                     Text("Delete", color = MaterialTheme.colorScheme.error)
                 }
             },

@@ -25,6 +25,7 @@ import com.efina.app.ui.theme.tonal
 import java.text.NumberFormat
 import java.util.Currency
 import java.util.Locale
+import com.efina.app.ui.theme.springClick
 
 /**
  * Shared UI primitives. These carry the design.md rules that would otherwise be
@@ -314,10 +315,10 @@ fun SegmentedRow(
         else -> EfinaCorners.groupInner
     }
     Surface(
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier.fillMaxWidth()
+            .springClick(EfinaCorners.menu, onClick = onClick ?: {}),
         shape = shape,
         color = MaterialTheme.colorScheme.surfaceContainerLow,
-        onClick = onClick ?: {}
     ) {
         Row(
             Modifier

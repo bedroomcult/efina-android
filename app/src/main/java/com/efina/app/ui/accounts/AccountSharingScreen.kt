@@ -15,6 +15,8 @@ import com.efina.app.domain.model.AccountShareRole
 import com.efina.app.ui.components.*
 import com.efina.app.ui.components.ContentWidth
 import com.efina.app.ui.components.WidthCapped
+import com.efina.app.ui.theme.Haptic
+import com.efina.app.ui.theme.rememberHaptics
 
 /**
  * Sharing sheet for one account.
@@ -31,6 +33,7 @@ fun AccountSharingScreen(
     viewModel: AccountsViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsState()
+    val haptics = rememberHaptics()
     val account = state.accounts.firstOrNull { it.id == accountId }
     val snackbar = remember { SnackbarHostState() }
     var adding by remember { mutableStateOf(false) }
@@ -39,7 +42,13 @@ fun AccountSharingScreen(
 
     LaunchedEffect(accountId) { viewModel.loadMembers(accountId) }
     LaunchedEffect(state.error) {
-        state.error?.let { snackbar.showSnackbar(it); viewModel.clearError() }
+        state.error?.let {
+            // A failed save is the one moment a user needs to notice without
+            // reading; the snackbar alone is easy to miss mid-scroll.
+            haptics(Haptic.Reject)
+            snackbar.showSnackbar(it)
+            viewModel.clearError()
+        }
     }
 
     Scaffold(

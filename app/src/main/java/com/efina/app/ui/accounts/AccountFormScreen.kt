@@ -22,6 +22,8 @@ import com.efina.app.ui.theme.EfinaCorners
 import com.efina.app.ui.theme.EfinaType
 import com.efina.app.ui.components.ContentWidth
 import com.efina.app.ui.components.WidthCapped
+import com.efina.app.ui.theme.Haptic
+import com.efina.app.ui.theme.rememberHaptics
 
 /**
  * Create and edit share one form: the backend's create and update bodies differ
@@ -49,6 +51,7 @@ fun AccountFormScreen(
     }
     var currency by remember(account?.id) { mutableStateOf(account?.currency ?: "IDR") }
     var description by remember(account?.id) { mutableStateOf(account?.description.orEmpty()) }
+    val haptics = rememberHaptics()
     var localError by remember { mutableStateOf<String?>(null) }
 
     val currencies = listOf("IDR", "USD", "EUR", "GBP", "SGD", "MYR", "JPY")
@@ -170,7 +173,7 @@ fun AccountFormScreen(
                                     currency = currency,
                                     description = description.ifBlank { null }
                                 )
-                            ) { onSaved() }
+                            ) { haptics(Haptic.Confirm); onSaved() }
                         } else {
                             viewModel.create(
                                 CreateAccountRequest(
@@ -180,7 +183,7 @@ fun AccountFormScreen(
                                     currency = currency,
                                     description = description.ifBlank { null }
                                 )
-                            ) { onSaved() }
+                            ) { haptics(Haptic.Confirm); onSaved() }
                         }
                     }
                 },

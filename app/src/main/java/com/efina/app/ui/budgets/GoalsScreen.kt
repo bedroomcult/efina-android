@@ -27,11 +27,15 @@ import com.efina.app.ui.theme.revealModifier
 import com.efina.app.ui.components.ContentWidth
 import com.efina.app.ui.components.WidthCapped
 import com.efina.app.ui.theme.RevealLatch
+import com.efina.app.ui.theme.Haptic
+import com.efina.app.ui.theme.rememberHaptics
+import com.efina.app.ui.theme.springClick
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun GoalsScreen(viewModel: GoalsViewModel = hiltViewModel()) {
     val state by viewModel.state.collectAsState()
+    val haptics = rememberHaptics()
     // Marks this screen as having played its entrance, so returning to the tab
     // does not replay the staggered reveal.
     RevealLatch.currentScreen = "goals"
@@ -44,7 +48,13 @@ fun GoalsScreen(viewModel: GoalsViewModel = hiltViewModel()) {
     var editTarget by remember { mutableStateOf("") }
 
     LaunchedEffect(state.error) {
-        state.error?.let { snackbar.showSnackbar(it); viewModel.clearError() }
+        state.error?.let {
+            // A failed save is the one moment a user needs to notice without
+            // reading; the snackbar alone is easy to miss mid-scroll.
+            haptics(Haptic.Reject)
+            snackbar.showSnackbar(it)
+            viewModel.clearError()
+        }
     }
 
     Scaffold(
@@ -172,7 +182,7 @@ fun GoalsScreen(viewModel: GoalsViewModel = hiltViewModel()) {
             title = { Text("Delete ${g.name}?") },
             text = { Text("Money already moved into this goal is not returned automatically.") },
             confirmButton = {
-                TextButton(onClick = { viewModel.delete(g.id); pendingDelete = null }) {
+                TextButton(onClick = { viewModel.delete(g.id); haptics(Haptic.Confirm); pendingDelete = null }) {
                     Text("Delete", color = MaterialTheme.colorScheme.error)
                 }
             },
@@ -221,10 +231,10 @@ private fun GoalCard(
     onEdit: () -> Unit
 ) {
     Surface(
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier.fillMaxWidth()
+            .springClick(EfinaCorners.menu, onClick = onEdit),
         shape = EfinaCorners.menu,
         color = MaterialTheme.colorScheme.surfaceContainerLow,
-        onClick = onEdit
     ) {
         Column(Modifier.padding(16.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -251,8 +261,19 @@ private fun GoalCard(
                 }
             }
             Spacer(Modifier.height(10.dp))
+            val goalTarget = (goal.progressPercentage / 100f).coerceIn(0f, 1f)
+            val goalFilled by androidx.compose.animation.core.animateFloatAsState(
+                targetValue = goalTarget,
+                animationSpec = if (com.efina.app.ui.theme.EfinaMotion.enabled)
+                    androidx.compose.animation.core.tween(
+                        durationMillis = 900,
+                        easing = androidx.compose.animation.core.FastOutSlowInEasing
+                    )
+                else androidx.compose.animation.core.tween(durationMillis = 0),
+                label = "goalFill"
+            )
             LinearProgressIndicator(
-                progress = { goal.progressPercentage / 100f },
+                progress = { goalFilled },
                 modifier = Modifier.fillMaxWidth().height(8.dp),
                 color = if (goal.isComplete) com.efina.app.ui.theme.EfinaSemantic.safe
                 else MaterialTheme.colorScheme.primary,

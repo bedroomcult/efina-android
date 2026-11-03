@@ -17,6 +17,8 @@ import com.efina.app.ui.theme.EfinaCorners
 import com.efina.app.ui.theme.EfinaType
 import com.efina.app.ui.components.ContentWidth
 import com.efina.app.ui.components.WidthCapped
+import com.efina.app.ui.theme.Haptic
+import com.efina.app.ui.theme.rememberHaptics
 
 /**
  * Settings.
@@ -37,6 +39,7 @@ fun SettingsScreen(
     viewModel: SettingsViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsState()
+    val haptics = rememberHaptics()
     val snackbar = remember { SnackbarHostState() }
     var showPasswordDialog by remember { mutableStateOf(false) }
     var confirmLogout by remember { mutableStateOf(false) }

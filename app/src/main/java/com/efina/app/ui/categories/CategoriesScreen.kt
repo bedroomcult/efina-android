@@ -24,6 +24,8 @@ import com.efina.app.ui.theme.tonal
 import com.efina.app.ui.components.ContentWidth
 import com.efina.app.ui.components.WidthCapped
 import com.efina.app.ui.theme.RevealLatch
+import com.efina.app.ui.theme.Haptic
+import com.efina.app.ui.theme.rememberHaptics
 
 @OptIn(ExperimentalMaterial3Api::class, androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
 @Composable
@@ -32,6 +34,7 @@ fun CategoriesScreen(
     viewModel: CategoriesViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsState()
+    val haptics = rememberHaptics()
     // Marks this screen as having played its entrance, so returning to the tab
     // does not replay the staggered reveal.
     RevealLatch.currentScreen = "categories"
@@ -44,7 +47,13 @@ fun CategoriesScreen(
     var editName by remember { mutableStateOf("") }
 
     LaunchedEffect(state.error) {
-        state.error?.let { snackbar.showSnackbar(it); viewModel.clearError() }
+        state.error?.let {
+            // A failed save is the one moment a user needs to notice without
+            // reading; the snackbar alone is easy to miss mid-scroll.
+            haptics(Haptic.Reject)
+            snackbar.showSnackbar(it)
+            viewModel.clearError()
+        }
     }
 
     Scaffold(
@@ -167,7 +176,7 @@ fun CategoriesScreen(
             text = { Text("Transactions using it keep their amount but lose the category.") },
             confirmButton = {
                 TextButton(onClick = {
-                    viewModel.delete(cat.id); pendingDelete = null
+                    viewModel.delete(cat.id); haptics(Haptic.Confirm); pendingDelete = null
                 }) { Text("Delete", color = MaterialTheme.colorScheme.error) }
             },
             dismissButton = {
@@ -189,20 +198,20 @@ private fun CategoryRow(
     val accent = parseHexColor(category.color, MaterialTheme.colorScheme.primary)
     val (container, onContainer) = tonal(accent, dark)
 
+    val rowShape = when {
+        first && last -> EfinaCorners.groupOuter
+        first -> androidx.compose.foundation.shape.RoundedCornerShape(
+            topStart = 20.dp, topEnd = 20.dp, bottomStart = 4.dp, bottomEnd = 4.dp
+        )
+        last -> androidx.compose.foundation.shape.RoundedCornerShape(
+            topStart = 4.dp, topEnd = 4.dp, bottomStart = 20.dp, bottomEnd = 20.dp
+        )
+        else -> EfinaCorners.groupInner
+    }
     Surface(
-        modifier = Modifier.fillMaxWidth(),
-        onClick = onEdit,
+        modifier = Modifier.fillMaxWidth().springClick(rowShape, onClick = onEdit),
         color = MaterialTheme.colorScheme.surfaceContainerLow,
-        shape = when {
-            first && last -> EfinaCorners.groupOuter
-            first -> androidx.compose.foundation.shape.RoundedCornerShape(
-                topStart = 20.dp, topEnd = 20.dp, bottomStart = 4.dp, bottomEnd = 4.dp
-            )
-            last -> androidx.compose.foundation.shape.RoundedCornerShape(
-                topStart = 4.dp, topEnd = 4.dp, bottomStart = 20.dp, bottomEnd = 20.dp
-            )
-            else -> EfinaCorners.groupInner
-        }
+        shape = rowShape
     ) {
         Row(
             Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 14.dp),

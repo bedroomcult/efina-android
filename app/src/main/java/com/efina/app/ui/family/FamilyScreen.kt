@@ -21,6 +21,8 @@ import com.efina.app.ui.theme.EfinaType
 import com.efina.app.ui.components.ContentWidth
 import com.efina.app.ui.components.WidthCapped
 import com.efina.app.ui.theme.RevealLatch
+import com.efina.app.ui.theme.Haptic
+import com.efina.app.ui.theme.rememberHaptics
 
 /**
  * Families and their invite codes.
@@ -36,6 +38,7 @@ fun FamilyScreen(
     viewModel: FamilyViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsState()
+    val haptics = rememberHaptics()
     // Marks this screen as having played its entrance, so returning to the tab
     // does not replay the staggered reveal.
     RevealLatch.currentScreen = "family"
@@ -47,7 +50,13 @@ fun FamilyScreen(
     var pendingRemove by remember { mutableStateOf<Pair<Long, Long>?>(null) }
 
     LaunchedEffect(state.error) {
-        state.error?.let { snackbar.showSnackbar(it); viewModel.clearError() }
+        state.error?.let {
+            // A failed save is the one moment a user needs to notice without
+            // reading; the snackbar alone is easy to miss mid-scroll.
+            haptics(Haptic.Reject)
+            snackbar.showSnackbar(it)
+            viewModel.clearError()
+        }
     }
 
     Scaffold(

@@ -39,6 +39,8 @@ import com.efina.app.ui.components.CategoryPickerSheet
 import com.efina.app.ui.components.DateTimeField
 import com.efina.app.ui.components.ContentWidth
 import com.efina.app.ui.components.WidthCapped
+import com.efina.app.ui.theme.Haptic
+import com.efina.app.ui.theme.rememberHaptics
 
 /**
  * Create / edit a transaction, or create a transfer pair.
@@ -80,6 +82,7 @@ fun TransactionFormScreen(
     var time by remember(existing?.id) {
         mutableStateOf(existing?.date?.drop(11)?.take(8) ?: nowTime())
     }
+    val haptics = rememberHaptics()
     var localError by remember { mutableStateOf<String?>(null) }
     var showCategoryPicker by remember { mutableStateOf(false) }
 
@@ -260,7 +263,7 @@ fun TransactionFormScreen(
                                     date = normalizeDate(date, time),
                                     description = description.ifBlank { null }
                                 )
-                            ) { onSaved() }
+                            ) { haptics(Haptic.Confirm); onSaved() }
                         } else if (isEdit) {
                             viewModel.update(
                                 existing!!.id,
@@ -273,7 +276,7 @@ fun TransactionFormScreen(
                                     date = normalizeDate(date, time),
                                     mood = existing.mood
                                 )
-                            ) { onSaved() }
+                            ) { haptics(Haptic.Confirm); onSaved() }
                         } else {
                             viewModel.create(
                                 CreateTransactionRequest(
@@ -284,7 +287,7 @@ fun TransactionFormScreen(
                                     description = description.ifBlank { null },
                                     date = normalizeDate(date, time)
                                 )
-                            ) { onSaved() }
+                            ) { haptics(Haptic.Confirm); onSaved() }
                         }
                     }
                 },

@@ -25,6 +25,9 @@ import com.efina.app.ui.theme.revealModifier
 import com.efina.app.ui.components.ContentWidth
 import com.efina.app.ui.components.WidthCapped
 import com.efina.app.ui.theme.RevealLatch
+import com.efina.app.ui.theme.Haptic
+import com.efina.app.ui.theme.rememberHaptics
+import com.efina.app.ui.theme.springClick
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
@@ -32,6 +35,7 @@ fun BudgetsScreen(
     viewModel: BudgetsViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsState()
+    val haptics = rememberHaptics()
     // Marks this screen as having played its entrance, so returning to the tab
     // does not replay the staggered reveal.
     RevealLatch.currentScreen = "budgets"
@@ -43,7 +47,13 @@ fun BudgetsScreen(
     var editPeriod by remember { mutableStateOf(com.efina.app.domain.model.PeriodType.MONTHLY) }
 
     LaunchedEffect(state.error) {
-        state.error?.let { snackbar.showSnackbar(it); viewModel.clearError() }
+        state.error?.let {
+            // A failed save is the one moment a user needs to notice without
+            // reading; the snackbar alone is easy to miss mid-scroll.
+            haptics(Haptic.Reject)
+            snackbar.showSnackbar(it)
+            viewModel.clearError()
+        }
     }
 
     Scaffold(
@@ -165,7 +175,7 @@ fun BudgetsScreen(
             title = { Text("Delete budget?") },
             text = { Text("Spending in this category will no longer be tracked against a limit.") },
             confirmButton = {
-                TextButton(onClick = { viewModel.delete(b.id); pendingDelete = null }) {
+                TextButton(onClick = { viewModel.delete(b.id); haptics(Haptic.Confirm); pendingDelete = null }) {
                     Text("Delete", color = MaterialTheme.colorScheme.error)
                 }
             },
@@ -195,8 +205,21 @@ private fun BudgetSummaryCard(total: Double, spent: Double, over: Int) {
             style = EfinaType.amountMedium
         )
         Spacer(Modifier.height(10.dp))
+        // Fills from zero on entry, so the bar reads as progress being made rather than
+        // as a value that was always there.
+        val target = if (total <= 0.0) 0f else (spent / total).toFloat().coerceIn(0f, 1f)
+        val filled by androidx.compose.animation.core.animateFloatAsState(
+            targetValue = target,
+            animationSpec = if (com.efina.app.ui.theme.EfinaMotion.enabled)
+                androidx.compose.animation.core.tween(
+                    durationMillis = 900,
+                    easing = androidx.compose.animation.core.FastOutSlowInEasing
+                )
+            else androidx.compose.animation.core.tween(durationMillis = 0),
+            label = "budgetFill"
+        )
         LinearProgressIndicator(
-            progress = { if (total <= 0.0) 0f else (spent / total).toFloat().coerceIn(0f, 1f) },
+            progress = { filled },
             modifier = Modifier.fillMaxWidth().height(8.dp),
             color = if (over > 0) MaterialTheme.colorScheme.error
             else MaterialTheme.colorScheme.primary,
@@ -229,10 +252,10 @@ private fun BudgetCard(
     }
 
     Surface(
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier.fillMaxWidth()
+            .springClick(EfinaCorners.menu, onClick = onEdit),
         shape = EfinaCorners.menu,
         color = MaterialTheme.colorScheme.surfaceContainerLow,
-        onClick = onEdit
     ) {
         Column(Modifier.padding(16.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {

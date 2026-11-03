@@ -23,6 +23,8 @@ import com.efina.app.ui.theme.springClick
 import com.efina.app.ui.components.ContentWidth
 import com.efina.app.ui.components.WidthCapped
 import com.efina.app.ui.theme.RevealLatch
+import com.efina.app.ui.theme.Haptic
+import com.efina.app.ui.theme.rememberHaptics
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -33,6 +35,7 @@ fun AccountsScreen(
     viewModel: AccountsViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsState()
+    val haptics = rememberHaptics()
     // Marks this screen as having played its entrance, so returning to the tab
     // does not replay the staggered reveal.
     RevealLatch.currentScreen = "accounts"
@@ -115,7 +118,7 @@ fun AccountsScreen(
             },
             confirmButton = {
                 TextButton(onClick = {
-                    viewModel.delete(account.id)
+                    viewModel.delete(account.id); haptics(Haptic.Confirm)
                     pendingDelete = null
                 }) { Text("Delete", color = MaterialTheme.colorScheme.error) }
             },
@@ -141,8 +144,9 @@ private fun TotalCard(total: Double, currency: String) {
             color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.75f)
         )
         Spacer(Modifier.height(4.dp))
-        Text(
-            formatMoney(total, currency),
+        AnimatedMoney(
+            amount = total,
+            currency = currency,
             style = EfinaType.amountLarge,
             color = MaterialTheme.colorScheme.onPrimaryContainer
         )

@@ -21,6 +21,7 @@ import com.efina.app.ui.theme.LocalMoneyPalette
 import com.efina.app.ui.components.ContentWidth
 import com.efina.app.ui.components.WidthCapped
 import com.efina.app.ui.theme.RevealLatch
+import com.efina.app.ui.theme.springClick
 
 /**
  * Dashboard. Assembled from accounts + transactions + budgets + goals, per
@@ -177,10 +178,10 @@ fun HomeScreen(
                         items(minOf(3, data.budgets.size)) { i ->
                             val b = data.budgets[i]
                             Surface(
-                                modifier = Modifier.fillMaxWidth(),
+                                modifier = Modifier.fillMaxWidth()
+                                    .springClick(EfinaCorners.menu, onClick = onNavigateToBudgets),
                                 shape = EfinaCorners.menu,
                                 color = MaterialTheme.colorScheme.surfaceContainerLow,
-                                onClick = onNavigateToBudgets
                             ) {
                                 Column(Modifier.padding(14.dp)) {
                                     Row {
@@ -219,10 +220,10 @@ fun HomeScreen(
                         items(minOf(2, data.goals.size)) { i ->
                             val g = data.goals[i]
                             Surface(
-                                modifier = Modifier.fillMaxWidth(),
+                                modifier = Modifier.fillMaxWidth()
+                                    .springClick(EfinaCorners.menu, onClick = onNavigateToGoals),
                                 shape = EfinaCorners.menu,
                                 color = MaterialTheme.colorScheme.surfaceContainerLow,
-                                onClick = onNavigateToGoals
                             ) {
                                 Column(Modifier.padding(14.dp)) {
                                     Text(g.name, style = MaterialTheme.typography.titleSmall)
@@ -291,8 +292,8 @@ private fun BalanceHero(total: Double, accountCount: Int) {
             color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.75f)
         )
         Spacer(Modifier.height(6.dp))
-        Text(
-            formatMoney(total),
+        AnimatedMoney(
+            amount = total,
             style = EfinaType.amountLarge,
             color = MaterialTheme.colorScheme.onPrimaryContainer
         )
@@ -356,10 +357,10 @@ private fun HealthCard(health: com.efina.app.domain.model.HealthScore) {
 @Composable
 private fun RecentRow(tx: Transaction, currency: String, onClick: () -> Unit) {
     Surface(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth()
+            .springClick(EfinaCorners.menu, onClick = onClick),
         shape = EfinaCorners.groupInner,
         color = MaterialTheme.colorScheme.surfaceContainerLow,
-        onClick = onClick
     ) {
         Row(
             Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 12.dp),
