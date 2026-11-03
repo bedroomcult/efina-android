@@ -26,6 +26,14 @@ import java.text.NumberFormat
 import java.util.Currency
 import java.util.Locale
 import com.efina.app.ui.theme.springClick
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.ui.draw.alpha
+import com.efina.app.ui.theme.EfinaMotion
+import androidx.compose.animation.core.FastOutSlowInEasing
 
 /**
  * Shared UI primitives. These carry the design.md rules that would otherwise be
@@ -221,11 +229,28 @@ fun SectionHeader(
 /** Shaped placeholder mirroring a row, per design.md skeletons. */
 @Composable
 fun SkeletonRow(modifier: Modifier = Modifier) {
+    // Shimmer rather than a flat grey block: a static rectangle reads as a broken row,
+    // while a pulse reads as "loading". 900ms alpha 0.45 <-> 0.9, and it stops entirely
+    // when animations are disabled.
+    val shimmer = if (EfinaMotion.enabled) {
+        val transition = rememberInfiniteTransition(label = "skeleton")
+        transition.animateFloat(
+            initialValue = 0.45f,
+            targetValue = 0.9f,
+            animationSpec = infiniteRepeatable(
+                animation = tween(900, easing = FastOutSlowInEasing),
+                repeatMode = RepeatMode.Reverse
+            ),
+            label = "skeletonAlpha"
+        ).value
+    } else 0.7f
+
     Column(modifier.fillMaxWidth().padding(vertical = 10.dp)) {
         Box(
             Modifier
                 .fillMaxWidth(0.45f)
                 .height(14.dp)
+                .alpha(shimmer)
                 .background(MaterialTheme.colorScheme.surfaceContainerHighest, EfinaCorners.groupInner)
         )
         Spacer(Modifier.height(6.dp))
@@ -233,6 +258,7 @@ fun SkeletonRow(modifier: Modifier = Modifier) {
             Modifier
                 .fillMaxWidth(0.25f)
                 .height(10.dp)
+                .alpha(shimmer)
                 .background(MaterialTheme.colorScheme.surfaceContainerHighest, EfinaCorners.groupInner)
         )
     }

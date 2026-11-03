@@ -31,6 +31,7 @@ import com.efina.app.ui.components.BadgeToastHost
 import com.efina.app.ui.components.BadgeTone
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import com.efina.app.ui.components.DockClearance
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -79,7 +80,7 @@ fun AccountsScreen(
             // The dock is an overlay drawn after the NavHost, so an un-padded FAB ends
             // up underneath it and cannot be tapped. 78dp clears the 52dp items plus
             // the dock's 6dp padding, 12dp inset and the navigation-bar inset.
-            Box(Modifier.padding(bottom = 78.dp)) {
+            Box(Modifier.padding(bottom = DockClearance)) {
                 ExtendedFloatingActionButton(
                     onClick = onNavigateToCreate,
                     icon = { Icon(Icons.Default.Add, contentDescription = null) },

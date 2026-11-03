@@ -91,6 +91,3 @@ fun WidthCapped(
         ) { content() }
     }
 }
-
-/** Convenience: `PaddingValues` equivalent for content that clears the floating dock. */
-val DockClearance: PaddingValues = PaddingValues(bottom = 96.dp)

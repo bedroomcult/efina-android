@@ -37,6 +37,17 @@ data class DockItem(val route: String, val icon: ImageVector, val label: String)
 const val WIDE_LAYOUT_BREAKPOINT_DP = 600
 
 /**
+ * Vertical space the floating dock occupies, for anything drawn in the same corner.
+ *
+ * 52dp items + 6dp container padding above and below + 12dp float inset + the
+ * navigation-bar inset. Anything placed by a Scaffold slot (FAB, snackbar) is laid out
+ * inside the NavHost and therefore under the dock, which is an overlay — each of those
+ * needs this offset, and hardcoding it in four places is how the FAB and the badge both
+ * ended up hidden.
+ */
+val DockClearance = 78.dp
+
+/**
  * Floating pill dock, per design.md §7.3's "Pill (default)".
  *
  * An overlay rather than `Scaffold.bottomBar`: the spec insets it 12dp above the system

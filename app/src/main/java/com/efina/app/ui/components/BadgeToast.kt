@@ -77,7 +77,7 @@ fun BadgeToastHost(
     // Lifted clear of the floating dock, which is drawn over the NavHost and would
     // otherwise cover the badge's lower half.
     Box(
-        modifier.fillMaxWidth().padding(bottom = 78.dp),
+        modifier.fillMaxWidth().padding(bottom = DockClearance),
         contentAlignment = Alignment.Center
     ) {
         AnimatedVisibility(

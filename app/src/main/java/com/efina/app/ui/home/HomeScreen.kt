@@ -333,7 +333,7 @@ private fun FlowStat(
         Text(label, style = MaterialTheme.typography.labelSmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant)
         Spacer(Modifier.height(4.dp))
-        Text(formatMoney(amount), style = EfinaType.amountSmall, color = content)
+        AnimatedMoney(amount = amount, style = EfinaType.amountSmall, color = content)
     }
 }
 

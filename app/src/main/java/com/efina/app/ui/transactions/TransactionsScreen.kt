@@ -35,6 +35,7 @@ import androidx.compose.material.icons.filled.Tune
 import com.efina.app.ui.theme.LocalMoneyPalette
 import com.efina.app.ui.components.BadgeToastHost
 import com.efina.app.ui.components.BadgeTone
+import com.efina.app.ui.components.DockClearance
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -107,7 +108,7 @@ fun TransactionsScreen(
         // Lifted clear of the floating dock, which is drawn over the NavHost.
         floatingActionButton = {
             // Clears the floating dock, which is drawn over the NavHost.
-            Box(Modifier.padding(bottom = 78.dp)) {
+            Box(Modifier.padding(bottom = DockClearance)) {
                 FloatingActionButton(
                     onClick = onNavigateToCreate,
                     shape = EfinaCorners.menu
