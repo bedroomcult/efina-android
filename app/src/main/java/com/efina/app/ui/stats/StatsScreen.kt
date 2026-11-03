@@ -15,23 +15,27 @@ import com.efina.app.ui.theme.EfinaCorners
 import com.efina.app.ui.theme.EfinaSemantic
 import com.efina.app.ui.theme.EfinaType
 import com.efina.app.ui.theme.LocalMoneyPalette
+import androidx.compose.foundation.layout.BoxWithConstraints
 import com.efina.app.ui.components.ContentWidth
-import com.efina.app.ui.components.WidthCapped
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun StatsScreen(viewModel: StatsViewModel = hiltViewModel()) {
     val state by viewModel.state.collectAsState()
 
-    Scaffold(
+    // Width cap by padding rather than by wrapping: adding a container around the
+    // Scaffold made the content lambda's early returns illegal and cost more churn
+    // than the cap is worth on this screen.
+    BoxWithConstraints(Modifier.fillMaxSize()) {
+    val side = ((maxWidth - ContentWidth.List.max.dp) / 2).coerceAtLeast(0.dp)
+    Scaffold(modifier = Modifier.padding(horizontal = side),
         topBar = {
             TopAppBar(
                 title = { Text("Statistics", style = EfinaType.titleLargeEmphasized) }
             )
         }
     ) { padding ->
-
-        WidthCapped(ContentWidth.List) {        if (state.error != null) {
+        if (state.error != null) {
             Column(Modifier.fillMaxSize().padding(16.dp)) {
                 ErrorState(message = state.error!!, onRetry = { viewModel.load() })
             }
@@ -221,8 +225,6 @@ fun StatsScreen(viewModel: StatsViewModel = hiltViewModel()) {
                 }
             }
         }
-    
-        }
     }
 }
 
@@ -240,4 +242,5 @@ private fun StatTile(
         Spacer(Modifier.height(4.dp))
         Text(formatMoney(amount), style = EfinaType.amountSmall, color = contentColor)
     }
-}
+}    }
+

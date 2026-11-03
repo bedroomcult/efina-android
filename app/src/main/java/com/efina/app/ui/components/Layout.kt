@@ -80,7 +80,7 @@ fun EfinaTopBar(
 fun WidthCapped(
     width: ContentWidth,
     modifier: Modifier = Modifier,
-    content: @Composable () -> Unit
+    content: @Composable androidx.compose.foundation.layout.BoxScope.() -> Unit
 ) {
     BoxWithConstraints(modifier.fillMaxWidth()) {
         val side = maxOf(0.dp, (maxWidth - width.max.dp) / 2)

@@ -62,9 +62,10 @@ fun SettingsScreen(
         }
     ) { padding ->
 
-        WidthCapped(ContentWidth.List) {        if (state.loading) {
+        WidthCapped(ContentWidth.List) {
+        if (state.loading) {
             LoadingList(rows = 6, modifier = Modifier.padding(padding).padding(16.dp))
-            return@Scaffold
+            return@WidthCapped
         }
 
         val settings = state.settings

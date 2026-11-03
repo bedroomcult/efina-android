@@ -101,11 +101,6 @@ sealed class Screen(val route: String) {
     data object Scheduled : Screen("scheduled")
 }
 
-/** The same five tabs as the dock/rail, in the shell's own type. */
-private val dockItems: List<DockItem> = bottomNavItems.map {
-    DockItem(route = it.screen.route, icon = it.icon, label = it.label)
-}
-
 private data class NavItem(val screen: Screen, val icon: ImageVector, val label: String)
 
 private val bottomNavItems = listOf(
@@ -115,6 +110,11 @@ private val bottomNavItems = listOf(
     NavItem(Screen.Stats, Icons.Default.BarChart, "Stats"),
     NavItem(Screen.Settings, Icons.Default.Person, "Profile")
 )
+
+/** The same five tabs as the dock/rail, in the shell's own type. */
+private val dockItems: List<DockItem> = bottomNavItems.map {
+    DockItem(route = it.screen.route, icon = it.icon, label = it.label)
+}
 
 @Composable
 fun EfinaAppRoot(
