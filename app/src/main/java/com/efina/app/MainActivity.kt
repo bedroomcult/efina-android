@@ -31,6 +31,10 @@ class MainActivity : ComponentActivity() {
         installSplashScreen()
         pendingRoute.value = routeForUri(intent?.dataString)
         super.onCreate(savedInstanceState)
+        // No arguments: enableEdgeToEdge() defaults to SystemBarStyle.auto with a fixed
+        // light scrim, so the status-bar icons never follow the app's palette. On a
+        // light theme the icons stay light-on-light and vanish. EfinaAppRoot re-applies
+        // the correct style once the theme is known (see SyncSystemBars there).
         enableEdgeToEdge()
 
         // EfinaAppRoot owns the theme, because the palette is driven by the

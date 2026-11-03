@@ -41,6 +41,12 @@ import com.efina.app.ui.components.ContentWidth
 import com.efina.app.ui.components.WidthCapped
 import com.efina.app.ui.theme.Haptic
 import com.efina.app.ui.theme.rememberHaptics
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
+import com.efina.app.ui.components.PickerOption
+import com.efina.app.ui.components.PickerSheet
+import com.efina.app.ui.theme.parseHexColor
 
 /**
  * Create / edit a transaction, or create a transfer pair.
@@ -85,6 +91,8 @@ fun TransactionFormScreen(
     val haptics = rememberHaptics()
     var localError by remember { mutableStateOf<String?>(null) }
     var showCategoryPicker by remember { mutableStateOf(false) }
+    var showAccountPicker by remember { mutableStateOf(false) }
+    var showDestPicker by remember { mutableStateOf(false) }
 
     val accounts = accountsState.accounts
     val writableAccounts = accounts.filter { it.canWrite }
@@ -142,24 +150,102 @@ fun TransactionFormScreen(
                     color = MaterialTheme.colorScheme.error
                 )
             } else {
-                PickerField(
-                    label = "Account",
-                    selectedLabel = writableAccounts.firstOrNull { it.id == accountId }?.name
-                        ?: "Choose an account",
-                    options = writableAccounts.map { it.id to it.name },
-                    onSelect = { accountId = it }
-                )
+                val chosenAccount = writableAccounts.firstOrNull { it.id == accountId }
+                OutlinedButton(
+                    onClick = { showAccountPicker = true },
+                    shape = EfinaCorners.menu,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Box(
+                        Modifier
+                            .padding(end = 10.dp)
+                            .size(12.dp)
+                            .background(
+                                parseHexColor(chosenAccount?.color, MaterialTheme.colorScheme.primary),
+                                CircleShape
+                            )
+                    )
+                    Text(
+                        text = chosenAccount?.name ?: "Choose an account",
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = if (chosenAccount == null) MaterialTheme.colorScheme.onSurfaceVariant
+                        else MaterialTheme.colorScheme.onSurface,
+                        maxLines = 1,
+                        modifier = Modifier.weight(1f)
+                    )
+                    Icon(
+                        Icons.Filled.ArrowDropDown,
+                        contentDescription = "Show accounts",
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+
+                if (showAccountPicker) {
+                    PickerSheet(
+                        title = "Account",
+                        options = writableAccounts.map {
+                            PickerOption(
+                                id = it.id,
+                                label = it.name,
+                                color = it.color,
+                                subtitle = formatMoney(it.balance, it.currency)
+                            )
+                        },
+                        selectedId = accountId,
+                        onSelect = { accountId = it.id; showAccountPicker = false },
+                        onDismiss = { showAccountPicker = false }
+                    )
+                }
             }
 
             if (mode == TransactionType.TRANSFER && !isEdit) {
-                PickerField(
-                    label = "To account",
-                    selectedLabel = writableAccounts.firstOrNull { it.id == toAccountId }?.name
-                        ?: "Choose a destination",
-                    options = writableAccounts.filter { it.id != accountId }
-                        .map { it.id to it.name },
-                    onSelect = { toAccountId = it }
-                )
+                val destinations = writableAccounts.filter { it.id != accountId }
+                val chosenDest = destinations.firstOrNull { it.id == toAccountId }
+                OutlinedButton(
+                    onClick = { showDestPicker = true },
+                    shape = EfinaCorners.menu,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Box(
+                        Modifier
+                            .padding(end = 10.dp)
+                            .size(12.dp)
+                            .background(
+                                parseHexColor(chosenDest?.color, MaterialTheme.colorScheme.primary),
+                                CircleShape
+                            )
+                    )
+                    Text(
+                        text = chosenDest?.name ?: "Choose a destination",
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = if (chosenDest == null) MaterialTheme.colorScheme.onSurfaceVariant
+                        else MaterialTheme.colorScheme.onSurface,
+                        maxLines = 1,
+                        modifier = Modifier.weight(1f)
+                    )
+                    Icon(
+                        Icons.Filled.ArrowDropDown,
+                        contentDescription = "Show accounts",
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+
+                if (showDestPicker) {
+                    PickerSheet(
+                        title = "To account",
+                        options = destinations.map {
+                            PickerOption(
+                                id = it.id,
+                                label = it.name,
+                                color = it.color,
+                                subtitle = formatMoney(it.balance, it.currency)
+                            )
+                        },
+                        selectedId = toAccountId,
+                        onSelect = { toAccountId = it.id; showDestPicker = false },
+                        onDismiss = { showDestPicker = false }
+                    )
+                }
             }
 
             if (mode != TransactionType.TRANSFER) {

@@ -25,6 +25,14 @@ import com.efina.app.ui.components.WidthCapped
 import com.efina.app.ui.theme.RevealLatch
 import com.efina.app.ui.theme.Haptic
 import com.efina.app.ui.theme.rememberHaptics
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.filled.ArrowDownward
+import androidx.compose.material.icons.filled.ArrowUpward
+import androidx.compose.material.icons.filled.SwapHoriz
+import androidx.compose.material.icons.filled.Tune
+import com.efina.app.ui.theme.LocalMoneyPalette
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -216,6 +224,43 @@ private fun TransactionRow(
             Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
+            // Direction icon on the left, in the money colour for the type. The row
+            // previously carried no visual marker, so income and expense were only
+            // distinguishable by reading the sign on the amount at the far right.
+            val money = LocalMoneyPalette.current
+            val (tint, container, glyph) = when (tx.type) {
+                TransactionType.INCOME ->
+                    Triple(money.income, money.onIncome, Icons.Filled.ArrowDownward)
+                TransactionType.EXPENSE ->
+                    Triple(money.expense, money.onExpense, Icons.Filled.ArrowUpward)
+                TransactionType.TRANSFER ->
+                    Triple(money.transfer, money.onTransfer, Icons.Filled.SwapHoriz)
+                TransactionType.ADJUSTMENT ->
+                    Triple(
+                        MaterialTheme.colorScheme.onSurfaceVariant,
+                        MaterialTheme.colorScheme.surfaceContainerHighest,
+                        Icons.Filled.Tune
+                    )
+            }
+            Box(
+                Modifier
+                    .padding(end = 12.dp)
+                    .size(36.dp)
+                    .background(container, CircleShape),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = glyph,
+                    contentDescription = when (tx.type) {
+                        TransactionType.INCOME -> "Income"
+                        TransactionType.EXPENSE -> "Expense"
+                        TransactionType.TRANSFER -> "Transfer"
+                        TransactionType.ADJUSTMENT -> "Adjustment"
+                    },
+                    tint = tint,
+                    modifier = Modifier.size(18.dp)
+                )
+            }
             Column(Modifier.weight(1f)) {
                 Text(
                     tx.description ?: tx.categoryName ?: "Untitled",

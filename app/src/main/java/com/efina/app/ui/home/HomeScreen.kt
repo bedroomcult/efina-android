@@ -24,6 +24,13 @@ import com.efina.app.ui.theme.RevealLatch
 import com.efina.app.ui.theme.springClick
 import androidx.compose.foundation.lazy.rememberLazyListState
 import com.efina.app.ui.components.ScrollToTopFab
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.filled.ArrowDownward
+import androidx.compose.material.icons.filled.ArrowUpward
+import androidx.compose.material.icons.filled.SwapHoriz
+import androidx.compose.material.icons.filled.Tune
+import androidx.compose.material3.Icon
 
 /**
  * Dashboard. Assembled from accounts + transactions + budgets + goals, per
@@ -370,6 +377,28 @@ private fun RecentRow(tx: Transaction, currency: String, onClick: () -> Unit) {
             Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
+            // Same direction icon as the full transaction list, so the two lists read
+            // the same way.
+            val money = LocalMoneyPalette.current
+            val (tint, container, glyph) = when (tx.type) {
+                TransactionType.INCOME ->
+                    Triple(money.income, money.onIncome, Icons.Filled.ArrowDownward)
+                TransactionType.EXPENSE ->
+                    Triple(money.expense, money.onExpense, Icons.Filled.ArrowUpward)
+                TransactionType.TRANSFER ->
+                    Triple(money.transfer, money.onTransfer, Icons.Filled.SwapHoriz)
+                TransactionType.ADJUSTMENT -> Triple(
+                    MaterialTheme.colorScheme.onSurfaceVariant,
+                    MaterialTheme.colorScheme.surfaceContainerHighest,
+                    Icons.Filled.Tune
+                )
+            }
+            Box(
+                Modifier.padding(end = 12.dp).size(36.dp).background(container, CircleShape),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(glyph, contentDescription = null, tint = tint, modifier = Modifier.size(18.dp))
+            }
             Column(Modifier.weight(1f)) {
                 Text(
                     tx.description ?: tx.categoryName ?: "Untitled",

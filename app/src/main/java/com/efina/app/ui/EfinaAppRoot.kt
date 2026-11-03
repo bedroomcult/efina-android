@@ -50,6 +50,7 @@ import com.efina.app.ui.components.FloatingDock
 import com.efina.app.ui.components.WIDE_LAYOUT_BREAKPOINT_DP
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
+import com.efina.app.ui.theme.SyncSystemBars
 
 /**
  * Navigation graph.
@@ -157,6 +158,9 @@ fun EfinaAppRoot(
     }
 
     EfinaTheme(themeName = themeName, darkTheme = darkTheme) {
+        // Inside the theme so it can read the resolved background colour.
+        SyncSystemBars()
+
         val navBackStackEntry by navController.currentBackStackEntryAsState()
         val currentRoute = navBackStackEntry?.destination?.route
         val showDock = bottomNavItems.any { it.screen.route == currentRoute }
