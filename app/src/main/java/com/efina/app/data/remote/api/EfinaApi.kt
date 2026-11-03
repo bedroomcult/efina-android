@@ -160,6 +160,13 @@ interface EfinaApi {
         @Body request: UpdateBudgetRequestDto
     ): Response<BudgetDto>
 
+    /** Toggle sharing; mirrors PATCH accounts/{id} so the client has one sharing call. */
+    @PATCH("budgets/{id}")
+    suspend fun updateBudgetSharing(
+        @Path("id") id: Long,
+        @Body request: UpdateBudgetSharingRequestDto
+    ): Response<BudgetDto>
+
     @DELETE("budgets/{id}")
     suspend fun deleteBudget(@Path("id") id: Long): Response<Unit>
 

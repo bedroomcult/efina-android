@@ -116,6 +116,46 @@ class DtoShapeTest {
     }
 
     @Test
+    fun `budget carries family scope and decodes from the backend row`() {
+        // GET budgets returns the raw row; a shared budget carries family_id and is_shared,
+        // a personal one sends family_id null and is_shared 0.
+        val shared = json.decodeFromString(
+            BudgetDto.serializer(),
+            """{"id":1,"user_id":1,"category_id":2,"amount":1000.0,"period_type":"monthly",
+                "family_id":7,"is_shared":1,"spent":300.0}"""
+        )
+        assertTrue("shared budget must decode as shared", shared.is_shared == 1)
+        assertEquals(7L, shared.family_id)
+
+        val personal = json.decodeFromString(
+            BudgetDto.serializer(),
+            """{"id":2,"user_id":1,"category_id":2,"amount":500.0,"period_type":"monthly",
+                "family_id":null,"is_shared":0}"""
+        )
+        assertTrue("personal budget must not decode as shared", personal.is_shared == 0)
+        assertEquals(null, personal.family_id)
+    }
+
+    @Test
+    fun `budget share request sends family_id and allows null`() {
+        // PATCH budgets/{id} reads { family_id }. Sharing sends the id; unsharing sends
+        // null, which the handler treats as "make personal again".
+        val share = json.encodeToString(
+            UpdateBudgetSharingRequestDto.serializer(),
+            UpdateBudgetSharingRequestDto(7L)
+        )
+        assertTrue("expected family_id in $share", share.contains("\"family_id\""))
+        assertTrue(share.contains("7"))
+
+        val unshare = json.encodeToString(
+            UpdateBudgetSharingRequestDto.serializer(),
+            UpdateBudgetSharingRequestDto(null)
+        )
+        assertTrue("unshare must still carry the key: $unshare", unshare.contains("\"family_id\""))
+        assertTrue("unshare must be null: $unshare", unshare.contains("null"))
+    }
+
+    @Test
     fun `sharing result parses both PATCH branches`() {
         // Share returns a full row with is_shared as SQLite 1; unshare returns a stub.
         val shared = json.decodeFromString(

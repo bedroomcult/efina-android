@@ -27,7 +27,8 @@ data class BudgetsUiState(
 @HiltViewModel
 class BudgetsViewModel @Inject constructor(
     private val repository: BudgetRepository,
-    private val categoryRepository: CategoryRepository
+    private val categoryRepository: CategoryRepository,
+    private val familyRepository: FamilyRepository
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(BudgetsUiState())
@@ -72,6 +73,41 @@ class BudgetsViewModel @Inject constructor(
                     _state.value = _state.value.copy(saving = false); load(); onDone()
                 }
                 .onFailure { _state.value = _state.value.copy(saving = false, error = it.message) }
+        }
+    }
+
+    /**
+     * Toggle sharing.
+     *
+     * An unshare sends null. A share resolves the caller's family first: a personal budget
+     * carries familyId = null, so reading the target family off the budget itself would send
+     * null and silently do nothing. Matches the web client, which uses useFamilies.
+     */
+    fun toggleSharing(budget: Budget, onDone: () -> Unit = {}) {
+        _state.value = _state.value.copy(saving = true, error = null)
+        viewModelScope.launch {
+            val targetFamilyId = if (budget.isShared) {
+                null
+            } else {
+                val families = familyRepository.getFamilies().getOrDefault(emptyList())
+                if (families.isEmpty()) {
+                    _state.value = _state.value.copy(
+                        saving = false,
+                        error = "Join a family before sharing a budget"
+                    )
+                    return@launch
+                }
+                families.first().id
+            }
+            repository.setBudgetSharing(id = budget.id, familyId = targetFamilyId)
+                .onSuccess {
+                    _state.value = _state.value.copy(saving = false)
+                    load()
+                    onDone()
+                }
+                .onFailure {
+                    _state.value = _state.value.copy(saving = false, error = it.message)
+                }
         }
     }
 

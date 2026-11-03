@@ -105,6 +105,7 @@ fun BudgetsScreen(
                         budget = budget,
                         modifier = revealModifier(index),
                         onDelete = { pendingDelete = budget },
+                        onToggleSharing = { viewModel.toggleSharing(budget) },
                         onEdit = {
                             editing = budget
                             editAmount = budget.amount.toString()
@@ -248,7 +249,8 @@ private fun BudgetCard(
     budget: Budget,
     modifier: Modifier = Modifier,
     onDelete: () -> Unit,
-    onEdit: () -> Unit
+    onEdit: () -> Unit,
+    onToggleSharing: () -> Unit
 ) {
     val pct = budget.percentage / 100f
     val barColor = when {
@@ -271,10 +273,35 @@ private fun BudgetCard(
                         style = EfinaType.titleMediumEmphasized,
                         maxLines = 1
                     )
-                    Text(
-                        budget.periodType.label,
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(
+                            budget.periodType.label,
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        // A shared budget's spend is pooled across the family's shared
+                        // accounts, so the figure means something different from a
+                        // personal budget's and is marked as such.
+                        if (budget.isShared) {
+                            Spacer(Modifier.width(6.dp))
+                            PillTag(
+                                text = "Family",
+                                container = MaterialTheme.colorScheme.primaryContainer,
+                                content = MaterialTheme.colorScheme.onPrimaryContainer
+                            )
+                        }
+                    }
+                }
+                IconButton(onClick = onToggleSharing) {
+                    Icon(
+                        Icons.Default.Share,
+                        contentDescription = if (budget.isShared) {
+                            "Stop sharing this budget"
+                        } else {
+                            "Share this budget with your family"
+                        },
+                        tint = if (budget.isShared) MaterialTheme.colorScheme.primary
+                        else MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
                 IconButton(onClick = onDelete) {

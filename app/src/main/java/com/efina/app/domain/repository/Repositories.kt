@@ -70,6 +70,8 @@ interface BudgetRepository {
     suspend fun createBudget(request: CreateBudgetRequest): Result<Budget>
     suspend fun updateBudget(id: Long, request: UpdateBudgetRequest): Result<Budget>
     suspend fun deleteBudget(id: Long): Result<Unit>
+    /** Share with a family, or pass null to make it personal again. */
+    suspend fun setBudgetSharing(id: Long, familyId: Long?): Result<Budget>
 }
 
 interface GoalRepository {

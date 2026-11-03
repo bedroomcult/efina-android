@@ -215,7 +215,11 @@ data class Budget(
     val amount: Double,
     val spent: Double,
     val periodType: PeriodType,
-    val periodStart: String? = null
+    val periodStart: String? = null,
+    /** Which family this budget is shared with; null when personal. */
+    val familyId: Long? = null,
+    /** True when shared. A shared budget's spend is pooled across the family's accounts. */
+    val isShared: Boolean = false
 ) {
     val remaining: Double get() = amount - spent
     val percentage: Float

@@ -322,7 +322,21 @@ data class BudgetDto(
     val category_name: String? = null,
     val category_color: String? = null,
     val category_icon: String? = null,
-    val spent: Double = 0.0
+    val spent: Double = 0.0,
+    /** Which family this budget is shared with; null for a personal budget. */
+    val family_id: Long? = null,
+    /**
+     * 1 when shared. Held as Int rather than Boolean for the same reason as
+     * AccountDto.is_shared: D1 returns the raw SQLite integer, and LenientBoolean would
+     * only be needed if this were a Boolean.
+     */
+    val is_shared: Int = 0
+)
+
+/** `PATCH budgets/{id}` — toggle sharing. Null family_id makes the budget personal. */
+@Serializable
+data class UpdateBudgetSharingRequestDto(
+    val family_id: Long? = null
 )
 
 @Serializable

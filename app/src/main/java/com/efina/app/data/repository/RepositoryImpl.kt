@@ -261,6 +261,11 @@ class BudgetRepositoryImpl @Inject constructor(
 
     override suspend fun deleteBudget(id: Long): Result<Unit> =
         safeCall { api.deleteBudget(id) }.announce(DataEvents.Domain.BUDGETS).map { }
+
+    override suspend fun setBudgetSharing(id: Long, familyId: Long?): Result<Budget> =
+        safeCall { api.updateBudgetSharing(id, UpdateBudgetSharingRequestDto(familyId)) }
+            .announce(DataEvents.Domain.BUDGETS)
+            .map { it.toDomain() }
 }
 
 @Singleton
