@@ -23,12 +23,12 @@ import com.efina.app.ui.components.ContentWidth
 fun StatsScreen(viewModel: StatsViewModel = hiltViewModel()) {
     val state by viewModel.state.collectAsState()
 
-    // Width cap by padding rather than by wrapping: adding a container around the
-    // Scaffold made the content lambda's early returns illegal and cost more churn
-    // than the cap is worth on this screen.
+    // Width cap from design.md §11, applied to the Scaffold's own modifier so the
+    // content lambda and its early returns are untouched.
     BoxWithConstraints(Modifier.fillMaxSize()) {
     val side = ((maxWidth - ContentWidth.List.max.dp) / 2).coerceAtLeast(0.dp)
-    Scaffold(modifier = Modifier.padding(horizontal = side),
+    Scaffold(
+        modifier = Modifier.padding(horizontal = side),
         topBar = {
             TopAppBar(
                 title = { Text("Statistics", style = EfinaType.titleLargeEmphasized) }
