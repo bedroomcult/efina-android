@@ -51,6 +51,7 @@ fun TransactionsScreen(
     var searchOpen by remember { mutableStateOf(false) }
     var query by remember { mutableStateOf("") }
     var pendingDelete by remember { mutableStateOf<Transaction?>(null) }
+    var detail by remember { mutableStateOf<Transaction?>(null) }
     val listState = rememberLazyListState()
 
     // A failed save is the one moment a user needs to notice without reading.
@@ -133,7 +134,10 @@ fun TransactionsScreen(
                         TransactionRow(
                             tx = tx,
                             modifier = revealModifier(index),
-                            onClick = { onNavigateToEdit(tx.id) },
+                            // Tap opens the detail sheet rather than the edit form: most
+                            // taps are "what was this?", and jumping into the form made
+                            // looking cost an accidental edit.
+                            onClick = { detail = tx },
                             onLongClick = { pendingDelete = tx }
                         )
                     }
@@ -158,6 +162,23 @@ fun TransactionsScreen(
         }
     
         }
+    }
+
+    detail?.let { tx ->
+        TransactionDetailSheet(
+            transaction = tx,
+            onDismiss = { detail = null },
+            onEdit = {
+                detail = null
+                onNavigateToEdit(tx.id)
+            },
+            onDelete = {
+                // Reuse the existing confirmation instead of deleting straight from the
+                // sheet: a transaction is financial history.
+                detail = null
+                pendingDelete = tx
+            }
+        )
     }
 
     pendingDelete?.let { tx ->
