@@ -55,7 +55,7 @@ fun HomeScreen(
                 }
             )
         }
-        floatingActionButton = { ScrollToTopFab(listState) }
+        floatingActionButton = { ScrollToTopFab(listState) },
     ) { padding ->
 
         WidthCapped(ContentWidth.List) {        PullToRefreshBox(

@@ -81,7 +81,7 @@ fun FamilyScreen(
                 }
             )
         }
-        floatingActionButton = { ScrollToTopFab(listState) }
+        floatingActionButton = { ScrollToTopFab(listState) },
     ) { padding ->
 
         WidthCapped(ContentWidth.List) {        Column(Modifier.fillMaxSize().padding(padding).padding(16.dp)) {

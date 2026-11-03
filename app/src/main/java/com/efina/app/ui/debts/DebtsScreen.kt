@@ -82,7 +82,7 @@ fun DebtsScreen(
                 }
             )
         }
-        floatingActionButton = { ScrollToTopFab(listState) }
+        floatingActionButton = { ScrollToTopFab(listState) },
     ) { padding ->
 
         WidthCapped(ContentWidth.List) {        when {
