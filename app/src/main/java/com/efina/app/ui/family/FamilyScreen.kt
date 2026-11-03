@@ -23,6 +23,8 @@ import com.efina.app.ui.components.WidthCapped
 import com.efina.app.ui.theme.RevealLatch
 import com.efina.app.ui.theme.Haptic
 import com.efina.app.ui.theme.rememberHaptics
+import androidx.compose.foundation.lazy.rememberLazyListState
+import com.efina.app.ui.components.ScrollToTopFab
 
 /**
  * Families and their invite codes.
@@ -38,6 +40,7 @@ fun FamilyScreen(
     viewModel: FamilyViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsState()
+    val listState = rememberLazyListState()
     val haptics = rememberHaptics()
     // Marks this screen as having played its entrance, so returning to the tab
     // does not replay the staggered reveal.
@@ -78,6 +81,7 @@ fun FamilyScreen(
                 }
             )
         }
+        floatingActionButton = { ScrollToTopFab(listState) }
     ) { padding ->
 
         WidthCapped(ContentWidth.List) {        Column(Modifier.fillMaxSize().padding(padding).padding(16.dp)) {

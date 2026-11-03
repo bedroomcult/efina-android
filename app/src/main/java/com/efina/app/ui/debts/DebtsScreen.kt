@@ -28,6 +28,8 @@ import com.efina.app.ui.components.WidthCapped
 import com.efina.app.ui.theme.RevealLatch
 import com.efina.app.ui.theme.Haptic
 import com.efina.app.ui.theme.rememberHaptics
+import androidx.compose.foundation.lazy.rememberLazyListState
+import com.efina.app.ui.components.ScrollToTopFab
 
 /**
  * Debts and receivables.
@@ -43,6 +45,7 @@ fun DebtsScreen(
     viewModel: DebtsViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsState()
+    val listState = rememberLazyListState()
     val haptics = rememberHaptics()
     // Marks this screen as having played its entrance, so returning to the tab
     // does not replay the staggered reveal.
@@ -79,6 +82,7 @@ fun DebtsScreen(
                 }
             )
         }
+        floatingActionButton = { ScrollToTopFab(listState) }
     ) { padding ->
 
         WidthCapped(ContentWidth.List) {        when {
@@ -94,6 +98,7 @@ fun DebtsScreen(
                 }
             )
             else -> LazyColumn(
+                state = listState,
                 Modifier.padding(padding),
                 contentPadding = PaddingValues(16.dp, 8.dp, 16.dp, 96.dp),
                 verticalArrangement = Arrangement.spacedBy(10.dp)

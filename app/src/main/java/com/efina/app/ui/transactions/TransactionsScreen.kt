@@ -94,11 +94,15 @@ fun TransactionsScreen(
                 )
             }
         },
+        // Lifted clear of the floating dock, which is drawn over the NavHost.
         floatingActionButton = {
-            FloatingActionButton(
-                onClick = onNavigateToCreate,
-                shape = EfinaCorners.menu
-            ) { Icon(Icons.Default.Add, contentDescription = "Add transaction") }
+            // Clears the floating dock, which is drawn over the NavHost.
+            Box(Modifier.padding(bottom = 78.dp)) {
+                FloatingActionButton(
+                    onClick = onNavigateToCreate,
+                    shape = EfinaCorners.menu
+                ) { Icon(Icons.Default.Add, contentDescription = "Add transaction") }
+            }
         }
     ) { padding ->
 

@@ -18,11 +18,14 @@ import com.efina.app.ui.theme.LocalMoneyPalette
 import androidx.compose.foundation.layout.BoxWithConstraints
 import com.efina.app.ui.components.ContentWidth
 import com.efina.app.ui.theme.RevealLatch
+import androidx.compose.foundation.lazy.rememberLazyListState
+import com.efina.app.ui.components.ScrollToTopFab
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun StatsScreen(viewModel: StatsViewModel = hiltViewModel()) {
     val state by viewModel.state.collectAsState()
+    val listState = rememberLazyListState()
     // Marks this screen as having played its entrance, so returning to the tab
     // does not replay the staggered reveal.
     RevealLatch.currentScreen = "stats"
@@ -38,6 +41,7 @@ fun StatsScreen(viewModel: StatsViewModel = hiltViewModel()) {
                 title = { Text("Statistics", style = EfinaType.titleLargeEmphasized) }
             )
         }
+        floatingActionButton = { ScrollToTopFab(listState) }
     ) { padding ->
         if (state.error != null) {
             Column(Modifier.fillMaxSize().padding(16.dp)) {
@@ -52,6 +56,7 @@ fun StatsScreen(viewModel: StatsViewModel = hiltViewModel()) {
         }
 
         LazyColumn(
+            state = listState,
             Modifier.padding(padding),
             contentPadding = PaddingValues(16.dp, 8.dp, 16.dp, 96.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp)

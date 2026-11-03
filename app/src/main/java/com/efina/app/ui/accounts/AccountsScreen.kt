@@ -25,6 +25,8 @@ import com.efina.app.ui.components.WidthCapped
 import com.efina.app.ui.theme.RevealLatch
 import com.efina.app.ui.theme.Haptic
 import com.efina.app.ui.theme.rememberHaptics
+import androidx.compose.foundation.lazy.rememberLazyListState
+import com.efina.app.ui.components.ScrollToTopFab
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -35,6 +37,7 @@ fun AccountsScreen(
     viewModel: AccountsViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsState()
+    val listState = rememberLazyListState()
     val haptics = rememberHaptics()
     // Marks this screen as having played its entrance, so returning to the tab
     // does not replay the staggered reveal.
@@ -61,13 +64,25 @@ fun AccountsScreen(
                 }
             )
         },
+        // Lifted clear of the floating dock: the dock is an overlay drawn after the
+        // NavHost, so an un-padded FAB sits underneath it and cannot be tapped.
         floatingActionButton = {
-            ExtendedFloatingActionButton(
-                onClick = onNavigateToCreate,
-                icon = { Icon(Icons.Default.Add, contentDescription = null) },
-                text = { Text("Account") },
-                shape = EfinaCorners.menu
-            )
+            androidx.compose.foundation.layout.Column(
+                horizontalAlignment = androidx.compose.ui.Alignment.End
+            ) {
+            ScrollToTopFab(listState)
+            // The dock is an overlay drawn after the NavHost, so an un-padded FAB ends
+            // up underneath it and cannot be tapped. 78dp clears the 52dp items plus
+            // the dock's 6dp padding, 12dp inset and the navigation-bar inset.
+            Box(Modifier.padding(bottom = 78.dp)) {
+                ExtendedFloatingActionButton(
+                    onClick = onNavigateToCreate,
+                    icon = { Icon(Icons.Default.Add, contentDescription = null) },
+                    text = { Text("Account") },
+                    shape = EfinaCorners.menu
+                )
+            }
+            }
         }
     ) { padding ->
 

@@ -40,7 +40,8 @@ fun ScrollToTopFab(
     AnimatedVisibility(visible = visible, enter = fadeIn(), exit = fadeOut()) {
         FilledTonalIconButton(
             onClick = { scope.launch { listState.animateScrollToItem(0) } },
-            modifier = modifier.padding(bottom = 84.dp)
+            // Clears the floating dock, which is drawn over the NavHost.
+            modifier = modifier.padding(bottom = 78.dp)
         ) {
             Icon(Icons.Filled.KeyboardArrowUp, contentDescription = "Scroll to top")
         }
