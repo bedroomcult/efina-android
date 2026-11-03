@@ -47,6 +47,7 @@ import androidx.compose.foundation.shape.CircleShape
 import com.efina.app.ui.components.PickerOption
 import com.efina.app.ui.components.PickerSheet
 import com.efina.app.ui.theme.parseHexColor
+import com.efina.app.ui.components.formatMoney
 
 /**
  * Create / edit a transaction, or create a transfer pair.

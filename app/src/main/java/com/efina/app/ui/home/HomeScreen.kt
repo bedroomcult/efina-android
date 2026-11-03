@@ -31,6 +31,7 @@ import androidx.compose.material.icons.filled.ArrowUpward
 import androidx.compose.material.icons.filled.SwapHoriz
 import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material3.Icon
+import androidx.compose.material.icons.Icons
 
 /**
  * Dashboard. Assembled from accounts + transactions + budgets + goals, per
