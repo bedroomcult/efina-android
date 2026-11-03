@@ -48,6 +48,8 @@ import com.efina.app.ui.components.DockItem
 import com.efina.app.ui.components.EfinaSideRail
 import com.efina.app.ui.components.FloatingDock
 import com.efina.app.ui.components.WIDE_LAYOUT_BREAKPOINT_DP
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
 
 /**
  * Navigation graph.
@@ -175,10 +177,17 @@ fun EfinaAppRoot(
                     EfinaSideRail(dockItems, currentRoute, onSelect)
                 }
                 Box(Modifier.weight(1f)) {
+                    // No cross-fade on tab changes. The default NavHost fade reads as a
+                    // flash on a light background, and a tab switch in a finance app
+                    // should feel instant rather than cinematic.
                     NavHost(
                         navController = navController,
                         startDestination = startDestination,
-                        modifier = Modifier.fillMaxSize()
+                        modifier = Modifier.fillMaxSize(),
+                        enterTransition = { EnterTransition.None },
+                        exitTransition = { ExitTransition.None },
+                        popEnterTransition = { EnterTransition.None },
+                        popExitTransition = { ExitTransition.None }
                     ) {
                 composable(Screen.Login.route) {
                     LoginScreen(

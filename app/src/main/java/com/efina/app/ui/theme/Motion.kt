@@ -80,15 +80,21 @@ object EfinaMotion {
  */
 @Composable
 fun revealModifier(index: Int): Modifier {
-    // rememberSaveable, not remember: inside a LazyColumn the composable is disposed
-    // when it scrolls off screen, so `remember` reset the flag and every row
-    // re-animated each time it recycled back into view.
-    var shown by rememberSaveable { mutableStateOf(index > 8) }
+    // Once per screen, across navigations.
+    //
+    // rememberSaveable alone fixed recycling but not navigation: each NavHost entry
+    // gets its own saveable registry, so returning to a tab replayed the whole
+    // staggered entrance. That is the flash. Rows past the first screenful skip it
+    // entirely, and the per-screen latch below is keyed by route name so a tab
+    // animates the first time and not on every return.
+    if (index > 8) return Modifier
+    var shown by remember { mutableStateOf(RevealLatch.isDone(RevealLatch.currentScreen)) }
     LaunchedEffect(Unit) {
         if (EfinaMotion.enabled) {
             kotlinx.coroutines.delay(EfinaMotion.staggerDelay(index).toLong())
         }
         shown = true
+        RevealLatch.markDone(RevealLatch.currentScreen)
     }
     val alpha by androidx.compose.animation.core.animateFloatAsState(
         targetValue = if (shown) 1f else 0f,
@@ -103,5 +109,24 @@ fun revealModifier(index: Int): Modifier {
     return Modifier.graphicsLayer {
         this.alpha = alpha
         translationY = offset
+    }
+}
+
+/**
+ * Remembers which screens have already played their entrance.
+ *
+ * A process-lifetime set, keyed by route name. Deliberately not persisted to disk: a
+ * cold start should animate, a tab switch should not.
+ */
+object RevealLatch {
+    /** Set by each screen root before composing its list. */
+    var currentScreen: String = ""
+
+    private val done = mutableSetOf<String>()
+
+    fun isDone(screen: String): Boolean = screen.isNotEmpty() && screen in done
+
+    fun markDone(screen: String) {
+        if (screen.isNotEmpty()) done += screen
     }
 }

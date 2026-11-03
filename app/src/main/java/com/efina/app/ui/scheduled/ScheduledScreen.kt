@@ -27,6 +27,7 @@ import java.util.Date
 import java.util.Locale
 import com.efina.app.ui.components.ContentWidth
 import com.efina.app.ui.components.WidthCapped
+import com.efina.app.ui.theme.RevealLatch
 
 /**
  * Recurring transactions.
@@ -41,6 +42,9 @@ fun ScheduledScreen(
     viewModel: ScheduledViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsState()
+    // Marks this screen as having played its entrance, so returning to the tab
+    // does not replay the staggered reveal.
+    RevealLatch.currentScreen = "scheduled"
     val snackbar = remember { SnackbarHostState() }
     var creating by remember { mutableStateOf(false) }
     var pendingDelete by remember { mutableStateOf<ScheduledTransaction?>(null) }

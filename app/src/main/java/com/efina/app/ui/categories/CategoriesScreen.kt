@@ -23,6 +23,7 @@ import com.efina.app.ui.theme.parseHexColor
 import com.efina.app.ui.theme.tonal
 import com.efina.app.ui.components.ContentWidth
 import com.efina.app.ui.components.WidthCapped
+import com.efina.app.ui.theme.RevealLatch
 
 @OptIn(ExperimentalMaterial3Api::class, androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
 @Composable
@@ -31,6 +32,9 @@ fun CategoriesScreen(
     viewModel: CategoriesViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsState()
+    // Marks this screen as having played its entrance, so returning to the tab
+    // does not replay the staggered reveal.
+    RevealLatch.currentScreen = "categories"
     val snackbar = remember { SnackbarHostState() }
     var creating by remember { mutableStateOf(false) }
     var newName by remember { mutableStateOf("") }

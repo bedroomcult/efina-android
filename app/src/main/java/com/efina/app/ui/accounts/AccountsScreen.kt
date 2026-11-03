@@ -22,6 +22,7 @@ import com.efina.app.ui.theme.revealModifier
 import com.efina.app.ui.theme.springClick
 import com.efina.app.ui.components.ContentWidth
 import com.efina.app.ui.components.WidthCapped
+import com.efina.app.ui.theme.RevealLatch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -32,6 +33,9 @@ fun AccountsScreen(
     viewModel: AccountsViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsState()
+    // Marks this screen as having played its entrance, so returning to the tab
+    // does not replay the staggered reveal.
+    RevealLatch.currentScreen = "accounts"
     val snackbar = remember { SnackbarHostState() }
     var pendingDelete by remember { mutableStateOf<Account?>(null) }
 

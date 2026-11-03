@@ -17,11 +17,15 @@ import com.efina.app.ui.theme.EfinaType
 import com.efina.app.ui.theme.LocalMoneyPalette
 import androidx.compose.foundation.layout.BoxWithConstraints
 import com.efina.app.ui.components.ContentWidth
+import com.efina.app.ui.theme.RevealLatch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun StatsScreen(viewModel: StatsViewModel = hiltViewModel()) {
     val state by viewModel.state.collectAsState()
+    // Marks this screen as having played its entrance, so returning to the tab
+    // does not replay the staggered reveal.
+    RevealLatch.currentScreen = "stats"
 
     // Width cap from design.md §11, applied to the Scaffold's own modifier so the
     // content lambda and its early returns are untouched.

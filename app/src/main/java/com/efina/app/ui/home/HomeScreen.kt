@@ -20,6 +20,7 @@ import com.efina.app.ui.theme.EfinaType
 import com.efina.app.ui.theme.LocalMoneyPalette
 import com.efina.app.ui.components.ContentWidth
 import com.efina.app.ui.components.WidthCapped
+import com.efina.app.ui.theme.RevealLatch
 
 /**
  * Dashboard. Assembled from accounts + transactions + budgets + goals, per
@@ -37,6 +38,9 @@ fun HomeScreen(
     viewModel: HomeViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsState()
+    // Marks this screen as having played its entrance, so returning to the tab
+    // does not replay the staggered reveal.
+    RevealLatch.currentScreen = "home"
 
     Scaffold(
         topBar = {
