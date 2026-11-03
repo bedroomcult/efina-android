@@ -40,7 +40,7 @@ fun StatsScreen(viewModel: StatsViewModel = hiltViewModel()) {
             TopAppBar(
                 title = { Text("Statistics", style = EfinaType.titleLargeEmphasized) }
             )
-        }
+        },
         floatingActionButton = { ScrollToTopFab(listState) },
     ) { padding ->
         if (state.error != null) {

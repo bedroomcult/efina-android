@@ -80,7 +80,7 @@ fun FamilyScreen(
                     }
                 }
             )
-        }
+        },
         floatingActionButton = { ScrollToTopFab(listState) },
     ) { padding ->
 

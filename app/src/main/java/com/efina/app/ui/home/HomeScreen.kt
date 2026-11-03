@@ -54,7 +54,7 @@ fun HomeScreen(
                     TextButton(onClick = onNavigateToSettings) { Text("Settings") }
                 }
             )
-        }
+        },
         floatingActionButton = { ScrollToTopFab(listState) },
     ) { padding ->
 

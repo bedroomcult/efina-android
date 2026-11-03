@@ -81,7 +81,7 @@ fun DebtsScreen(
                     }
                 }
             )
-        }
+        },
         floatingActionButton = { ScrollToTopFab(listState) },
     ) { padding ->
 

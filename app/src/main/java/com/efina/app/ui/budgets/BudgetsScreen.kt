@@ -70,7 +70,7 @@ fun BudgetsScreen(
                     }
                 }
             )
-        }
+        },
         floatingActionButton = { ScrollToTopFab(listState) },
     ) { padding ->
 

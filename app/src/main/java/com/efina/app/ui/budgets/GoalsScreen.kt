@@ -71,7 +71,7 @@ fun GoalsScreen(viewModel: GoalsViewModel = hiltViewModel()) {
                     }
                 }
             )
-        }
+        },
         floatingActionButton = { ScrollToTopFab(listState) },
     ) { padding ->
 

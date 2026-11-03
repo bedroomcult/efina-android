@@ -71,7 +71,7 @@ fun CategoriesScreen(
                     }
                 }
             )
-        }
+        },
         floatingActionButton = { ScrollToTopFab(listState) },
     ) { padding ->
 
