@@ -30,6 +30,8 @@ import com.efina.app.ui.theme.Haptic
 import com.efina.app.ui.theme.rememberHaptics
 import androidx.compose.foundation.lazy.rememberLazyListState
 import com.efina.app.ui.components.ScrollToTopFab
+import com.efina.app.ui.components.BadgeToastHost
+import com.efina.app.ui.components.BadgeTone
 
 /**
  * Debts and receivables.
@@ -50,23 +52,22 @@ fun DebtsScreen(
     // Marks this screen as having played its entrance, so returning to the tab
     // does not replay the staggered reveal.
     RevealLatch.currentScreen = "debts"
-    val snackbar = remember { SnackbarHostState() }
     var creating by remember { mutableStateOf(false) }
     var paying by remember { mutableStateOf<Debt?>(null) }
     var pendingDelete by remember { mutableStateOf<Debt?>(null) }
 
+    // A failed save is the one moment a user needs to notice without reading.
+    var badge by remember { mutableStateOf<String?>(null) }
     LaunchedEffect(state.error) {
         state.error?.let {
-            // A failed save is the one moment a user needs to notice without
-            // reading; the snackbar alone is easy to miss mid-scroll.
             haptics(Haptic.Reject)
-            snackbar.showSnackbar(it)
+            badge = it.lineSequence().first().take(48)
             viewModel.clearError()
         }
     }
 
     Scaffold(
-        snackbarHost = { SnackbarHost(snackbar) },
+        snackbarHost = { BadgeToastHost(badge, BadgeTone.Error) { badge = null } },
         topBar = {
             TopAppBar(
                 title = { Text("Debts", style = EfinaType.titleLargeEmphasized) },

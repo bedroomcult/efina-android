@@ -32,6 +32,8 @@ import com.efina.app.ui.theme.rememberHaptics
 import com.efina.app.ui.theme.springClick
 import androidx.compose.foundation.lazy.rememberLazyListState
 import com.efina.app.ui.components.ScrollToTopFab
+import com.efina.app.ui.components.BadgeToastHost
+import com.efina.app.ui.components.BadgeTone
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
@@ -42,7 +44,6 @@ fun GoalsScreen(viewModel: GoalsViewModel = hiltViewModel()) {
     // Marks this screen as having played its entrance, so returning to the tab
     // does not replay the staggered reveal.
     RevealLatch.currentScreen = "goals"
-    val snackbar = remember { SnackbarHostState() }
     var creating by remember { mutableStateOf(false) }
     var funding by remember { mutableStateOf<Goal?>(null) }
     var pendingDelete by remember { mutableStateOf<Goal?>(null) }
@@ -50,18 +51,18 @@ fun GoalsScreen(viewModel: GoalsViewModel = hiltViewModel()) {
     var editName by remember { mutableStateOf("") }
     var editTarget by remember { mutableStateOf("") }
 
+    // A failed save is the one moment a user needs to notice without reading.
+    var badge by remember { mutableStateOf<String?>(null) }
     LaunchedEffect(state.error) {
         state.error?.let {
-            // A failed save is the one moment a user needs to notice without
-            // reading; the snackbar alone is easy to miss mid-scroll.
             haptics(Haptic.Reject)
-            snackbar.showSnackbar(it)
+            badge = it.lineSequence().first().take(48)
             viewModel.clearError()
         }
     }
 
     Scaffold(
-        snackbarHost = { SnackbarHost(snackbar) },
+        snackbarHost = { BadgeToastHost(badge, BadgeTone.Error) { badge = null } },
         topBar = {
             TopAppBar(
                 title = { Text("Goals", style = EfinaType.titleLargeEmphasized) },
@@ -209,7 +210,7 @@ private fun GoalsSummary(saved: Double, target: Double, completed: Int) {
         Text(
             "Saved towards goals",
             style = MaterialTheme.typography.labelMedium,
-            color = MaterialTheme.colorScheme.onTertiaryContainer.copy(alpha = 0.75f)
+            color = MaterialTheme.colorScheme.onTertiaryContainer
         )
         Spacer(Modifier.height(6.dp))
         Text(
@@ -222,7 +223,7 @@ private fun GoalsSummary(saved: Double, target: Double, completed: Int) {
                 if (completed > 0) " · $completed completed" else ""
             }",
             style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onTertiaryContainer.copy(alpha = 0.8f)
+            color = MaterialTheme.colorScheme.onTertiaryContainer
         )
     }
 }

@@ -19,6 +19,18 @@ import com.efina.app.ui.components.ContentWidth
 import com.efina.app.ui.components.WidthCapped
 import com.efina.app.ui.theme.Haptic
 import com.efina.app.ui.theme.rememberHaptics
+import com.efina.app.ui.components.BadgeToastHost
+import com.efina.app.ui.components.BadgeTone
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.filled.ArrowDropDown
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.Icon
+import androidx.compose.material3.OutlinedButton
 
 /**
  * Settings.
@@ -40,19 +52,18 @@ fun SettingsScreen(
 ) {
     val state by viewModel.state.collectAsState()
     val haptics = rememberHaptics()
-    val snackbar = remember { SnackbarHostState() }
     var showPasswordDialog by remember { mutableStateOf(false) }
     var confirmLogout by remember { mutableStateOf(false) }
 
     LaunchedEffect(state.error) {
-        state.error?.let { snackbar.showSnackbar(it); viewModel.clearMessages() }
+        state.error?.let { badge = (it); viewModel.clearMessages() }
     }
     LaunchedEffect(state.savedMessage) {
-        state.savedMessage?.let { snackbar.showSnackbar(it); viewModel.clearMessages() }
+        state.savedMessage?.let { badge = (it); viewModel.clearMessages() }
     }
 
     Scaffold(
-        snackbarHost = { SnackbarHost(snackbar) },
+        snackbarHost = { BadgeToastHost(badge, BadgeTone.Error) { badge = null } },
         topBar = {
             TopAppBar(
                 title = { Text("Settings", style = EfinaType.titleLargeEmphasized) },
@@ -105,47 +116,27 @@ fun SettingsScreen(
             if (settings != null) {
                 Text("Preferences", style = MaterialTheme.typography.titleMedium)
                 Text("Currency", style = MaterialTheme.typography.labelLarge)
-                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    listOf("IDR", "USD", "EUR", "GBP", "SGD").forEach { code ->
-                        FilterChip(
-                            selected = settings.currency == code,
-                            onClick = { viewModel.update(UpdateSettingsRequest(currency = code)) },
-                            label = { Text(code) },
-                            shape = EfinaCorners.pill
-                        )
-                    }
-                }
+                SettingsDropdown(
+                    selected = settings.currency,
+                    options = listOf("IDR", "USD", "EUR", "GBP", "SGD").map { it to it },
+                    onSelect = { viewModel.update(UpdateSettingsRequest(currency = it)) }
+                )
 
                 Text("Language", style = MaterialTheme.typography.labelLarge)
-                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    listOf("id" to "Indonesian", "en" to "English").forEach { (code, label) ->
-                        FilterChip(
-                            selected = settings.language == code,
-                            onClick = { viewModel.update(UpdateSettingsRequest(language = code)) },
-                            label = { Text(label) },
-                            shape = EfinaCorners.pill
-                        )
-                    }
-                }
+                SettingsDropdown(
+                    selected = settings.language,
+                    options = listOf("id" to "Indonesian", "en" to "English"),
+                    onSelect = { viewModel.update(UpdateSettingsRequest(language = it)) }
+                )
 
                 Text("Theme", style = MaterialTheme.typography.labelLarge)
-                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    // `mono` and `dynamic` are handled by EfinaTheme; the twelve
-                    // seeded palettes derive their scheme from a single accent.
-                    val themes = listOf("light" to "Light", "dark" to "Dark", "mono" to "Mono") +
-                        com.efina.app.ui.theme.GeneratedPalettes.keys.map {
-                            it to it.replaceFirstChar(Char::uppercase)
-                        }
-
-                    themes.forEach { (code, label) ->
-                        FilterChip(
-                            selected = settings.theme == code,
-                            onClick = { viewModel.update(UpdateSettingsRequest(theme = code)) },
-                            label = { Text(label) },
-                            shape = EfinaCorners.pill
-                        )
-                    }
-                }
+                // A dropdown rather than a chip row: thirteen palettes do not fit a chip
+                // wrap without turning into three ragged lines, and a dropdown can show
+                // each palette's actual colour as a swatch.
+                ThemeDropdown(
+                    selected = settings.theme,
+                    onSelect = { viewModel.update(UpdateSettingsRequest(theme = it)) }
+                )
 
                 HorizontalDivider()
 
@@ -290,5 +281,143 @@ private fun ChangePasswordDialog(
             ) { Text("Update") }
         },
         dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } }
+    )
+}
+
+/** A one-line dropdown for picking a single value. */
+@Composable
+private fun SettingsDropdown(
+    selected: String?,
+    options: List<Pair<String, String>>,
+    onSelect: (String) -> Unit
+) {
+    var open by remember { mutableStateOf(false) }
+    val current = options.firstOrNull { it.first == selected }?.second ?: "Not set"
+
+    Box(Modifier.fillMaxWidth()) {
+        OutlinedButton(
+            onClick = { open = true },
+            shape = EfinaCorners.menu,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text(
+                current,
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier.weight(1f),
+                maxLines = 1
+            )
+            Icon(
+                Icons.Filled.ArrowDropDown,
+                contentDescription = "Choose",
+                tint = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+        DropdownMenu(
+            expanded = open,
+            onDismissRequest = { open = false },
+            modifier = Modifier.fillMaxWidth(0.9f)
+        ) {
+            options.forEach { (code, label) ->
+                DropdownMenuItem(
+                    text = { Text(label) },
+                    trailingIcon = {
+                        if (code == selected) {
+                            Icon(Icons.Filled.Check, contentDescription = "Selected")
+                        }
+                    },
+                    onClick = { onSelect(code); open = false }
+                )
+            }
+        }
+    }
+}
+
+/**
+ * Theme picker showing each palette's primary colour as a swatch.
+ *
+ * The names are meaningless on their own — nothing tells you what "Grape" looks like —
+ * so the swatch is the actual affordance. Light and dark are listed as modifiers of the
+ * current palette rather than as palettes, which is how the theme value is stored.
+ */
+@Composable
+private fun ThemeDropdown(selected: String?, onSelect: (String) -> Unit) {
+    var open by remember { mutableStateOf(false) }
+
+    // entry: stored value, label, swatch colour (null = follow the palette/system)
+    data class Entry(val code: String, val label: String, val swatch: androidx.compose.ui.graphics.Color?)
+
+    val dark = androidx.compose.foundation.isSystemInDarkTheme()
+    val entries = buildList {
+        add(Entry("system", "Follow system", null))
+        add(Entry("dynamic", "Material You", null))
+        add(Entry("mono", "Mono", MaterialTheme.colorScheme.onSurfaceVariant))
+        com.efina.app.ui.theme.GeneratedPalettes.forEach { (id, set) ->
+            add(
+                Entry(
+                    code = id,
+                    label = set.label,
+                    swatch = if (dark) set.dark.primary else set.light.primary
+                )
+            )
+        }
+        val current = selected?.takeIf { s -> com.efina.app.ui.theme.GeneratedPalettes.containsKey(s) }
+        if (current != null) {
+            add(Entry("light", "Light", null))
+            add(Entry("dark", "Dark", null))
+        }
+    }
+
+    val current = entries.firstOrNull { it.code == selected }
+
+    Box(Modifier.fillMaxWidth()) {
+        OutlinedButton(
+            onClick = { open = true },
+            shape = EfinaCorners.menu,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Swatch(current?.swatch)
+            Text(
+                current?.label ?: "Choose a theme",
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier.weight(1f),
+                maxLines = 1
+            )
+            Icon(
+                Icons.Filled.ArrowDropDown,
+                contentDescription = "Choose a theme",
+                tint = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+        DropdownMenu(
+            expanded = open,
+            onDismissRequest = { open = false },
+            modifier = Modifier.fillMaxWidth(0.9f)
+        ) {
+            entries.forEach { entry ->
+                DropdownMenuItem(
+                    leadingIcon = { Swatch(entry.swatch) },
+                    text = { Text(entry.label) },
+                    trailingIcon = {
+                        if (entry.code == selected) {
+                            Icon(Icons.Filled.Check, contentDescription = "Selected")
+                        }
+                    },
+                    onClick = { onSelect(entry.code); open = false }
+                )
+            }
+        }
+    }
+}
+
+/** A colour dot, or a hollow ring when the palette has no single representative hue. */
+@Composable
+private fun Swatch(color: androidx.compose.ui.graphics.Color?) {
+    Box(
+        Modifier
+            .padding(end = 10.dp)
+            .size(14.dp)
+            .background(color ?: MaterialTheme.colorScheme.surfaceContainerHighest, CircleShape)
     )
 }

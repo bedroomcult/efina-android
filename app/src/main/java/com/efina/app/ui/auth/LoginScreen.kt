@@ -21,6 +21,8 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.efina.app.ui.theme.EfinaCorners
 import com.efina.app.ui.theme.EfinaType
+import com.efina.app.ui.components.BadgeToastHost
+import com.efina.app.ui.components.BadgeTone
 
 /**
  * Sign in / sign up.
@@ -49,16 +51,15 @@ fun LoginScreen(
         if (state.isLoggedIn) onLoginSuccess()
     }
 
-    val snackbar = remember { SnackbarHostState() }
     LaunchedEffect(state.error) {
         state.error?.let {
-            snackbar.showSnackbar(it)
+            badge = (it)
             viewModel.clearError()
         }
     }
 
     Scaffold(
-        snackbarHost = { SnackbarHost(snackbar) },
+        snackbarHost = { BadgeToastHost(badge, BadgeTone.Error) { badge = null } },
         containerColor = MaterialTheme.colorScheme.background
     ) { padding ->
         Column(

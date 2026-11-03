@@ -260,7 +260,7 @@ fun EfinaTheme(
 ) {
     val context = LocalContext.current
 
-    val scheme: ColorScheme = when {
+    val rawScheme: ColorScheme = when {
         dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S ->
             if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
         themeName == "mono" -> monoScheme(darkTheme)
@@ -273,6 +273,9 @@ fun EfinaTheme(
             generatedScheme(themeName, darkTheme)!!
         else -> if (darkTheme) orionDarkScheme() else orionLightScheme()
     }
+    // Widen the container steps; the generated M3 ramps are too close to the page for
+    // flat cards to read. See Elevation.kt for the numbers.
+    val scheme = rawScheme.withVisibleSurfaces()
 
     val money = if (darkTheme) MoneyPalette(
         income = MoneyColors.incomeDark,

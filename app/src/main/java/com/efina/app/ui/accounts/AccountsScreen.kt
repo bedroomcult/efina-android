@@ -27,6 +27,8 @@ import com.efina.app.ui.theme.Haptic
 import com.efina.app.ui.theme.rememberHaptics
 import androidx.compose.foundation.lazy.rememberLazyListState
 import com.efina.app.ui.components.ScrollToTopFab
+import com.efina.app.ui.components.BadgeToastHost
+import com.efina.app.ui.components.BadgeTone
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -42,18 +44,17 @@ fun AccountsScreen(
     // Marks this screen as having played its entrance, so returning to the tab
     // does not replay the staggered reveal.
     RevealLatch.currentScreen = "accounts"
-    val snackbar = remember { SnackbarHostState() }
     var pendingDelete by remember { mutableStateOf<Account?>(null) }
 
     LaunchedEffect(state.error) {
         state.error?.let {
-            snackbar.showSnackbar(it)
+            badge = (it)
             viewModel.clearError()
         }
     }
 
     Scaffold(
-        snackbarHost = { SnackbarHost(snackbar) },
+        snackbarHost = { BadgeToastHost(badge, BadgeTone.Error) { badge = null } },
         topBar = {
             TopAppBar(
                 title = { Text("Accounts", style = EfinaType.titleLargeEmphasized) },
@@ -156,7 +157,7 @@ private fun TotalCard(total: Double, currency: String) {
         Text(
             "Total balance",
             style = MaterialTheme.typography.labelMedium,
-            color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.75f)
+            color = MaterialTheme.colorScheme.onPrimaryContainer
         )
         Spacer(Modifier.height(4.dp))
         AnimatedMoney(

@@ -33,6 +33,8 @@ import androidx.compose.material.icons.filled.ArrowUpward
 import androidx.compose.material.icons.filled.SwapHoriz
 import androidx.compose.material.icons.filled.Tune
 import com.efina.app.ui.theme.LocalMoneyPalette
+import com.efina.app.ui.components.BadgeToastHost
+import com.efina.app.ui.components.BadgeTone
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -50,14 +52,13 @@ fun TransactionsScreen(
     var query by remember { mutableStateOf("") }
     var pendingDelete by remember { mutableStateOf<Transaction?>(null) }
     val listState = rememberLazyListState()
-    val snackbar = remember { SnackbarHostState() }
 
+    // A failed save is the one moment a user needs to notice without reading.
+    var badge by remember { mutableStateOf<String?>(null) }
     LaunchedEffect(state.error) {
         state.error?.let {
-            // A failed save is the one moment a user needs to notice without
-            // reading; the snackbar alone is easy to miss mid-scroll.
             haptics(Haptic.Reject)
-            snackbar.showSnackbar(it)
+            badge = it.lineSequence().first().take(48)
             viewModel.clearError()
         }
     }
@@ -74,7 +75,7 @@ fun TransactionsScreen(
     }
 
     Scaffold(
-        snackbarHost = { SnackbarHost(snackbar) },
+        snackbarHost = { BadgeToastHost(badge, BadgeTone.Error) { badge = null } },
         topBar = {
             if (searchOpen) {
                 SearchBar(

@@ -17,6 +17,8 @@ import com.efina.app.ui.components.ContentWidth
 import com.efina.app.ui.components.WidthCapped
 import com.efina.app.ui.theme.Haptic
 import com.efina.app.ui.theme.rememberHaptics
+import com.efina.app.ui.components.BadgeToastHost
+import com.efina.app.ui.components.BadgeTone
 
 /**
  * Sharing sheet for one account.
@@ -35,24 +37,23 @@ fun AccountSharingScreen(
     val state by viewModel.state.collectAsState()
     val haptics = rememberHaptics()
     val account = state.accounts.firstOrNull { it.id == accountId }
-    val snackbar = remember { SnackbarHostState() }
     var adding by remember { mutableStateOf(false) }
     var newUserId by remember { mutableStateOf("") }
     var newRole by remember { mutableStateOf(AccountShareRole.MEMBER) }
 
     LaunchedEffect(accountId) { viewModel.loadMembers(accountId) }
+    // A failed save is the one moment a user needs to notice without reading.
+    var badge by remember { mutableStateOf<String?>(null) }
     LaunchedEffect(state.error) {
         state.error?.let {
-            // A failed save is the one moment a user needs to notice without
-            // reading; the snackbar alone is easy to miss mid-scroll.
             haptics(Haptic.Reject)
-            snackbar.showSnackbar(it)
+            badge = it.lineSequence().first().take(48)
             viewModel.clearError()
         }
     }
 
     Scaffold(
-        snackbarHost = { SnackbarHost(snackbar) },
+        snackbarHost = { BadgeToastHost(badge, BadgeTone.Error) { badge = null } },
         topBar = {
             TopAppBar(
                 title = { Text("Sharing", style = com.efina.app.ui.theme.EfinaType.titleLargeEmphasized) },

@@ -25,6 +25,8 @@ import com.efina.app.ui.theme.Haptic
 import com.efina.app.ui.theme.rememberHaptics
 import androidx.compose.foundation.lazy.rememberLazyListState
 import com.efina.app.ui.components.ScrollToTopFab
+import com.efina.app.ui.components.BadgeToastHost
+import com.efina.app.ui.components.BadgeTone
 
 /**
  * Families and their invite codes.
@@ -45,25 +47,24 @@ fun FamilyScreen(
     // Marks this screen as having played its entrance, so returning to the tab
     // does not replay the staggered reveal.
     RevealLatch.currentScreen = "family"
-    val snackbar = remember { SnackbarHostState() }
     var creating by remember { mutableStateOf(false) }
     var joining by remember { mutableStateOf(false) }
     var newName by remember { mutableStateOf("") }
     var inviteCodeInput by remember { mutableStateOf("") }
     var pendingRemove by remember { mutableStateOf<Pair<Long, Long>?>(null) }
 
+    // A failed save is the one moment a user needs to notice without reading.
+    var badge by remember { mutableStateOf<String?>(null) }
     LaunchedEffect(state.error) {
         state.error?.let {
-            // A failed save is the one moment a user needs to notice without
-            // reading; the snackbar alone is easy to miss mid-scroll.
             haptics(Haptic.Reject)
-            snackbar.showSnackbar(it)
+            badge = it.lineSequence().first().take(48)
             viewModel.clearError()
         }
     }
 
     Scaffold(
-        snackbarHost = { SnackbarHost(snackbar) },
+        snackbarHost = { BadgeToastHost(badge, BadgeTone.Error) { badge = null } },
         topBar = {
             TopAppBar(
                 title = { Text("Family", style = EfinaType.titleLargeEmphasized) },

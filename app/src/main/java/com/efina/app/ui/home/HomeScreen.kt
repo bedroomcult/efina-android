@@ -301,7 +301,7 @@ private fun BalanceHero(total: Double, accountCount: Int) {
         Text(
             "Total balance",
             style = MaterialTheme.typography.labelMedium,
-            color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.75f)
+            color = MaterialTheme.colorScheme.onPrimaryContainer
         )
         Spacer(Modifier.height(6.dp))
         AnimatedMoney(
@@ -312,7 +312,7 @@ private fun BalanceHero(total: Double, accountCount: Int) {
         Text(
             "$accountCount account${if (accountCount == 1) "" else "s"}",
             style = MaterialTheme.typography.labelMedium,
-            color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
+            color = MaterialTheme.colorScheme.onPrimaryContainer
         )
     }
 }
