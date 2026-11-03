@@ -29,6 +29,8 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import com.efina.app.ui.components.ScrollToTopFab
 import com.efina.app.ui.components.BadgeToastHost
 import com.efina.app.ui.components.BadgeTone
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -39,6 +41,8 @@ fun AccountsScreen(
     viewModel: AccountsViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsState()
+    // Short badge instead of a snackbar: one phrase, self-dismissing.
+    var badge by remember { mutableStateOf<String?>(null) }
     val listState = rememberLazyListState()
     val haptics = rememberHaptics()
     // Marks this screen as having played its entrance, so returning to the tab

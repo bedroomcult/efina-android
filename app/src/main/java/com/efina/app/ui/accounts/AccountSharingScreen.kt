@@ -91,9 +91,10 @@ fun AccountSharingScreen(
                         // Sharing needs a family id; when turning on without one the
                         // backend rejects it, so surface that rather than guessing.
                         if (on) {
-                            snackbar.let {
-                                // Optimistically note the requirement; the family id is
-                                // chosen on the Family screen.
+                            // Sharing needs a family id; when turning on without one the
+                            // backend rejects it, so say so instead of guessing.
+                            if (account.familyId == null) {
+                                badge = "Pick a family first"
                             }
                         }
                         viewModel.setShared(accountId, if (on) account.familyId else null)

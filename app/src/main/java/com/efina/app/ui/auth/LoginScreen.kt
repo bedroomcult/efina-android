@@ -23,6 +23,8 @@ import com.efina.app.ui.theme.EfinaCorners
 import com.efina.app.ui.theme.EfinaType
 import com.efina.app.ui.components.BadgeToastHost
 import com.efina.app.ui.components.BadgeTone
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 
 /**
  * Sign in / sign up.
@@ -39,6 +41,8 @@ fun LoginScreen(
     viewModel: AuthViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsState()
+    // Short badge instead of a snackbar: one phrase, self-dismissing.
+    var badge by remember { mutableStateOf<String?>(null) }
     var registerMode by remember { mutableStateOf(false) }
 
     var email by remember { mutableStateOf("") }

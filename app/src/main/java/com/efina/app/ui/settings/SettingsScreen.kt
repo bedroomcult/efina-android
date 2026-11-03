@@ -31,6 +31,8 @@ import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 
 /**
  * Settings.
@@ -51,6 +53,8 @@ fun SettingsScreen(
     viewModel: SettingsViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsState()
+    // Short badge instead of a snackbar: one phrase, self-dismissing.
+    var badge by remember { mutableStateOf<String?>(null) }
     val haptics = rememberHaptics()
     var showPasswordDialog by remember { mutableStateOf(false) }
     var confirmLogout by remember { mutableStateOf(false) }
