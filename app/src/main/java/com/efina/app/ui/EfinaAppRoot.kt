@@ -41,6 +41,13 @@ import com.efina.app.ui.transactions.TransactionsViewModel
 import com.efina.app.data.remote.DataEvents
 import com.efina.app.ui.theme.EfinaTheme
 import com.efina.app.ui.theme.ThemePreference
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.Row
+import androidx.compose.ui.unit.dp
+import com.efina.app.ui.components.DockItem
+import com.efina.app.ui.components.EfinaSideRail
+import com.efina.app.ui.components.FloatingDock
+import com.efina.app.ui.components.WIDE_LAYOUT_BREAKPOINT_DP
 
 /**
  * Navigation graph.
@@ -94,6 +101,11 @@ sealed class Screen(val route: String) {
     data object Scheduled : Screen("scheduled")
 }
 
+/** The same five tabs as the dock/rail, in the shell's own type. */
+private val dockItems: List<DockItem> = bottomNavItems.map {
+    DockItem(route = it.screen.route, icon = it.icon, label = it.label)
+}
+
 private data class NavItem(val screen: Screen, val icon: ImageVector, val label: String)
 
 private val bottomNavItems = listOf(
@@ -143,39 +155,31 @@ fun EfinaAppRoot(
     }
 
     EfinaTheme(themeName = themeName, darkTheme = darkTheme) {
-        Scaffold(
-            bottomBar = {
-                val navBackStackEntry by navController.currentBackStackEntryAsState()
-                val currentRoute = navBackStackEntry?.destination?.route
-                val showBar = bottomNavItems.any { it.screen.route == currentRoute }
-
-                if (showBar) {
-                    NavigationBar {
-                        bottomNavItems.forEach { item ->
-                            NavigationBarItem(
-                                icon = { Icon(item.icon, contentDescription = item.label) },
-                                label = { Text(item.label) },
-                                selected = currentRoute == item.screen.route,
-                                onClick = {
-                                    if (currentRoute != item.screen.route) {
-                                        navController.navigate(item.screen.route) {
-                                            popUpTo(Screen.Home.route) { saveState = true }
-                                            launchSingleTop = true
-                                            restoreState = true
-                                        }
-                                    }
-                                }
-                            )
-                        }
-                    }
+        val navBackStackEntry by navController.currentBackStackEntryAsState()
+        val currentRoute = navBackStackEntry?.destination?.route
+        val showDock = bottomNavItems.any { it.screen.route == currentRoute }
+        val onSelect: (DockItem) -> Unit = { item ->
+            if (currentRoute != item.route) {
+                navController.navigate(item.route) {
+                    popUpTo(Screen.Home.route) { saveState = true }
+                    launchSingleTop = true
+                    restoreState = true
                 }
             }
-        ) { padding ->
-            NavHost(
-                navController = navController,
-                startDestination = startDestination,
-                modifier = Modifier.padding(padding)
-            ) {
+        }
+
+        BoxWithConstraints(Modifier.fillMaxSize()) {
+            val wide = maxWidth >= WIDE_LAYOUT_BREAKPOINT_DP.dp
+            Row(Modifier.fillMaxSize()) {
+                if (wide && showDock) {
+                    EfinaSideRail(dockItems, currentRoute, onSelect)
+                }
+                Box(Modifier.weight(1f)) {
+                    NavHost(
+                        navController = navController,
+                        startDestination = startDestination,
+                        modifier = Modifier.fillMaxSize()
+                    ) {
                 composable(Screen.Login.route) {
                     LoginScreen(
                         onLoginSuccess = {
@@ -328,6 +332,16 @@ fun EfinaAppRoot(
                 composable(Screen.Scheduled.route) {
                     ScheduledScreen(onNavigateBack = { navController.popBackStack() })
                 }
+                    }
+                }
+            }
+            if (!wide && showDock) {
+                FloatingDock(
+                    items = dockItems,
+                    currentRoute = currentRoute,
+                    onSelect = onSelect,
+                    modifier = Modifier.align(Alignment.BottomCenter)
+                )
             }
         }
     }

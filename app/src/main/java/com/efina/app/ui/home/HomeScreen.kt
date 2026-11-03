@@ -18,6 +18,8 @@ import com.efina.app.ui.theme.EfinaCorners
 import com.efina.app.ui.theme.EfinaSemantic
 import com.efina.app.ui.theme.EfinaType
 import com.efina.app.ui.theme.LocalMoneyPalette
+import com.efina.app.ui.components.ContentWidth
+import com.efina.app.ui.components.WidthCapped
 
 /**
  * Dashboard. Assembled from accounts + transactions + budgets + goals, per
@@ -46,7 +48,8 @@ fun HomeScreen(
             )
         }
     ) { padding ->
-        PullToRefreshBox(
+
+        WidthCapped(ContentWidth.List) {        PullToRefreshBox(
             isRefreshing = state.refreshing,
             onRefresh = { viewModel.refresh() },
             modifier = Modifier.fillMaxSize().padding(padding)
@@ -264,6 +267,8 @@ fun HomeScreen(
                     }
                 }
             }
+        }
+    
         }
     }
 }

@@ -20,6 +20,8 @@ import com.efina.app.ui.theme.EfinaCorners
 import com.efina.app.ui.theme.EfinaType
 import com.efina.app.ui.theme.revealModifier
 import com.efina.app.ui.theme.springClick
+import com.efina.app.ui.components.ContentWidth
+import com.efina.app.ui.components.WidthCapped
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -61,7 +63,8 @@ fun AccountsScreen(
             )
         }
     ) { padding ->
-        when {
+
+        WidthCapped(ContentWidth.List) {        when {
             state.loading -> Box(Modifier.fillMaxSize().padding(padding)) {
                 LoadingList(rows = 4, modifier = Modifier.padding(16.dp))
             }
@@ -94,6 +97,8 @@ fun AccountsScreen(
                     )
                 }
             }
+        }
+    
         }
     }
 

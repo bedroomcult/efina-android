@@ -22,6 +22,8 @@ import com.efina.app.ui.components.*
 import com.efina.app.ui.theme.EfinaCorners
 import com.efina.app.ui.theme.EfinaType
 import com.efina.app.ui.theme.revealModifier
+import com.efina.app.ui.components.ContentWidth
+import com.efina.app.ui.components.WidthCapped
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
@@ -53,7 +55,8 @@ fun BudgetsScreen(
             )
         }
     ) { padding ->
-        when {
+
+        WidthCapped(ContentWidth.List) {        when {
             state.loading -> LoadingList(rows = 5, modifier = Modifier.padding(padding).padding(16.dp))
             state.budgets.isEmpty() -> EmptyState(
                 title = "No budgets yet",
@@ -90,6 +93,8 @@ fun BudgetsScreen(
                     )
                 }
             }
+        }
+    
         }
     }
 

@@ -15,6 +15,8 @@ import com.efina.app.domain.model.UpdateSettingsRequest
 import com.efina.app.ui.components.*
 import com.efina.app.ui.theme.EfinaCorners
 import com.efina.app.ui.theme.EfinaType
+import com.efina.app.ui.components.ContentWidth
+import com.efina.app.ui.components.WidthCapped
 
 /**
  * Settings.
@@ -59,7 +61,8 @@ fun SettingsScreen(
             )
         }
     ) { padding ->
-        if (state.loading) {
+
+        WidthCapped(ContentWidth.List) {        if (state.loading) {
             LoadingList(rows = 6, modifier = Modifier.padding(padding).padding(16.dp))
             return@Scaffold
         }
@@ -173,6 +176,8 @@ fun SettingsScreen(
                 SettingRow("Sign out", "End this session",
                     last = true, destructive = true, onClick = { confirmLogout = true })
             }
+        }
+    
         }
     }
 

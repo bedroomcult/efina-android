@@ -20,6 +20,8 @@ import com.efina.app.domain.model.UpdateAccountRequest
 import com.efina.app.ui.components.ErrorState
 import com.efina.app.ui.theme.EfinaCorners
 import com.efina.app.ui.theme.EfinaType
+import com.efina.app.ui.components.ContentWidth
+import com.efina.app.ui.components.WidthCapped
 
 /**
  * Create and edit share one form: the backend's create and update bodies differ
@@ -68,7 +70,8 @@ fun AccountFormScreen(
             )
         }
     ) { padding ->
-        Column(
+
+        WidthCapped(ContentWidth.Form) {        Column(
             Modifier
                 .fillMaxSize()
                 .padding(padding)
@@ -199,6 +202,8 @@ fun AccountFormScreen(
             if (state.error != null) {
                 ErrorState(state.error!!)
             }
+        }
+    
         }
     }
 }

@@ -37,6 +37,8 @@ import com.efina.app.ui.theme.LocalIsDarkTheme
 import com.efina.app.ui.theme.MoneyColors
 import com.efina.app.ui.components.CategoryPickerSheet
 import com.efina.app.ui.components.DateTimeField
+import com.efina.app.ui.components.ContentWidth
+import com.efina.app.ui.components.WidthCapped
 
 /**
  * Create / edit a transaction, or create a transfer pair.
@@ -106,7 +108,8 @@ fun TransactionFormScreen(
             )
         }
     ) { padding ->
-        Column(
+
+        WidthCapped(ContentWidth.Form) {        Column(
             Modifier
                 .fillMaxSize()
                 .padding(padding)
@@ -300,6 +303,8 @@ fun TransactionFormScreen(
             }
 
             state.error?.let { ErrorState(it) }
+        }
+    
         }
     }
 }

@@ -15,6 +15,8 @@ import com.efina.app.ui.theme.EfinaCorners
 import com.efina.app.ui.theme.EfinaSemantic
 import com.efina.app.ui.theme.EfinaType
 import com.efina.app.ui.theme.LocalMoneyPalette
+import com.efina.app.ui.components.ContentWidth
+import com.efina.app.ui.components.WidthCapped
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -28,7 +30,8 @@ fun StatsScreen(viewModel: StatsViewModel = hiltViewModel()) {
             )
         }
     ) { padding ->
-        if (state.error != null) {
+
+        WidthCapped(ContentWidth.List) {        if (state.error != null) {
             Column(Modifier.fillMaxSize().padding(16.dp)) {
                 ErrorState(message = state.error!!, onRetry = { viewModel.load() })
             }
@@ -217,6 +220,8 @@ fun StatsScreen(viewModel: StatsViewModel = hiltViewModel()) {
                     }
                 }
             }
+        }
+    
         }
     }
 }

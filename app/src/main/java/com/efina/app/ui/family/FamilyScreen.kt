@@ -18,6 +18,8 @@ import com.efina.app.domain.model.FamilyGroup
 import com.efina.app.ui.components.*
 import com.efina.app.ui.theme.EfinaCorners
 import com.efina.app.ui.theme.EfinaType
+import com.efina.app.ui.components.ContentWidth
+import com.efina.app.ui.components.WidthCapped
 
 /**
  * Families and their invite codes.
@@ -64,7 +66,8 @@ fun FamilyScreen(
             )
         }
     ) { padding ->
-        Column(Modifier.fillMaxSize().padding(padding).padding(16.dp)) {
+
+        WidthCapped(ContentWidth.List) {        Column(Modifier.fillMaxSize().padding(padding).padding(16.dp)) {
             Text(
                 "Share bank accounts with your household. Family members can see a shared account and record transactions on it, depending on their role.",
                 style = MaterialTheme.typography.bodyMedium,
@@ -100,6 +103,8 @@ fun FamilyScreen(
                     }
                 }
             }
+        }
+    
         }
     }
 

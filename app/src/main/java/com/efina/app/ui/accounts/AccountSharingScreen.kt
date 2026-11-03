@@ -13,6 +13,8 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.efina.app.domain.model.AccountShareRole
 import com.efina.app.ui.components.*
+import com.efina.app.ui.components.ContentWidth
+import com.efina.app.ui.components.WidthCapped
 
 /**
  * Sharing sheet for one account.
@@ -53,7 +55,8 @@ fun AccountSharingScreen(
             )
         }
     ) { padding ->
-        Column(
+
+        WidthCapped(ContentWidth.Form) {        Column(
             Modifier.fillMaxSize().padding(padding).padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
@@ -176,6 +179,8 @@ fun AccountSharingScreen(
                     }
                 }
             }
+        }
+    
         }
     }
 }

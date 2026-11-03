@@ -23,6 +23,8 @@ import com.efina.app.ui.components.*
 import com.efina.app.ui.theme.EfinaCorners
 import com.efina.app.ui.theme.EfinaType
 import com.efina.app.ui.theme.LocalMoneyPalette
+import com.efina.app.ui.components.ContentWidth
+import com.efina.app.ui.components.WidthCapped
 
 /**
  * Debts and receivables.
@@ -65,7 +67,8 @@ fun DebtsScreen(
             )
         }
     ) { padding ->
-        when {
+
+        WidthCapped(ContentWidth.List) {        when {
             state.loading -> LoadingList(rows = 4, modifier = Modifier.padding(padding).padding(16.dp))
             state.debts.isEmpty() -> EmptyState(
                 title = "Nothing tracked",
@@ -105,6 +108,8 @@ fun DebtsScreen(
                     )
                 }
             }
+        }
+    
         }
     }
 

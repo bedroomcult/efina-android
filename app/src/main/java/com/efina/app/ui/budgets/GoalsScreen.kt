@@ -24,6 +24,8 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 import com.efina.app.ui.theme.revealModifier
+import com.efina.app.ui.components.ContentWidth
+import com.efina.app.ui.components.WidthCapped
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
@@ -54,7 +56,8 @@ fun GoalsScreen(viewModel: GoalsViewModel = hiltViewModel()) {
             )
         }
     ) { padding ->
-        when {
+
+        WidthCapped(ContentWidth.List) {        when {
             state.loading -> LoadingList(rows = 4, modifier = Modifier.padding(padding).padding(16.dp))
             state.goals.isEmpty() -> EmptyState(
                 title = "No goals yet",
@@ -88,6 +91,8 @@ fun GoalsScreen(viewModel: GoalsViewModel = hiltViewModel()) {
                     )
                 }
             }
+        }
+    
         }
     }
 

@@ -20,6 +20,8 @@ import com.efina.app.ui.theme.EfinaCorners
 import com.efina.app.ui.theme.EfinaType
 import com.efina.app.ui.theme.revealModifier
 import com.efina.app.ui.theme.springClick
+import com.efina.app.ui.components.ContentWidth
+import com.efina.app.ui.components.WidthCapped
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -86,7 +88,8 @@ fun TransactionsScreen(
             ) { Icon(Icons.Default.Add, contentDescription = "Add transaction") }
         }
     ) { padding ->
-        Column(Modifier.fillMaxSize().padding(padding)) {
+
+        WidthCapped(ContentWidth.List) {        Column(Modifier.fillMaxSize().padding(padding)) {
             TypeFilterRow(selected = state.filter.type) { viewModel.setType(it) }
 
             when {
@@ -126,6 +129,8 @@ fun TransactionsScreen(
                     }
                 }
             }
+        }
+    
         }
     }
 

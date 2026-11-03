@@ -25,6 +25,8 @@ import com.efina.app.ui.theme.revealModifier
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import com.efina.app.ui.components.ContentWidth
+import com.efina.app.ui.components.WidthCapped
 
 /**
  * Recurring transactions.
@@ -65,7 +67,8 @@ fun ScheduledScreen(
             )
         }
     ) { padding ->
-        when {
+
+        WidthCapped(ContentWidth.List) {        when {
             state.loading -> LoadingList(rows = 4, modifier = Modifier.padding(padding).padding(16.dp))
             state.scheduled.isEmpty() -> EmptyState(
                 title = "No schedules",
@@ -109,6 +112,8 @@ fun ScheduledScreen(
                     )
                 }
             }
+        }
+    
         }
     }
 

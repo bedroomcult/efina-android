@@ -21,6 +21,8 @@ import com.efina.app.ui.theme.EfinaType
 import com.efina.app.ui.theme.LocalIsDarkTheme
 import com.efina.app.ui.theme.parseHexColor
 import com.efina.app.ui.theme.tonal
+import com.efina.app.ui.components.ContentWidth
+import com.efina.app.ui.components.WidthCapped
 
 @OptIn(ExperimentalMaterial3Api::class, androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
 @Composable
@@ -54,7 +56,8 @@ fun CategoriesScreen(
             )
         }
     ) { padding ->
-        when {
+
+        WidthCapped(ContentWidth.List) {        when {
             state.loading -> LoadingList(rows = 6, modifier = Modifier.padding(padding).padding(16.dp))
             state.categories.isEmpty() -> EmptyState(
                 title = "No categories",
@@ -79,6 +82,8 @@ fun CategoriesScreen(
                     )
                 }
             }
+        }
+    
         }
     }
 
