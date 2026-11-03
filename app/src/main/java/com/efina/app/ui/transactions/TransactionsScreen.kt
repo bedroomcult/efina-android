@@ -19,6 +19,7 @@ import com.efina.app.ui.components.*
 import com.efina.app.ui.theme.EfinaCorners
 import com.efina.app.ui.theme.EfinaType
 import com.efina.app.ui.theme.revealModifier
+import com.efina.app.ui.theme.springClick
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -179,12 +180,15 @@ private fun TransactionRow(
     onClick: () -> Unit,
     onLongClick: () -> Unit
 ) {
-    val interaction = remember { androidx.compose.foundation.interaction.MutableInteractionSource() }
+    // springClick rather than Surface(onClick): the latter keeps its interaction
+    // source private, so the press scale and focus ring cannot hook in. Long-press
+    // stays on the combinedClickable inside springClick's caller.
     Surface(
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier
+            .fillMaxWidth()
+            .springClick(EfinaCorners.groupInner, onClick = onClick),
         color = MaterialTheme.colorScheme.surfaceContainerLow,
-        shape = EfinaCorners.groupInner,
-        onClick = onClick
+        shape = EfinaCorners.groupInner
     ) {
         Row(
             Modifier.padding(horizontal = 14.dp, vertical = 12.dp),

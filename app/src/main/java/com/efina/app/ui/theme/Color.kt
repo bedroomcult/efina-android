@@ -144,32 +144,6 @@ fun tonal(accent: Color, dark: Boolean): Pair<Color, Color> {
 
 private fun Color.toArgbInt(): Int = this.toArgb()
 
-/**
- * The 14 palettes design.md §2.2 names, as seed accents.
- *
- * Only Orion ships a hand-tuned full scheme. The other thirteen derive a complete
- * ColorScheme from a single seed through [tonal], which is how the doc's
- * material-color-utilities generator works in principle: one tonal spot, four
- * schemes. Deriving beats hand-writing 13 x 2 x 30 roles, and it means adding a
- * palette is one hex value rather than a file.
- *
- * `orion` and `mono` are absent here on purpose: they have hand-tuned schemes in
- * Theme.kt, which look better than a derived approximation for the default.
- */
-val PaletteSeeds: Map<String, Color> = mapOf(
-    "ocean" to Color(0xFF1E6FD9),
-    "forest" to Color(0xFF2E7D46),
-    "sunset" to Color(0xFFE85D3D),
-    "rose" to Color(0xFFD24C7F),
-    "grape" to Color(0xFF7B4BC4),
-    "mint" to Color(0xFF19A97D),
-    "ember" to Color(0xFFC2410C),
-    "amber" to Color(0xFFC98A00),
-    "cyber" to Color(0xFF00A8B5),
-    "midnight" to Color(0xFF3B4B9C),
-    "lime" to Color(0xFF5A9E10),
-    "cocoa" to Color(0xFF8A5A3C)
-)
 
 /** Parses "#RRGGBB", "#AARRGGBB" or a named fallback into a Color. */
 fun parseHexColor(value: String?, fallback: Color): Color {

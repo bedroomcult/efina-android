@@ -70,3 +70,4 @@ Thumbs.db
 keystore.properties
 *.jks
 *.keystore
+node_modules/

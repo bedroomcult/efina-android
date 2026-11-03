@@ -19,6 +19,7 @@ import com.efina.app.ui.components.*
 import com.efina.app.ui.theme.EfinaCorners
 import com.efina.app.ui.theme.EfinaType
 import com.efina.app.ui.theme.revealModifier
+import com.efina.app.ui.theme.springClick
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -149,11 +150,14 @@ private fun AccountRow(
 ) {
     var menuOpen by remember { mutableStateOf(false) }
 
+    // Plain Surface + springClick rather than Surface(onClick): the latter keeps its
+    // InteractionSource private, so the press scale and focus ring cannot hook in.
     Surface(
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier
+            .fillMaxWidth()
+            .springClick(EfinaCorners.menu, onClick = onClick),
         shape = EfinaCorners.menu,
-        color = MaterialTheme.colorScheme.surfaceContainerLow,
-        onClick = onClick
+        color = MaterialTheme.colorScheme.surfaceContainerLow
     ) {
         Row(
             Modifier.padding(14.dp),

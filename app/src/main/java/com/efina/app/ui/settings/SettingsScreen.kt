@@ -126,7 +126,7 @@ fun SettingsScreen(
                     // `mono` and `dynamic` are handled by EfinaTheme; the twelve
                     // seeded palettes derive their scheme from a single accent.
                     val themes = listOf("light" to "Light", "dark" to "Dark", "mono" to "Mono") +
-                        com.efina.app.ui.theme.PaletteSeeds.keys.map {
+                        com.efina.app.ui.theme.GeneratedPalettes.keys.map {
                             it to it.replaceFirstChar(Char::uppercase)
                         }
 
