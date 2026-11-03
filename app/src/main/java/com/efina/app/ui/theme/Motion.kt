@@ -80,13 +80,10 @@ object EfinaMotion {
  */
 @Composable
 fun revealModifier(index: Int): Modifier {
-    // Only the first screenful animates. Items further down appear as-is, so a fling
-    // never shows rows sliding in.
-    if (index > 8) return this
     // rememberSaveable, not remember: inside a LazyColumn the composable is disposed
     // when it scrolls off screen, so `remember` reset the flag and every row
     // re-animated each time it recycled back into view.
-    var shown by rememberSaveable { mutableStateOf(false) }
+    var shown by rememberSaveable { mutableStateOf(index > 8) }
     LaunchedEffect(Unit) {
         if (EfinaMotion.enabled) {
             kotlinx.coroutines.delay(EfinaMotion.staggerDelay(index).toLong())
