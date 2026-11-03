@@ -33,6 +33,15 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
+import com.efina.app.ui.components.PickerOption
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.material3.ExperimentalMaterial3Api
 
 /**
  * Settings.
@@ -121,15 +130,21 @@ fun SettingsScreen(
                 Text("Preferences", style = MaterialTheme.typography.titleMedium)
                 Text("Currency", style = MaterialTheme.typography.labelLarge)
                 SettingsDropdown(
+                    label = "Currency",
                     selected = settings.currency,
-                    options = listOf("IDR", "USD", "EUR", "GBP", "SGD").map { it to it },
+                    options = listOf("IDR", "USD", "EUR", "GBP", "SGD")
+                        .map { Triple(it, it, null) },
                     onSelect = { viewModel.update(UpdateSettingsRequest(currency = it)) }
                 )
 
                 Text("Language", style = MaterialTheme.typography.labelLarge)
                 SettingsDropdown(
+                    label = "Language",
                     selected = settings.language,
-                    options = listOf("id" to "Indonesian", "en" to "English"),
+                    options = listOf(
+                        Triple("id", "Indonesian", null),
+                        Triple("en", "English", null)
+                    ),
                     onSelect = { viewModel.update(UpdateSettingsRequest(language = it)) }
                 )
 
@@ -288,128 +303,240 @@ private fun ChangePasswordDialog(
     )
 }
 
-/** A one-line dropdown for picking a single value. */
+/**
+ * A settings picker that opens as a bottom sheet.
+ *
+ * Same interaction as the category and account pickers: tap the field, the sheet slides
+ * up, pick a row, it slides away. An anchored DropdownMenu was the odd one out — it
+ * appears wherever the field happens to sit, is awkward to reach one-handed, and behaves
+ * differently from every other single-choice control in the app.
+ */
 @Composable
 private fun SettingsDropdown(
+    label: String,
     selected: String?,
-    options: List<Pair<String, String>>,
+    options: List<Triple<String, String, androidx.compose.ui.graphics.Color?>>,
     onSelect: (String) -> Unit
 ) {
     var open by remember { mutableStateOf(false) }
-    val current = options.firstOrNull { it.first == selected }?.second ?: "Not set"
+    val current = options.firstOrNull { it.first == selected }
 
-    Box(Modifier.fillMaxWidth()) {
-        OutlinedButton(
-            onClick = { open = true },
-            shape = EfinaCorners.menu,
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Text(
-                current,
-                style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onSurface,
-                modifier = Modifier.weight(1f),
-                maxLines = 1
-            )
-            Icon(
-                Icons.Filled.ArrowDropDown,
-                contentDescription = "Choose",
-                tint = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-        }
-        DropdownMenu(
-            expanded = open,
-            onDismissRequest = { open = false },
-            modifier = Modifier.fillMaxWidth(0.9f)
-        ) {
-            options.forEach { (code, label) ->
-                DropdownMenuItem(
-                    text = { Text(label) },
-                    trailingIcon = {
-                        if (code == selected) {
-                            Icon(Icons.Filled.Check, contentDescription = "Selected")
-                        }
-                    },
-                    onClick = { onSelect(code); open = false }
-                )
-            }
-        }
+    OutlinedButton(
+        onClick = { open = true },
+        shape = EfinaCorners.menu,
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        current?.third?.let { Swatch(it) }
+        Text(
+            current?.second ?: "Not set",
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.onSurface,
+            modifier = Modifier.weight(1f),
+            maxLines = 1
+        )
+        Icon(
+            Icons.Filled.ArrowDropDown,
+            contentDescription = "Choose $label",
+            tint = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+    }
+
+    if (open) {
+        ChoiceSheet(
+            title = label,
+            options = options.map { PickerOption(0L, it.second, null) }
+                .mapIndexed { i, o -> o.copy(id = i.toLong()) },
+            selectedIndex = options.indexOfFirst { it.first == selected },
+            onSelectIndex = { idx ->
+                onSelect(options[idx].first)
+                open = false
+            },
+            onDismiss = { open = false }
+        )
     }
 }
 
 /**
- * Theme picker showing each palette's primary colour as a swatch.
+ * Theme picker, shown as a bottom sheet with each palette's primary colour.
  *
  * The names are meaningless on their own — nothing tells you what "Grape" looks like —
- * so the swatch is the actual affordance. Light and dark are listed as modifiers of the
- * current palette rather than as palettes, which is how the theme value is stored.
+ * so the swatch is the actual affordance.
  */
 @Composable
 private fun ThemeDropdown(selected: String?, onSelect: (String) -> Unit) {
     var open by remember { mutableStateOf(false) }
 
-    // entry: stored value, label, swatch colour (null = follow the palette/system)
-    data class Entry(val code: String, val label: String, val swatch: androidx.compose.ui.graphics.Color?)
-
     val dark = androidx.compose.foundation.isSystemInDarkTheme()
     val entries = buildList {
-        add(Entry("system", "Follow system", null))
-        add(Entry("dynamic", "Material You", null))
-        add(Entry("mono", "Mono", MaterialTheme.colorScheme.onSurfaceVariant))
+        add(Triple("system", "Follow system", null))
+        add(Triple("dynamic", "Material You", null))
+        add(Triple("mono", "Mono", MaterialTheme.colorScheme.onSurfaceVariant))
         com.efina.app.ui.theme.GeneratedPalettes.forEach { (id, set) ->
             add(
-                Entry(
-                    code = id,
-                    label = set.label,
-                    swatch = if (dark) set.dark.primary else set.light.primary
+                Triple(
+                    id,
+                    set.label,
+                    if (dark) set.dark.primary else set.light.primary
                 )
             )
         }
-        val current = selected?.takeIf { s -> com.efina.app.ui.theme.GeneratedPalettes.containsKey(s) }
-        if (current != null) {
-            add(Entry("light", "Light", null))
-            add(Entry("dark", "Dark", null))
+        // Light/dark are modifiers of a chosen palette, not palettes themselves.
+        if (selected != null && com.efina.app.ui.theme.GeneratedPalettes.containsKey(selected)) {
+            add(Triple("light", "Light", null))
+            add(Triple("dark", "Dark", null))
         }
     }
 
-    val current = entries.firstOrNull { it.code == selected }
+    val current = entries.firstOrNull { it.first == selected }
 
-    Box(Modifier.fillMaxWidth()) {
-        OutlinedButton(
-            onClick = { open = true },
-            shape = EfinaCorners.menu,
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Swatch(current?.swatch)
+    OutlinedButton(
+        onClick = { open = true },
+        shape = EfinaCorners.menu,
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        current?.third?.let { Swatch(it) }
+        Text(
+            current?.second ?: "Choose a theme",
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.onSurface,
+            modifier = Modifier.weight(1f),
+            maxLines = 1
+        )
+        Icon(
+            Icons.Filled.ArrowDropDown,
+            contentDescription = "Choose a theme",
+            tint = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+    }
+
+    if (open) {
+        ThemeSheet(
+            entries = entries,
+            selected = selected,
+            onSelect = { onSelect(it); open = false },
+            onDismiss = { open = false }
+        )
+    }
+}
+
+/** Bottom sheet of plain choices, matching the category picker's rows. */
+@OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
+@Composable
+private fun ChoiceSheet(
+    title: String,
+    options: List<PickerOption>,
+    selectedIndex: Int,
+    onSelectIndex: (Int) -> Unit,
+    onDismiss: () -> Unit
+) {
+    val sheetState = androidx.compose.material3.rememberModalBottomSheetState(
+        skipPartiallyExpanded = true
+    )
+    androidx.compose.material3.ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = sheetState
+    ) {
+        Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
             Text(
-                current?.label ?: "Choose a theme",
-                style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onSurface,
-                modifier = Modifier.weight(1f),
-                maxLines = 1
+                title,
+                style = MaterialTheme.typography.titleLarge,
+                modifier = Modifier.padding(bottom = 12.dp)
             )
-            Icon(
-                Icons.Filled.ArrowDropDown,
-                contentDescription = "Choose a theme",
-                tint = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-        }
-        DropdownMenu(
-            expanded = open,
-            onDismissRequest = { open = false },
-            modifier = Modifier.fillMaxWidth(0.9f)
-        ) {
-            entries.forEach { entry ->
-                DropdownMenuItem(
-                    leadingIcon = { Swatch(entry.swatch) },
-                    text = { Text(entry.label) },
-                    trailingIcon = {
-                        if (entry.code == selected) {
-                            Icon(Icons.Filled.Check, contentDescription = "Selected")
+            androidx.compose.foundation.lazy.LazyColumn(
+                Modifier.fillMaxWidth().heightIn(max = 420.dp)
+            ) {
+                androidx.compose.foundation.lazy.itemsIndexed(options) { index, option ->
+                    val chosen = index == selectedIndex
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { onSelectIndex(index) }
+                            .background(
+                                if (chosen) MaterialTheme.colorScheme.primaryContainer
+                                else androidx.compose.ui.graphics.Color.Transparent,
+                                EfinaCorners.menu
+                            )
+                            .padding(vertical = 14.dp, horizontal = 8.dp)
+                    ) {
+                        Text(
+                            option.label,
+                            style = MaterialTheme.typography.bodyLarge,
+                            fontWeight = FontWeight.Medium,
+                            modifier = Modifier.weight(1f)
+                        )
+                        if (chosen) {
+                            Icon(
+                                Icons.Filled.Check,
+                                contentDescription = "Selected",
+                                tint = MaterialTheme.colorScheme.primary
+                            )
                         }
-                    },
-                    onClick = { onSelect(entry.code); open = false }
-                )
+                    }
+                }
+                item { Box(Modifier.height(16.dp)) }
+            }
+        }
+    }
+}
+
+/** Bottom sheet of themes, each row led by its palette colour. */
+@OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
+@Composable
+private fun ThemeSheet(
+    entries: List<Triple<String, String, androidx.compose.ui.graphics.Color?>>,
+    selected: String?,
+    onSelect: (String) -> Unit,
+    onDismiss: () -> Unit
+) {
+    val sheetState = androidx.compose.material3.rememberModalBottomSheetState(
+        skipPartiallyExpanded = true
+    )
+    androidx.compose.material3.ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = sheetState
+    ) {
+        Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
+            Text(
+                "Theme",
+                style = MaterialTheme.typography.titleLarge,
+                modifier = Modifier.padding(bottom = 12.dp)
+            )
+            androidx.compose.foundation.lazy.LazyColumn(
+                Modifier.fillMaxWidth().heightIn(max = 480.dp)
+            ) {
+                androidx.compose.foundation.lazy.items(entries) { entry ->
+                    val chosen = entry.first == selected
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { onSelect(entry.first) }
+                            .background(
+                                if (chosen) MaterialTheme.colorScheme.primaryContainer
+                                else androidx.compose.ui.graphics.Color.Transparent,
+                                EfinaCorners.menu
+                            )
+                            .padding(vertical = 12.dp, horizontal = 8.dp)
+                    ) {
+                        Swatch(entry.third)
+                        Text(
+                            entry.second,
+                            style = MaterialTheme.typography.bodyLarge,
+                            fontWeight = FontWeight.Medium,
+                            modifier = Modifier.weight(1f),
+                            maxLines = 1
+                        )
+                        if (chosen) {
+                            Icon(
+                                Icons.Filled.Check,
+                                contentDescription = "Selected",
+                                tint = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                    }
+                }
+                item { Box(Modifier.height(16.dp)) }
             }
         }
     }
