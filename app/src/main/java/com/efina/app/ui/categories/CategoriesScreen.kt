@@ -20,6 +20,7 @@ import com.efina.app.ui.theme.EfinaCorners
 import com.efina.app.ui.theme.EfinaType
 import com.efina.app.ui.theme.LocalIsDarkTheme
 import com.efina.app.ui.theme.parseHexColor
+import com.efina.app.ui.theme.springClick
 import com.efina.app.ui.theme.tonal
 import com.efina.app.ui.components.ContentWidth
 import com.efina.app.ui.components.WidthCapped
