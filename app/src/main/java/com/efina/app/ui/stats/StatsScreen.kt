@@ -226,6 +226,7 @@ fun StatsScreen(viewModel: StatsViewModel = hiltViewModel()) {
             }
         }
     }
+    }
 }
 
 @Composable
@@ -242,5 +243,5 @@ private fun StatTile(
         Spacer(Modifier.height(4.dp))
         Text(formatMoney(amount), style = EfinaType.amountSmall, color = contentColor)
     }
-}    }
+}
 
