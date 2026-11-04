@@ -1,7 +1,7 @@
 {
   "generatedFrom": "bedroomcult/efina functions/api",
   "note": "Regenerate with: node tools/check-api-contract.mjs --emit-manifest",
-  "count": 138,
+  "count": 139,
   "routes": {
     "DELETE /api/accounts/:id": true,
     "DELETE /api/accounts/:id/members": true,
@@ -71,6 +71,7 @@
     "PATCH /api/accounts/:id": true,
     "PATCH /api/admin/achievements": true,
     "PATCH /api/admin/users": true,
+    "PATCH /api/budgets/:id": true,
     "PATCH /api/mcp/keys": true,
     "POST /api/accounts": true,
     "POST /api/accounts/:id/members": true,
