@@ -12,8 +12,11 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+import com.efina.app.domain.repository.AuthRepository
 
 data class TransactionsUiState(
+    /** Signed-in user, so another member's rows can be badged. */
+    val currentUserId: Long? = null,
     val loading: Boolean = true,
     val loadingMore: Boolean = false,
     val saving: Boolean = false,
@@ -30,8 +33,17 @@ data class TransactionsUiState(
 @HiltViewModel
 class TransactionsViewModel @Inject constructor(
     private val repository: TransactionRepository,
-    private val accountRepository: AccountRepository
+    private val accountRepository: AccountRepository,
+    private val authRepository: AuthRepository
 ) : ViewModel() {
+
+    init {
+        viewModelScope.launch {
+            authRepository.currentUserFlow().collect { u ->
+                _state.value = _state.value.copy(currentUserId = u?.id)
+            }
+        }
+    }
 
     /** accountId -> ISO currency, so rows can render in their account's currency. */
     private var currencyByAccount: Map<Long, String> = emptyMap()

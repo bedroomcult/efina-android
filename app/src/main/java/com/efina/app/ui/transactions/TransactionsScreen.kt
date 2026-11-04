@@ -139,7 +139,8 @@ fun TransactionsScreen(
                             // taps are "what was this?", and jumping into the form made
                             // looking cost an accidental edit.
                             onClick = { detail = tx },
-                            onLongClick = { pendingDelete = tx }
+                            onLongClick = { pendingDelete = tx },
+                            currentUserId = state.currentUserId
                         )
                     }
                     if (state.loadingMore) {
@@ -231,7 +232,8 @@ private fun TransactionRow(
     tx: Transaction,
     modifier: Modifier = Modifier,
     onClick: () -> Unit,
-    onLongClick: () -> Unit
+    onLongClick: () -> Unit,
+    currentUserId: Long? = null
 ) {
     // springClick rather than Surface(onClick): the latter keeps its interaction
     // source private, so the press scale and focus ring cannot hook in. Long-press
@@ -296,8 +298,19 @@ private fun TransactionRow(
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
+                    // A row recorded by another household member, so a shared budget's
+                    // spending is distinguishable from your own.
+                    val fromFamily = currentUserId != null && tx.userId != 0L &&
+                        tx.userId != currentUserId
                     val meta = tx.categoryName ?: tx.accountName
-                    if (meta != null) {
+                    if (fromFamily) {
+                        Text(
+                            " · Family",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.primary,
+                            fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold
+                        )
+                    } else if (meta != null) {
                         Text(
                             " · $meta",
                             style = MaterialTheme.typography.labelSmall,

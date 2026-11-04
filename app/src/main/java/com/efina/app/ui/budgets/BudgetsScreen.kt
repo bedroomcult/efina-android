@@ -136,6 +136,34 @@ fun BudgetsScreen(
         )
     }
 
+    // Tapping a budget opens this; Edit inside it opens the alert dialog below. Without this
+    // block the card's onOpen set state that nothing rendered, and onEdit became unreachable —
+    // an Android user could not change a budget's limit at all.
+    detail?.let { budget ->
+        BudgetDetailSheet(
+            budget = budget,
+            transactions = state.detailTransactions,
+            loading = state.detailLoading,
+            currentUserId = state.currentUserId,
+            onDismiss = {
+                detail = null
+                viewModel.clearDetail()
+            },
+            onEdit = {
+                detail = null
+                viewModel.clearDetail()
+                editing = budget
+                editAmount = budget.amount.toString()
+                editPeriod = budget.periodType
+            },
+            onDelete = {
+                detail = null
+                viewModel.clearDetail()
+                pendingDelete = budget
+            }
+        )
+    }
+
     editing?.let { b ->
         AlertDialog(
             onDismissRequest = { editing = null },
