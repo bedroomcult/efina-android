@@ -139,6 +139,55 @@ function checkColumnTypes(dtos) {
   }
 }
 
+// ── Check C: response fields that look like snake_case but match no column ──
+/**
+ * A response DTO field written in snake_case is claiming to mirror a backend column. If no
+ * column by that name exists, it is either a typo or a renamed wire field, and because the
+ * JSON parser ignores unknown keys the value silently stays at its default.
+ *
+ * This is how `familyId` slipped through: Check A skips any field with no matching column,
+ * so a *renamed* field is invisible to it. Only fields that are already snake_case are
+ * judged, so idiomatic Kotlin properties are not flagged.
+ */
+function checkSuspiciousResponseFields(dtos) {
+  // Joined and computed fields are legitimate wire keys with no column behind them. The
+  // backend declares them as SQL aliases (`... AS account_name`), so derive the allowlist
+  // from that source rather than hand-maintaining it — a hand-written list is how the
+  // original ai/context.js copy ended up missing its filter.
+  const aliases = new Set();
+  if (fs.existsSync(API_DIR)) {
+    const walkAlias = (dir) => {
+      for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
+        const full = path.join(dir, e.name);
+        if (e.isDirectory()) walkAlias(full);
+        else if (e.name.endsWith('.js')) {
+          const src = fs.readFileSync(full, 'utf8');
+          for (const m of src.matchAll(/\bAS\s+([a-z][a-z0-9_]*)/gi)) aliases.add(m[1]);
+          // Response object literals: `from_transaction: fromTransaction`. These are real
+          // wire keys with no column or SQL alias behind them.
+          for (const m of src.matchAll(/[{,]\s*([a-z][a-z0-9_]*)\s*:/g)) aliases.add(m[1]);
+        }
+      }
+    };
+    walkAlias(API_DIR);
+  }
+
+  for (const [dtoName, dto] of dtos) {
+    if (!/(Dto|Response)$/.test(dtoName)) continue;
+    if (/Request(Dto)?$/.test(dtoName)) continue;   // request bodies, not responses
+    for (const { field } of dto.fields) {
+      if (!/^[a-z][a-z0-9]*(_[a-z0-9]+)+$/.test(field)) continue;   // not snake_case
+      if (columnTypes.has(field)) continue;                          // real column
+      if (aliases.has(field)) continue;                              // SQL alias in a handler
+      problems.push(
+        `${dtoName}.${field}: snake_case field matches no schema column — ` +
+        `renamed or misspelled wire field (unknown JSON keys are ignored, so this ` +
+        `stays at its default silently)`
+      );
+    }
+  }
+}
+
 // ── Check B: request fields exist in the receiving handler ─────────────────
 /** Fields that are intentional client-side aliases and never sent literally. */
 const ALIASES = new Set([]);
@@ -240,6 +289,7 @@ if (process.argv.includes('--emit-schema')) {
 
 const dtos = readDtos();
 checkColumnTypes(dtos);
+checkSuspiciousResponseFields(dtos);
 checkRequestFields(dtos);
 
 console.log(`schema columns: ${columnTypes.size}`);
