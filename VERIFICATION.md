@@ -46,9 +46,13 @@ copied from the account each transaction was recorded on. Both family members th
 the same figure, and neither member's personal spending is counted toward a household limit.
 A personal budget counts only its owner's untagged rows.
 
-Sharing a budget also promotes its category — and that category's ancestors — into the family,
-because a budget naming a category the other member cannot see is unusable. This happens on
-create and on the share toggle, so budgets that predate the feature work too.
+Sharing a budget also promotes its category, that category's ancestors and its descendants
+into the family, because a budget naming a category the other member cannot see is unusable.
+This happens on create and on the share toggle, so budgets that predate the feature work too.
+
+Known limit: a subcategory the owner creates *after* sharing stays personal until it is
+promoted, so a parent budget counts it for the owner and not for the other member until then.
+Sharing is a point-in-time action rather than a standing rule over future rows.
 
 Server-side only: the Android client calls `PATCH budgets/{id}` and `POST transactions`; the
 family tagging of transactions is the backend's job and needs no client change.
