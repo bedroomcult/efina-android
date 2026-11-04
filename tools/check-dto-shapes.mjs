@@ -30,6 +30,7 @@ const MIGRATIONS = path.join(WEB_ROOT, 'migrations');
 const API_DIR = path.join(WEB_ROOT, 'functions', 'api');
 const DTO_DIR = path.join(ANDROID_ROOT, 'app/src/main/java/com/efina/app/data/remote/dto');
 const SCHEMA_SNAPSHOT = path.join(ANDROID_ROOT, 'tools', 'backend-schema.json');
+const ALIAS_SNAPSHOT = path.join(ANDROID_ROOT, 'tools', 'backend-aliases.json');
 
 const strict = process.argv.includes('--strict');
 const problems = [];
@@ -172,6 +173,12 @@ function checkSuspiciousResponseFields(dtos) {
     walkAlias(API_DIR);
   }
 
+  // CI has no backend checkout, so fall back to the committed alias snapshot. Without it
+  // every legitimate alias is reported and the check is useless in CI.
+  if (!aliases.size && fs.existsSync(ALIAS_SNAPSHOT)) {
+    for (const a of JSON.parse(fs.readFileSync(ALIAS_SNAPSHOT, 'utf8')).aliases) aliases.add(a);
+  }
+
   for (const [dtoName, dto] of dtos) {
     if (!/(Dto|Response)$/.test(dtoName)) continue;
     if (/Request(Dto)?$/.test(dtoName)) continue;   // request bodies, not responses
@@ -272,6 +279,31 @@ if (process.argv.includes('--selftest')) {
   }
   console.log(bad === 0 ? `selftest OK: ${cases.length} cases` : `selftest FAILED: ${bad}`);
   process.exit(bad === 0 ? 0 : 1);
+}
+
+if (process.argv.includes('--emit-aliases')) {
+  const aliases = new Set();
+  if (fs.existsSync(API_DIR)) {
+    const walkA = (dir) => {
+      for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
+        const full = path.join(dir, e.name);
+        if (e.isDirectory()) walkA(full);
+        else if (e.name.endsWith('.js')) {
+          const src = fs.readFileSync(full, 'utf8');
+          for (const m of src.matchAll(/\bAS\s+([a-z][a-z0-9_]*)/gi)) aliases.add(m[1]);
+          for (const m of src.matchAll(/[{,]\s*([a-z][a-z0-9_]*)\s*:/g)) aliases.add(m[1]);
+        }
+      }
+    };
+    walkA(API_DIR);
+  }
+  fs.writeFileSync(ALIAS_SNAPSHOT, JSON.stringify({
+    generatedFrom: 'bedroomcult/efina functions/api',
+    note: 'Regenerate with: node tools/check-dto-shapes.mjs --emit-aliases',
+    aliases: [...aliases].sort(),
+  }, null, 2) + '\n');
+  console.log(`wrote ${aliases.size} aliases`);
+  process.exit(0);
 }
 
 if (process.argv.includes('--emit-schema')) {
