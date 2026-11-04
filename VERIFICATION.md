@@ -39,13 +39,30 @@ Six runtime-defeating defects had shipped behind that blind spot.
 sent and goal creation still returned 400 even after it had been given a default value.
 A checker that agrees with itself proves nothing; a test that fails does.
 
+## Budget sharing (shared with the web app)
+
+A shared budget's `spent` is pooled from transactions stamped with that `family_id`, which is
+copied from the account each transaction was recorded on. Both family members therefore see
+the same figure, and neither member's personal spending is counted toward a household limit.
+A personal budget counts only its owner's untagged rows.
+
+Sharing a budget also promotes its category — and that category's ancestors — into the family,
+because a budget naming a category the other member cannot see is unusable. This happens on
+create and on the share toggle, so budgets that predate the feature work too.
+
+Server-side only: the Android client calls `PATCH budgets/{id}` and `POST transactions`; the
+family tagging of transactions is the backend's job and needs no client change.
+
 ## Known limits
 
 - `MotionScheme` / `MaterialExpressiveTheme` are `internal` in material3 1.4.0, so expressive
   motion is hand-implemented. The compiler rejected both; the error is in `DESIGN-PARITY.md`.
 - The app has never run on a device or emulator. Verification is static analysis, JVM unit
   tests and a compiling CI-green build — not runtime evidence.
-- Release artifacts are unsigned: no keystore secrets are configured.
+- Release artifacts ARE signed. The four `ANDROID_*` keystore secrets are configured and
+  `release.yml` verifies the APK with `apksigner` before publishing. This line previously said
+  the opposite, from before signing was wired; v1.0.1 through v1.0.3 did ship unsigned and
+  could not be installed, which is why signing was added.
 - `achievements` and `notifications` return 500 for every caller because their handlers SELECT
   columns absent from the schema. That is a defect in the separate web repository; the client
   renders those panels empty rather than crashing.
