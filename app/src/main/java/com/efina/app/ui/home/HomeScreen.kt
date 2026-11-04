@@ -382,13 +382,13 @@ private fun RecentRow(tx: Transaction, currency: String, onClick: () -> Unit) {
             // the same way.
             val money = LocalMoneyPalette.current
             val (tint, container, glyph) = when (tx.type) {
-                TransactionType.INCOME.value ->
+                TransactionType.INCOME ->
                     Triple(money.income, money.onIncome, Icons.Filled.ArrowDownward)
-                TransactionType.EXPENSE.value ->
+                TransactionType.EXPENSE ->
                     Triple(money.expense, money.onExpense, Icons.Filled.ArrowUpward)
-                TransactionType.TRANSFER.value ->
+                TransactionType.TRANSFER ->
                     Triple(money.transfer, money.onTransfer, Icons.Filled.SwapHoriz)
-                TransactionType.ADJUSTMENT.value -> Triple(
+                TransactionType.ADJUSTMENT -> Triple(
                     MaterialTheme.colorScheme.onSurfaceVariant,
                     MaterialTheme.colorScheme.surfaceContainerHighest,
                     Icons.Filled.Tune
