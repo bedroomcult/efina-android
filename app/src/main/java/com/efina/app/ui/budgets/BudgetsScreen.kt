@@ -7,7 +7,7 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Share
+import androidx.compose.material.icons.filled.Groups
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -48,6 +48,7 @@ fun BudgetsScreen(
     var creating by remember { mutableStateOf(false) }
     var pendingDelete by remember { mutableStateOf<Budget?>(null) }
     var editing by remember { mutableStateOf<Budget?>(null) }
+    var detail by remember { mutableStateOf<Budget?>(null) }
     var editAmount by remember { mutableStateOf("") }
     var editPeriod by remember { mutableStateOf(com.efina.app.domain.model.PeriodType.MONTHLY) }
 
@@ -107,6 +108,10 @@ fun BudgetsScreen(
                         modifier = revealModifier(index),
                         onDelete = { pendingDelete = budget },
                         onToggleSharing = { viewModel.toggleSharing(budget) },
+                        onOpen = {
+                            detail = budget
+                            viewModel.loadDetail(budget)
+                        },
                         onEdit = {
                             editing = budget
                             editAmount = budget.amount.toString()
@@ -251,7 +256,8 @@ private fun BudgetCard(
     modifier: Modifier = Modifier,
     onDelete: () -> Unit,
     onEdit: () -> Unit,
-    onToggleSharing: () -> Unit
+    onToggleSharing: () -> Unit,
+    onOpen: () -> Unit
 ) {
     val pct = budget.percentage / 100f
     val barColor = when {
@@ -262,7 +268,7 @@ private fun BudgetCard(
 
     Surface(
         modifier = modifier.fillMaxWidth()
-            .springClick(EfinaCorners.menu, onClick = onEdit),
+            .springClick(EfinaCorners.menu, onClick = onOpen),
         shape = EfinaCorners.menu,
         color = MaterialTheme.colorScheme.surfaceContainerLow,
     ) {
@@ -295,7 +301,7 @@ private fun BudgetCard(
                 }
                 IconButton(onClick = onToggleSharing) {
                     Icon(
-                        Icons.Default.Share,
+                        Icons.Default.Groups,
                         contentDescription = if (budget.isShared) {
                             "Stop sharing this budget"
                         } else {

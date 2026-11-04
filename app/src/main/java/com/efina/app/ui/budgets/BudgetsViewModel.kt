@@ -12,12 +12,22 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+import com.efina.app.domain.repository.TransactionRepository
+import com.efina.app.domain.model.TransactionType
+import com.efina.app.domain.model.TransactionFilter
+import com.efina.app.domain.model.Transaction
+import com.efina.app.domain.repository.AuthRepository
 
 data class BudgetsUiState(
     val loading: Boolean = true,
     val saving: Boolean = false,
     val budgets: List<Budget> = emptyList(),
     val categories: List<Category> = emptyList(),
+    /** Transactions for the budget currently open in the detail sheet. */
+    val detailTransactions: List<Transaction> = emptyList(),
+    val detailLoading: Boolean = false,
+    /** Signed-in user, so a row recorded by another member can be badged. */
+    val currentUserId: Long? = null,
     val error: String? = null
 ) {
     val totalBudget: Double get() = budgets.sumOf { it.amount }
@@ -29,13 +39,22 @@ data class BudgetsUiState(
 class BudgetsViewModel @Inject constructor(
     private val repository: BudgetRepository,
     private val categoryRepository: CategoryRepository,
-    private val familyRepository: FamilyRepository
+    private val familyRepository: FamilyRepository,
+    private val transactionRepository: TransactionRepository,
+    private val authRepository: AuthRepository
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(BudgetsUiState())
     val state: StateFlow<BudgetsUiState> = _state.asStateFlow()
 
-    init { load() }
+    init {
+        viewModelScope.launch {
+            authRepository.currentUserFlow().collect { user ->
+                _state.value = _state.value.copy(currentUserId = user?.id)
+            }
+        }
+        load()
+    }
 
     fun load() {
         _state.value = _state.value.copy(loading = true, error = null)
@@ -110,6 +129,39 @@ class BudgetsViewModel @Inject constructor(
                     _state.value = _state.value.copy(saving = false, error = it.message)
                 }
         }
+    }
+
+    /**
+     * Loads the transactions that make up a budget's spend.
+     *
+     * Filtered by the budget's category (including subcategories) over its period, exactly
+     * like the total on the card, so the list and the figure agree. Rows recorded by another
+     * household member on a shared account come back too — they are part of the pooled total.
+     */
+    fun loadDetail(budget: Budget) {
+        _state.value = _state.value.copy(detailLoading = true, detailTransactions = emptyList())
+        viewModelScope.launch {
+            transactionRepository.getTransactions(
+                TransactionFilter(
+                    limit = 100,
+                    categoryId = budget.categoryId,
+                    includeSubcategories = true,
+                    startDate = budget.periodStart,
+                    type = TransactionType.EXPENSE
+                )
+            ).onSuccess {
+                _state.value = _state.value.copy(
+                    detailLoading = false,
+                    detailTransactions = it.transactions
+                )
+            }.onFailure {
+                _state.value = _state.value.copy(detailLoading = false, error = it.message)
+            }
+        }
+    }
+
+    fun clearDetail() {
+        _state.value = _state.value.copy(detailTransactions = emptyList(), detailLoading = false)
     }
 
     fun delete(id: Long) {
