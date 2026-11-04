@@ -38,9 +38,17 @@ class TransactionsViewModel @Inject constructor(
 ) : ViewModel() {
 
     init {
+        // Collect the current user so shared-budget rows can be badged. Wrapped
+        // in try/catch: a null delegate during flow collection (for example
+        // EncryptedSharedPreferences failing on MIUI) must not kill the app
+        // during ViewModel construction.
         viewModelScope.launch {
-            authRepository.currentUserFlow().collect { u ->
-                _state.value = _state.value.copy(currentUserId = u?.id)
+            try {
+                authRepository.currentUserFlow().collect { u ->
+                    _state.value = _state.value.copy(currentUserId = u?.id)
+                }
+            } catch (e: Exception) {
+                // currentUserId stays null; family badges simply won't show
             }
         }
     }

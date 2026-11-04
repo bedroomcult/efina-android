@@ -414,8 +414,6 @@ private fun SegmentedButtonRow(
     // The web app fills these three buttons with emerald/red/blue and white text
     // (TransactionModal.jsx). Match that: the selected chip carries the money colour
     // for its type, so income and expense are distinguishable at a glance.
-    // A local `fun` cannot call @Composable functions, so the adjustment colour is
-    // read once here and the sealed expression stays composable-free.
     val adjustmentColor = MaterialTheme.colorScheme.surfaceContainerHighest
     fun accentFor(type: TransactionType) = when (type) {
         TransactionType.INCOME -> if (isDark) MoneyColors.incomeDark else MoneyColors.incomeLight
@@ -425,7 +423,7 @@ private fun SegmentedButtonRow(
         TransactionType.ADJUSTMENT -> adjustmentColor
     }
 
-    SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
+    Row(Modifier.fillMaxWidth()) {
         options.forEachIndexed { index, (type, label) ->
             val accent = accentFor(type)
             val isSelected = selected == type

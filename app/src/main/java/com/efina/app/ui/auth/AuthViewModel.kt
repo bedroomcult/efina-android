@@ -42,9 +42,19 @@ class AuthViewModel @Inject constructor(
         // Collector first: restore() fires a network call, and a 401 arriving
         // before anyone is listening would be dropped (SharedFlow with replay=0
         // and no subscriber). Order here is load-bearing.
-        observeUnauthorized()
-        observeCsrfExpiry()
-        restore()
+        // Wrapped in try/catch: a null delegate during flow collection (for
+        // example EncryptedSharedPreferences failing on MIUI) must not kill
+        // the app during ViewModel construction.
+        try {
+            observeUnauthorized()
+            observeCsrfExpiry()
+            restore()
+        } catch (e: Exception) {
+            _state.value = AuthUiState(
+                checked = true,
+                error = "Failed to restore session. Please sign in again."
+            )
+        }
     }
 
     /**
@@ -58,22 +68,30 @@ class AuthViewModel @Inject constructor(
      */
     private fun observeCsrfExpiry() {
         viewModelScope.launch {
-            SessionEvents.csrfExpired.collect {
-                if (_state.value.isLoggedIn) repository.refreshCsrfToken()
+            try {
+                SessionEvents.csrfExpired.collect {
+                    if (_state.value.isLoggedIn) repository.refreshCsrfToken()
+                }
+            } catch (e: Exception) {
+                // CSRF refresh collection failed; writes will 403 and be retried
             }
         }
     }
 
     private fun observeUnauthorized() {
         viewModelScope.launch {
-            SessionEvents.unauthorized.collect {
-                if (_state.value.isLoggedIn) {
-                    repository.logout()
-                    _state.value = AuthUiState(
-                        checked = true,
-                        error = "Session expired, please sign in again."
-                    )
+            try {
+                SessionEvents.unauthorized.collect {
+                    if (_state.value.isLoggedIn) {
+                        repository.logout()
+                        _state.value = AuthUiState(
+                            checked = true,
+                            error = "Session expired, please sign in again."
+                        )
+                    }
                 }
+            } catch (e: Exception) {
+                // Unauthorized collection failed; session state is unchanged
             }
         }
     }
@@ -85,7 +103,14 @@ class AuthViewModel @Inject constructor(
      * needed for its blank-screen complaint.
      */
     private fun restore() {
-        if (!repository.isLoggedIn()) {
+        val loggedIn = try {
+            repository.isLoggedIn()
+        } catch (e: Exception) {
+            // EncryptedSharedPreferences may fail on some devices; treat as
+            // not logged in so the user can sign in fresh.
+            false
+        }
+        if (!loggedIn) {
             _state.value = AuthUiState(checked = true)
             return
         }
