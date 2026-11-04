@@ -83,9 +83,9 @@ class HomeViewModel @Inject constructor(
             val health = healthJob.await().getOrNull()
 
             val transactions = txPage?.transactions ?: emptyList()
-            val income = transactions.filter { it.type == TransactionType.INCOME }
+            val income = transactions.filter { it.type == TransactionType.INCOME.value }
                 .sumOf { it.amount }
-            val expense = transactions.filter { it.type == TransactionType.EXPENSE }
+            val expense = transactions.filter { it.type == TransactionType.EXPENSE.value }
                 .sumOf { it.amount }
 
             // Surface a total failure: previously every panel used

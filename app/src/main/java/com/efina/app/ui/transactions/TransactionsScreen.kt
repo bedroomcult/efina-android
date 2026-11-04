@@ -254,18 +254,19 @@ private fun TransactionRow(
             // distinguishable by reading the sign on the amount at the far right.
             val money = LocalMoneyPalette.current
             val (tint, container, glyph) = when (tx.type) {
-                TransactionType.INCOME ->
+                TransactionType.INCOME.value ->
                     Triple(money.income, money.onIncome, Icons.Filled.ArrowDownward)
-                TransactionType.EXPENSE ->
+                TransactionType.EXPENSE.value ->
                     Triple(money.expense, money.onExpense, Icons.Filled.ArrowUpward)
-                TransactionType.TRANSFER ->
+                TransactionType.TRANSFER.value ->
                     Triple(money.transfer, money.onTransfer, Icons.Filled.SwapHoriz)
-                TransactionType.ADJUSTMENT ->
+                TransactionType.ADJUSTMENT.value ->
                     Triple(
                         MaterialTheme.colorScheme.onSurfaceVariant,
                         MaterialTheme.colorScheme.surfaceContainerHighest,
                         Icons.Filled.Tune
                     )
+                else -> throw IllegalStateException("Unknown transaction type: ${tx.type}")
             }
             Box(
                 Modifier
@@ -277,10 +278,11 @@ private fun TransactionRow(
                 Icon(
                     imageVector = glyph,
                     contentDescription = when (tx.type) {
-                        TransactionType.INCOME -> "Income"
-                        TransactionType.EXPENSE -> "Expense"
-                        TransactionType.TRANSFER -> "Transfer"
-                        TransactionType.ADJUSTMENT -> "Adjustment"
+                        TransactionType.INCOME.value -> "Income"
+                        TransactionType.EXPENSE.value -> "Expense"
+                        TransactionType.TRANSFER.value -> "Transfer"
+                        TransactionType.ADJUSTMENT.value -> "Adjustment"
+                        else -> throw IllegalStateException("Unknown transaction type: ${tx.type}")
                     },
                     tint = tint,
                     modifier = Modifier.size(18.dp)
