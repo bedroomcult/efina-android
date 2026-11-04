@@ -316,6 +316,8 @@ data class BudgetDto(
     val amount: Double,
     val period_type: String,
     val period_start: String? = null,
+    /** Computed by the list endpoint, not a column. */
+    val period_end: String? = null,
     val created_at: String? = null,
     val updated_at: String? = null,
     // Joined by the list query

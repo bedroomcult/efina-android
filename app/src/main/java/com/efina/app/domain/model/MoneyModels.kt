@@ -154,7 +154,9 @@ data class TransactionFilter(
     val startDate: String? = null,
     val endDate: String? = null,
     val search: String? = null,
-    val includeSubcategories: Boolean = false
+    val includeSubcategories: Boolean = false,
+    /** Restrict to family-tagged rows, matching a shared budget's figure. */
+    val familyOnly: Boolean = false
 )
 
 // ─────────────────────────── Categories ───────────────────────────
@@ -216,6 +218,8 @@ data class Budget(
     val spent: Double,
     val periodType: PeriodType,
     val periodStart: String? = null,
+    /** End of the current period, so a detail list matches the card's figure exactly. */
+    val periodEnd: String? = null,
     /** Which family this budget is shared with; null when personal. */
     val familyId: Long? = null,
     /** True when shared. A shared budget's spend is pooled across the family's accounts. */

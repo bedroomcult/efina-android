@@ -147,6 +147,9 @@ class BudgetsViewModel @Inject constructor(
                     categoryId = budget.categoryId,
                     includeSubcategories = true,
                     startDate = budget.periodStart,
+                    endDate = budget.periodEnd,
+                    // Match the figure exactly: a shared budget counts family-tagged rows only.
+                    familyOnly = budget.isShared,
                     type = TransactionType.EXPENSE
                 )
             ).onSuccess {

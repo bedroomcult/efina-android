@@ -73,6 +73,7 @@ fun BudgetDto.toDomain(): Budget = Budget(
     spent = spent,
     periodType = PeriodType.from(period_type),
     periodStart = period_start,
+    periodEnd = period_end,
     familyId = family_id,
     isShared = is_shared == 1
 )

@@ -190,7 +190,8 @@ class TransactionRepositoryImpl @Inject constructor(
             startDate = filter.startDate,
             endDate = filter.endDate,
             search = filter.search?.takeIf { it.isNotBlank() },
-            includeSubcategories = filter.includeSubcategories
+            includeSubcategories = filter.includeSubcategories,
+            familyOnly = filter.familyOnly.takeIf { it }
         ) }.map { page ->
             TransactionPage(
                 transactions = page.transactions.map { it.toDomain() },

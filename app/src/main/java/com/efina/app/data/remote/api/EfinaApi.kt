@@ -96,6 +96,7 @@ interface EfinaApi {
         @Query("start_date") startDate: String? = null,
         @Query("end_date") endDate: String? = null,
         @Query("search") search: String? = null,
+        @Query("family_only") familyOnly: Boolean? = null,
         @Query("include_subcategories") includeSubcategories: Boolean? = null
     ): Response<TransactionsPageDto>
 
