@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.efina.app.domain.model.*
 import com.efina.app.domain.repository.BudgetRepository
 import com.efina.app.domain.repository.CategoryRepository
+import com.efina.app.domain.repository.FamilyRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
