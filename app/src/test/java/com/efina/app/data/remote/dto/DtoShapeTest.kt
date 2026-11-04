@@ -147,12 +147,23 @@ class DtoShapeTest {
         assertTrue("expected family_id in $share", share.contains("\"family_id\""))
         assertTrue(share.contains("7"))
 
+        // The app's Json sets explicitNulls = false, so a null is omitted from the body
+        // rather than sent as null. The handler treats a missing family_id as unshare
+        // (`familyId === null || familyId === undefined`), so omitting it is correct — this
+        // test pins that contract so a future change to explicitNulls or to the handler is
+        // caught rather than silently leaving budgets shared.
         val unshare = json.encodeToString(
             UpdateBudgetSharingRequestDto.serializer(),
             UpdateBudgetSharingRequestDto(null)
         )
-        assertTrue("unshare must still carry the key: $unshare", unshare.contains("\"family_id\""))
-        assertTrue("unshare must be null: $unshare", unshare.contains("null"))
+        assertTrue(
+            "unshare must not carry a family id: $unshare",
+            !unshare.contains("\"family_id\":7")
+        )
+        assertTrue(
+            "with explicitNulls=false the key is omitted: $unshare",
+            !unshare.contains("\"family_id\"")
+        )
     }
 
     @Test

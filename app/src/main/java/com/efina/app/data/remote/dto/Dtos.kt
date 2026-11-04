@@ -333,7 +333,14 @@ data class BudgetDto(
     val is_shared: Int = 0
 )
 
-/** `PATCH budgets/{id}` — toggle sharing. Null family_id makes the budget personal. */
+/**
+ * `PATCH budgets/{id}` — toggle sharing.
+ *
+ * An absent or null `family_id` makes the budget personal again. The client JSON is
+ * configured with explicitNulls = false, so a null is omitted from the body entirely; the
+ * handler tests `familyId === null || familyId === undefined`, which is why both forms
+ * unshare. Documented because "unshare sends nothing" is surprising on the wire.
+ */
 @Serializable
 data class UpdateBudgetSharingRequestDto(
     val family_id: Long? = null
