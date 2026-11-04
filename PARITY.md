@@ -26,7 +26,7 @@ Generated for the rebuild described in API_CONTRACT.md. Static checks:
 | Transaction create/edit/delete | `TransactionFormScreen` | `POST`, `PUT`, `DELETE transactions/{id}` | |
 | Transfers | `TransactionFormScreen` | `POST transfers` | routed to the transfer endpoint, not `type=transfer` |
 | Categories | `CategoriesScreen` | `GET/POST/PUT/DELETE categories` | create, list, rename (tap a row), delete; type chosen per category |
-| Budgets | `BudgetsScreen` | `GET/POST/PUT/DELETE budgets` | progress, over-limit warning, create dialog, edit limit/period by tapping a card |
+| Budgets | `BudgetsScreen` | `GET/POST/PUT/DELETE budgets`, `PATCH budgets/{id}` | progress, over-limit warning, create dialog, edit limit/period by tapping a card; share with family via the card action. A shared budget's `spent` is pooled from family-tagged (shared-account) transactions only, so both members see the same figure; a personal budget counts only the owner's untagged rows |
 | Goals | `GoalsScreen` | `GET/POST/PUT/DELETE goals`, `POST goals/{id}/add-funds` | fund-from-account, edit name/target by tapping a card |
 | Statistics | `StatsScreen` | `GET transactions` + `forecast` + `health-score` + `achievements` + `leaderboard` | derived client-side |
 | Settings | `SettingsScreen` | `GET/PUT settings`, `POST user/change-password` | currency, language, theme, password, sign out |

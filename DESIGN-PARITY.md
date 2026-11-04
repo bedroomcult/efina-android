@@ -89,7 +89,7 @@ building, not assumed — see `PARITY.md` §"Material 3 Expressive".
 | `MotionScheme.expressive()` | **no — API is internal.** Approximated with spring specs (damping 0.72, medium-low stiffness for spatial; no-bounce low stiffness for effects) | `EfinaMotion` in `Motion.kt` |
 | "Disable Animations" → instant scheme | yes, `EfinaMotion.enabled` swaps every spec for a zero-duration tween. `snap()` was not used because it does not satisfy the `FiniteAnimationSpec` return type | `Motion.kt:37-39` |
 | "Calm" setting stopping ambient loops | no — no ambient loops exist | — |
-| `springClick`: 0.94 press scale | **not implemented** — every tappable row is `Surface(onClick)`, which keeps its InteractionSource private, so no press stream is observable. The helper was dead code and has been removed | — |
+| `springClick`: 0.94 press scale | **implemented** on 9 call sites (account card, transaction row, category rows, budget and goal cards, home stat cards). Rows moved from `Surface(onClick)` to a plain `Surface` plus the modifier, because the former keeps its InteractionSource private. Press 0.94, focus lift 1.04, 3dp focus ring, SELECTION haptic | `ui/theme/Interaction.kt` |
 | `reveal(index)`: 28dp rise + fade, 45 ms stagger, first 9 items | yes, all four numbers | `revealModifier` |
 | Shared-element icon transition | **no** — `SharedTransitionLayout` is newer than the pinned Compose | — |
 | Tab change: fade-through, 0.98 scale-in, scroll state per tab | partly — nav preserves state via `saveState`/`restoreState`; no scale-in | `EfinaAppRoot.kt` |
@@ -118,7 +118,7 @@ per content item, rationed emphasis, staggered entrances) are.
 | §2 color | 7 / 8 | custom palette maker, install-state colours (no finance analogue) | — |
 | §3 typography | 5 / 8 | custom fonts, the other 10 families; eyebrow style unused | — |
 | §4 shape | 6 / 10 | selected-row morph, top-only corners, media corners unused | `MaterialShapes`, `Morph` (internal) |
-| §5 motion | 3 / 15 | dock, mascot, haptics, wave indicators, springClick | `MotionScheme` (internal), `SharedTransitionLayout` (unavailable) |
+| §5 motion | 5 / 15 | dock, mascot, wave indicators, swipe actions, ambient loops, themed pull-to-refresh, animated splash | `MotionScheme` (internal), `SharedTransitionLayout` (unavailable) |
 
 Corrected after an independent audit found 9 of 30 claim rows false. The earlier
 counters overstated §1 (8 rows, not 9), §4 and §5.
