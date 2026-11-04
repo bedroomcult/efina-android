@@ -34,7 +34,7 @@ import com.efina.app.domain.model.Transaction
 import com.efina.app.ui.components.EmptyState
 import com.efina.app.ui.components.LoadingList
 import com.efina.app.ui.components.formatMoney
-import com.efina.app.ui.components.springClick
+import com.efina.app.ui.theme.springClick
 import com.efina.app.ui.theme.EfinaCorners
 import com.efina.app.ui.theme.EfinaType
 
