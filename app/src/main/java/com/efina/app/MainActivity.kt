@@ -8,13 +8,22 @@ import androidx.activity.enableEdgeToEdge
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import com.efina.app.ui.EfinaAppRoot
 import com.efina.app.ui.routeForUri
+import com.efina.app.util.UpdateChecker
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
+
+    @Inject
+    lateinit var updateChecker: UpdateChecker
+
+    private val _updateAvailable = MutableStateFlow<UpdateChecker.UpdateInfo?>(null)
+    val updateAvailable: StateFlow<UpdateChecker.UpdateInfo?> = _updateAvailable.asStateFlow()
 
     /**
      * The route an inbound link should land on.
@@ -37,11 +46,19 @@ class MainActivity : ComponentActivity() {
         // the correct style once the theme is known (see SyncSystemBars there).
         enableEdgeToEdge()
 
+        // Check for updates on startup if notifications are enabled
+        lifecycleScope.launch {
+            _updateAvailable.value = updateChecker.checkForUpdatesIfEnabled(BuildConfig.VERSION_NAME)
+        }
+
         // EfinaAppRoot owns the theme, because the palette is driven by the
         // server-side settings row (GET /settings). Nothing here may read
         // MaterialTheme.colorScheme: there is no theme above this point.
         setContent {
-            EfinaAppRoot(deepLinkRoute = pendingRoute.asStateFlow())
+            EfinaAppRoot(
+                deepLinkRoute = pendingRoute.asStateFlow(),
+                updateAvailable = updateAvailable
+            )
         }
     }
 

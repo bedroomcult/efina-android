@@ -31,6 +31,7 @@ import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Switch
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.foundation.clickable
@@ -157,6 +158,29 @@ fun SettingsScreen(
                     selected = settings.theme,
                     onSelect = { viewModel.update(UpdateSettingsRequest(theme = it)) }
                 )
+
+                Text("Updates", style = MaterialTheme.typography.labelLarge)
+                Row(
+                    Modifier.fillMaxWidth().padding(vertical = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(Modifier.weight(1f)) {
+                        Text(
+                            "Notify new updates",
+                            style = MaterialTheme.typography.titleSmall,
+                        )
+                        Text(
+                            "Check GitHub for new versions on startup",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            maxLines = 2,
+                        )
+                    }
+                    Switch(
+                        checked = state.updateNotifications,
+                        onCheckedChange = { viewModel.setUpdateNotifications(it) }
+                    )
+                }
 
                 HorizontalDivider()
 

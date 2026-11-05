@@ -21,7 +21,8 @@ data class SettingsUiState(
     val settings: UserSettings? = null,
     val user: User? = null,
     val error: String? = null,
-    val savedMessage: String? = null
+    val savedMessage: String? = null,
+    val updateNotifications: Boolean = false
 )
 
 @HiltViewModel
@@ -47,12 +48,18 @@ class SettingsViewModel @Inject constructor(
         _state.value = _state.value.copy(loading = true, error = null)
         viewModelScope.launch {
             val userResult = authRepository.refreshCurrentUser().getOrNull()
+            val notifications = preferences.updateNotifications.first()
             settingsRepository.getSettings()
                 .onSuccess {
                     // Push the saved preference into the theme so a restart shows
                     // the user's choice rather than the default.
                     ThemePreference.apply(it.theme)
-                    _state.value = _state.value.copy(loading = false, settings = it, user = userResult)
+                    _state.value = _state.value.copy(
+                        loading = false,
+                        settings = it,
+                        user = userResult,
+                        updateNotifications = notifications
+                    )
                 }
                 .onFailure {
                     _state.value = _state.value.copy(loading = false, user = userResult, error = it.message)
@@ -92,5 +99,12 @@ class SettingsViewModel @Inject constructor(
 
     fun clearMessages() {
         _state.value = _state.value.copy(error = null, savedMessage = null)
+    }
+
+    fun setUpdateNotifications(enabled: Boolean) {
+        _state.value = _state.value.copy(updateNotifications = enabled)
+        viewModelScope.launch {
+            preferences.setUpdateNotifications(enabled)
+        }
     }
 }

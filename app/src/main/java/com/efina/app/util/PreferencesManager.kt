@@ -59,11 +59,16 @@ class PreferencesManager @Inject constructor(
         dataStore.edit { prefs -> prefs[KEY_BIOMETRIC_ENABLED] = enabled }
     }
     
+    suspend fun setUpdateNotifications(enabled: Boolean) {
+        dataStore.edit { prefs -> prefs[KEY_UPDATE_NOTIFICATIONS] = enabled }
+    }
+    
     companion object {
         private val KEY_THEME = stringPreferencesKey(Constants.PREFS_THEME)
         private val KEY_CURRENCY = stringPreferencesKey(Constants.PREFS_CURRENCY)
         private val KEY_LANGUAGE = stringPreferencesKey(Constants.PREFS_LANGUAGE)
         private val KEY_ONBOARDING_COMPLETE = booleanPreferencesKey(Constants.PREFS_ONBOARDING_COMPLETE)
         private val KEY_BIOMETRIC_ENABLED = booleanPreferencesKey(Constants.PREFS_BIOMETRIC_ENABLED)
+        private val KEY_UPDATE_NOTIFICATIONS = booleanPreferencesKey(Constants.PREFS_UPDATE_NOTIFICATIONS)
     }
 }

@@ -14,6 +14,7 @@ object Constants {
     const val PREFS_LANGUAGE = "language"
     const val PREFS_ONBOARDING_COMPLETE = "onboarding_complete"
     const val PREFS_BIOMETRIC_ENABLED = "biometric_enabled"
+    const val PREFS_UPDATE_NOTIFICATIONS = "update_notifications"
     
     // Default Values
     const val DEFAULT_CURRENCY = "IDR"

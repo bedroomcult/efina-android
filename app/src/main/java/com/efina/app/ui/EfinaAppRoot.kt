@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -43,6 +44,7 @@ import com.efina.app.ui.theme.EfinaTheme
 import com.efina.app.ui.theme.ThemePreference
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Row
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.efina.app.ui.components.DockItem
 import com.efina.app.ui.components.EfinaSideRail
@@ -51,6 +53,7 @@ import com.efina.app.ui.components.WIDE_LAYOUT_BREAKPOINT_DP
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
 import com.efina.app.ui.theme.SyncSystemBars
+import com.efina.app.util.UpdateChecker
 
 /**
  * Navigation graph.
@@ -124,9 +127,12 @@ fun EfinaAppRoot(
     navController: NavHostController = rememberNavController(),
     authViewModel: AuthViewModel = hiltViewModel(),
     /** Route resolved from the launch Intent or a later onNewIntent. */
-    deepLinkRoute: StateFlow<String?> = MutableStateFlow(null)
+    deepLinkRoute: StateFlow<String?> = MutableStateFlow(null),
+    /** Update available from the startup GitHub check, if any. */
+    updateAvailable: StateFlow<UpdateChecker.UpdateInfo?> = MutableStateFlow(null)
 ) {
     val authState by authViewModel.state.collectAsState()
+    val update by updateAvailable.collectAsState()
 
     // Wait for the stored session to be read before deciding the start screen,
     // otherwise a logged-in user sees a flash of the login form.
@@ -358,4 +364,41 @@ fun EfinaAppRoot(
             }
         }
     }
+
+    update?.let { info ->
+        UpdateDialog(
+            version = info.version,
+            url = info.url,
+            onDismiss = { }
+        )
+    }
 }
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun UpdateDialog(
+    version: String,
+    url: String,
+    onDismiss: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Update available") },
+        text = { Text("Version $version is available. Update now?") },
+        confirmButton = {
+            TextButton(
+                onClick = {
+                    onDismiss()
+                    val intent = Intent(Intent.ACTION_VIEW).apply {
+                        data = Uri.parse(url)
+                    }
+                    LocalContext.current.startActivity(intent)
+                }
+            ) { Text("Update") }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text("Later") }
+        }
+    )
+}
+
