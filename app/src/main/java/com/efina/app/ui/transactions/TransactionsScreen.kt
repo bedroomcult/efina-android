@@ -15,6 +15,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.efina.app.R
 import com.efina.app.domain.model.Transaction
 import com.efina.app.domain.model.TransactionType
 import com.efina.app.ui.components.*
@@ -32,7 +33,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.filled.ArrowDownward
 import androidx.compose.material.icons.filled.ArrowUpward
-import androidx.compose.material.icons.filled.People
 import androidx.compose.material.icons.filled.SwapHoriz
 import androidx.compose.material.icons.filled.Tune
 
@@ -323,7 +323,7 @@ private fun TransactionRow(
                                 modifier = Modifier.padding(horizontal = 4.dp)
                             ) {
                                 Icon(
-                                    imageVector = People,
+                                    imageVector = Icons.Filled.People,
                                     contentDescription = null,
                                     tint = MaterialTheme.colorScheme.primary,
                                     modifier = Modifier.size(10.dp)

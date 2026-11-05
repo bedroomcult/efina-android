@@ -32,6 +32,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.efina.app.R
 import com.efina.app.domain.model.Transaction
 import com.efina.app.domain.model.TransactionType
 import com.efina.app.ui.components.formatMoney
