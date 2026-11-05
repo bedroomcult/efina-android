@@ -25,7 +25,8 @@ class CategoriesViewModel @Inject constructor(
     private val repository: CategoryRepository
 ) : ViewModel() {
 
-    private val _state = MutableStateFlow(CategoriesUiState())
+    private val _state = runCatching { MutableStateFlow(CategoriesUiState()) }
+        .getOrDefault { MutableStateFlow(CategoriesUiState()) }
     val state: StateFlow<CategoriesUiState> = _state.asStateFlow()
 
     init { try { load() } catch (e: Exception) {

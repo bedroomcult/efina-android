@@ -39,7 +39,8 @@ class HomeViewModel @Inject constructor(
     private val insightsRepository: InsightsRepository
 ) : ViewModel() {
 
-    private val _state = MutableStateFlow(HomeUiState())
+    private val _state = runCatching { MutableStateFlow(HomeUiState()) }
+        .getOrDefault { MutableStateFlow(HomeUiState()) }
     val state: StateFlow<HomeUiState> = _state.asStateFlow()
 
     init { try { load() } catch (e: Exception) {

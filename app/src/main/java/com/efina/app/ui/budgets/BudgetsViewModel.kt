@@ -44,7 +44,8 @@ class BudgetsViewModel @Inject constructor(
     private val authRepository: AuthRepository
 ) : ViewModel() {
 
-    private val _state = MutableStateFlow(BudgetsUiState())
+    private val _state = runCatching { MutableStateFlow(BudgetsUiState()) }
+        .getOrDefault { MutableStateFlow(BudgetsUiState()) }
     val state: StateFlow<BudgetsUiState> = _state.asStateFlow()
 
     init {

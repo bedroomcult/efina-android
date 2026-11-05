@@ -44,7 +44,8 @@ class StatsViewModel @Inject constructor(
     private val insightsRepository: InsightsRepository
 ) : ViewModel() {
 
-    private val _state = MutableStateFlow(StatsUiState())
+    private val _state = runCatching { MutableStateFlow(StatsUiState()) }
+        .getOrDefault { MutableStateFlow(StatsUiState()) }
     val state: StateFlow<StatsUiState> = _state.asStateFlow()
 
     init { try { load() } catch (e: Exception) {

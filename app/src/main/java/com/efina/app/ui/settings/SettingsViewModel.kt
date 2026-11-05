@@ -31,7 +31,8 @@ class SettingsViewModel @Inject constructor(
     private val preferences: com.efina.app.util.PreferencesManager
 ) : ViewModel() {
 
-    private val _state = MutableStateFlow(SettingsUiState())
+    private val _state = runCatching { MutableStateFlow(SettingsUiState()) }
+        .getOrDefault { MutableStateFlow(SettingsUiState()) }
     val state: StateFlow<SettingsUiState> = _state.asStateFlow()
 
     init {

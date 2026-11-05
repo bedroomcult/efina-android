@@ -32,7 +32,8 @@ class DebtsViewModel @Inject constructor(
     private val accountRepository: AccountRepository
 ) : ViewModel() {
 
-    private val _state = MutableStateFlow(DebtsUiState())
+    private val _state = runCatching { MutableStateFlow(DebtsUiState()) }
+        .getOrDefault { MutableStateFlow(DebtsUiState()) }
     val state: StateFlow<DebtsUiState> = _state.asStateFlow()
 
     init { try { load() } catch (e: Exception) {

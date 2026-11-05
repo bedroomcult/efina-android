@@ -30,7 +30,8 @@ class GoalsViewModel @Inject constructor(
     private val accountRepository: AccountRepository
 ) : ViewModel() {
 
-    private val _state = MutableStateFlow(GoalsUiState())
+    private val _state = runCatching { MutableStateFlow(GoalsUiState()) }
+        .getOrDefault { MutableStateFlow(GoalsUiState()) }
     val state: StateFlow<GoalsUiState> = _state.asStateFlow()
 
     init { try { load() } catch (e: Exception) {

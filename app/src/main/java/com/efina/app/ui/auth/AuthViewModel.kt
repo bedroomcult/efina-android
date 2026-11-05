@@ -7,6 +7,7 @@ import com.efina.app.data.repository.ApiException
 import com.efina.app.domain.model.User
 import com.efina.app.domain.repository.AuthRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -35,7 +36,8 @@ class AuthViewModel @Inject constructor(
     private val repository: AuthRepository
 ) : ViewModel() {
 
-    private val _state = MutableStateFlow(AuthUiState())
+    private val _state = runCatching { MutableStateFlow(AuthUiState()) }
+        .getOrDefault { MutableStateFlow(AuthUiState()) }
     val state: StateFlow<AuthUiState> = _state.asStateFlow()
 
     init {

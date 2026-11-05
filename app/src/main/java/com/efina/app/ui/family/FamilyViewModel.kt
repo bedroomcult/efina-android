@@ -27,7 +27,8 @@ class FamilyViewModel @Inject constructor(
     private val repository: FamilyRepository
 ) : ViewModel() {
 
-    private val _state = MutableStateFlow(FamilyUiState())
+    private val _state = runCatching { MutableStateFlow(FamilyUiState()) }
+        .getOrDefault { MutableStateFlow(FamilyUiState()) }
     val state: StateFlow<FamilyUiState> = _state.asStateFlow()
 
     init { try { load() } catch (e: Exception) {

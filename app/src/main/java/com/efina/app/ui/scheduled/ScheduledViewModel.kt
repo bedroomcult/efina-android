@@ -31,7 +31,8 @@ class ScheduledViewModel @Inject constructor(
     private val accountRepository: AccountRepository
 ) : ViewModel() {
 
-    private val _state = MutableStateFlow(ScheduledUiState())
+    private val _state = runCatching { MutableStateFlow(ScheduledUiState()) }
+        .getOrDefault { MutableStateFlow(ScheduledUiState()) }
     val state: StateFlow<ScheduledUiState> = _state.asStateFlow()
 
     init { try { load() } catch (e: Exception) {

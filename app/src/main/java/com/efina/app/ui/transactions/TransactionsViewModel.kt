@@ -69,7 +69,8 @@ class TransactionsViewModel @Inject constructor(
     private fun List<com.efina.app.domain.model.Transaction>.withCurrency() =
         map { tx -> tx.copy(currency = currencyByAccount[tx.accountId] ?: tx.currency) }
 
-    private val _state = MutableStateFlow(TransactionsUiState())
+    private val _state = runCatching { MutableStateFlow(TransactionsUiState()) }
+        .getOrDefault { MutableStateFlow(TransactionsUiState()) }
     val state: StateFlow<TransactionsUiState> = _state.asStateFlow()
 
     fun load() {
