@@ -58,9 +58,10 @@ fun TransactionsScreen(
     // A failed save is the one moment a user needs to notice without reading.
     var badge by remember { mutableStateOf<String?>(null) }
     LaunchedEffect(state.error) {
-        state.error?.let {
+        state.error?.let { error ->
+            val firstLine = error.lineSequence().firstOrNull() ?: error.take(1)
             haptics(Haptic.Reject)
-            badge = it.lineSequence().first().take(48)
+            badge = firstLine.take(48)
             viewModel.clearError()
         }
     }
@@ -266,7 +267,11 @@ private fun TransactionRow(
                         MaterialTheme.colorScheme.surfaceContainerHighest,
                         Icons.Filled.Tune
                     )
-                else -> throw IllegalStateException("Unknown transaction type: ${tx.type}")
+                else -> Triple(
+                    MaterialTheme.colorScheme.onSurfaceVariant,
+                    MaterialTheme.colorScheme.surfaceContainerHighest,
+                    Icons.Filled.Help
+                )
             }
             Box(
                 Modifier
@@ -282,7 +287,7 @@ private fun TransactionRow(
                         TransactionType.EXPENSE -> "Expense"
                         TransactionType.TRANSFER -> "Transfer"
                         TransactionType.ADJUSTMENT -> "Adjustment"
-                        else -> throw IllegalStateException("Unknown transaction type: ${tx.type}")
+                        else -> "Transaction"
                     },
                     tint = tint,
                     modifier = Modifier.size(18.dp)
