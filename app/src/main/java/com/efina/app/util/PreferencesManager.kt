@@ -55,6 +55,10 @@ class PreferencesManager @Inject constructor(
         dataStore.edit { prefs -> prefs[KEY_ONBOARDING_COMPLETE] = complete }
     }
     
+    val updateNotifications: Flow<Boolean> = dataStore.data.map { prefs ->
+        prefs[KEY_UPDATE_NOTIFICATIONS] ?: false
+    }
+    
     suspend fun setBiometricEnabled(enabled: Boolean) {
         dataStore.edit { prefs -> prefs[KEY_BIOMETRIC_ENABLED] = enabled }
     }

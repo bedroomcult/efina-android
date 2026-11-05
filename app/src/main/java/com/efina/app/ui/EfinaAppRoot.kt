@@ -52,6 +52,8 @@ import com.efina.app.ui.components.FloatingDock
 import com.efina.app.ui.components.WIDE_LAYOUT_BREAKPOINT_DP
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
+import android.content.Intent
+import android.net.Uri
 import com.efina.app.ui.theme.SyncSystemBars
 import com.efina.app.util.UpdateChecker
 
@@ -389,21 +391,20 @@ private fun UpdateDialog(
         title = { Text("Update available") },
         text = { Text("Version $version is available. Update now?") },
         confirmButton = {
+            val context = LocalContext.current
             TextButton(
                 onClick = {
                     onDismiss()
                     val intent = Intent(Intent.ACTION_VIEW).apply {
                         data = Uri.parse(url)
                     }
-                    LocalContext.current.startActivity(intent)
-                },
-                contentDescription = "Update to version $version"
+                    context.startActivity(intent)
+                }
             ) { Text("Update") }
         },
         dismissButton = {
             TextButton(
-                onClick = onDismiss,
-                contentDescription = "Skip update for now"
+                onClick = onDismiss
             ) { Text("Later") }
         }
     )

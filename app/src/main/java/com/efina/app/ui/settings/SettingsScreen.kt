@@ -164,8 +164,7 @@ fun SettingsScreen(
                     }
                     Switch(
                         checked = state.updateNotifications,
-                        onCheckedChange = { viewModel.setUpdateNotifications(it) },
-                        contentDescription = if (state.updateNotifications) "Notifications enabled" else "Notifications disabled"
+                        onCheckedChange = { viewModel.setUpdateNotifications(it) }
                     )
                 }
 
@@ -652,9 +651,6 @@ private fun ProfileCard(
             }
 
             Icon(
-                imageVector = Icons.Default.ChevronRight,
-                contentDescription = "Open profile",
-                tint = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.size(24.dp)
             )
         }

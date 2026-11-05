@@ -1,5 +1,7 @@
 package com.efina.app.util
 
+import javax.inject.Inject
+import javax.inject.Singleton
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.decodeFromString
@@ -45,7 +47,7 @@ class UpdateChecker @Inject constructor(
             .build()
 
         val response = client.newCall(request).execute()
-        val body = response.body()?.string() ?: return null
+        val body = response.body?.string() ?: return null
 
         val json = Json { ignoreUnknownKeys = true }
         val release = json.decodeFromString<GitHubRelease>(body)
@@ -62,8 +64,8 @@ class UpdateChecker @Inject constructor(
         val l = local.removePrefix("v").split(".").map { it.toIntOrNull() ?: 0 }
         val maxLen = maxOf(r.size, l.size)
         for (i in 0 until maxLen) {
-            val rv = r.getOrDefault(i, 0)
-            val lv = l.getOrDefault(i, 0)
+            val rv = r.getOrElse(i) { 0 }
+            val lv = l.getOrElse(i) { 0 }
             if (rv != lv) return rv > lv
         }
         return false

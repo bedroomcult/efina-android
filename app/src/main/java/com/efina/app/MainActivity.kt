@@ -10,6 +10,7 @@ import com.efina.app.ui.EfinaAppRoot
 import com.efina.app.ui.routeForUri
 import com.efina.app.util.UpdateChecker
 import dagger.hilt.android.AndroidEntryPoint
+import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
