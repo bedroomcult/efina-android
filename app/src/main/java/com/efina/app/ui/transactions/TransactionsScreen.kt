@@ -323,7 +323,7 @@ private fun TransactionRow(
                                 modifier = Modifier.padding(horizontal = 4.dp)
                             ) {
                                 Icon(
-                                    imageVector = Icons.Filled.Group,
+                                    imageVector = Icons.Filled.Person,
                                     contentDescription = null,
                                     tint = MaterialTheme.colorScheme.primary,
                                     modifier = Modifier.size(10.dp)
