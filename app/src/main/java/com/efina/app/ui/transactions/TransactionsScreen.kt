@@ -242,9 +242,9 @@ private fun TransactionRow(
     Surface(
         modifier = modifier
             .fillMaxWidth()
-            .springClick(EfinaCorners.groupInner, onClick = onClick),
+            .springClick(EfinaCorners.menu, onClick = onClick),
         color = MaterialTheme.colorScheme.surfaceContainerLow,
-        shape = EfinaCorners.groupInner
+        shape = EfinaCorners.menu
     ) {
         Row(
             Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
@@ -295,33 +295,12 @@ private fun TransactionRow(
                     style = MaterialTheme.typography.titleSmall,
                     maxLines = 1
                 )
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(
-                        formatDate(tx.date),
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    // A row recorded by another household member, so a shared budget's
-                    // spending is distinguishable from your own.
-                    val fromFamily = currentUserId != null && tx.userId != 0L &&
-                        tx.userId != currentUserId
-                    val meta = tx.categoryName ?: tx.accountName
-                    if (fromFamily) {
-                        Text(
-                            " · Family",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.primary,
-                            fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold
-                        )
-                    } else if (meta != null) {
-                        Text(
-                            " · $meta",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            maxLines = 1
-                        )
-                    }
-                }
+                Text(
+                    formatDate(tx.date) + (tx.accountName?.let { " · $it" } ?: ""),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1
+                )
             }
             Spacer(Modifier.width(8.dp))
             AmountText(
