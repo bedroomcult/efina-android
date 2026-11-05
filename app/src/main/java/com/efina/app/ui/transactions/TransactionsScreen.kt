@@ -47,8 +47,9 @@ fun TransactionsScreen(
     val state by viewModel.state.collectAsState()
     val haptics = rememberHaptics()
     // Marks this screen as having played its entrance, so returning to the tab
-    // does not replay the staggered reveal.
-    RevealLatch.currentScreen = "transactions"
+    // does not replay the staggered reveal. Set in an effect, not during
+    // composition, to avoid mutating shared state in the composition pass.
+    LaunchedEffect(Unit) { RevealLatch.currentScreen = "transactions" }
     var searchOpen by remember { mutableStateOf(false) }
     var query by remember { mutableStateOf("") }
     var pendingDelete by remember { mutableStateOf<Transaction?>(null) }
