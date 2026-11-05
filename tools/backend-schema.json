@@ -646,6 +646,9 @@
     ],
     "xp_to_next_level": [
       "INTEGER"
+    ],
+    "creator_user_id": [
+      "INTEGER"
     ]
   }
 }

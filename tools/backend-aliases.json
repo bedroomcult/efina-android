@@ -63,6 +63,7 @@
     "count",
     "create_transaction",
     "created_at",
+    "creator_name",
     "currency",
     "current_amount",
     "daily_expense",
