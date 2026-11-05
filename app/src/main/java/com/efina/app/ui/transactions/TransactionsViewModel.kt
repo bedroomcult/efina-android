@@ -37,6 +37,13 @@ class TransactionsViewModel @Inject constructor(
     private val authRepository: AuthRepository
 ) : ViewModel() {
 
+    /** accountId -> ISO currency, so rows can render in their account's currency. */
+    private var currencyByAccount: Map<Long, String> = emptyMap()
+
+    /** Declared before init so it is initialized before the launch in init runs. */
+    private val _state = MutableStateFlow(TransactionsUiState())
+    val state: StateFlow<TransactionsUiState> = _state.asStateFlow()
+
     init {
         viewModelScope.launch {
             authRepository.currentUserFlow().collect { u ->
@@ -44,9 +51,6 @@ class TransactionsViewModel @Inject constructor(
             }
         }
     }
-
-    /** accountId -> ISO currency, so rows can render in their account's currency. */
-    private var currencyByAccount: Map<Long, String> = emptyMap()
 
     private suspend fun loadCurrencies() {
         currencyByAccount = accountRepository.getAccounts()
@@ -57,9 +61,6 @@ class TransactionsViewModel @Inject constructor(
     /** The transactions endpoint does not return currency, so join it here. */
     private fun List<com.efina.app.domain.model.Transaction>.withCurrency() =
         map { tx -> tx.copy(currency = currencyByAccount[tx.accountId] ?: tx.currency) }
-
-    private val _state = MutableStateFlow(TransactionsUiState())
-    val state: StateFlow<TransactionsUiState> = _state.asStateFlow()
 
     init { load() }
 
