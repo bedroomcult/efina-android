@@ -51,6 +51,9 @@ class TransactionsViewModel @Inject constructor(
                 // currentUserId stays null; family badges simply won't show
             }
         }
+        try { load() } catch (e: Exception) {
+            _state.value = _state.value.copy(loading = false, error = "Init failed: ${e.message}")
+        }
     }
 
     /** accountId -> ISO currency, so rows can render in their account's currency. */
@@ -68,8 +71,6 @@ class TransactionsViewModel @Inject constructor(
 
     private val _state = MutableStateFlow(TransactionsUiState())
     val state: StateFlow<TransactionsUiState> = _state.asStateFlow()
-
-    init { load() }
 
     fun load() {
         _state.value = _state.value.copy(loading = true, error = null)
