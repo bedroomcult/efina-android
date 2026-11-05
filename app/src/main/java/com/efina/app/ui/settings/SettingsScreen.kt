@@ -650,9 +650,6 @@ private fun ProfileCard(
                 }
             }
 
-            Icon(
-                modifier = Modifier.size(24.dp)
-            )
         }
     }
 }
