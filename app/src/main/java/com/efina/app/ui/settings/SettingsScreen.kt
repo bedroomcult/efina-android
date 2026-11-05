@@ -178,7 +178,8 @@ fun SettingsScreen(
                     }
                     Switch(
                         checked = state.updateNotifications,
-                        onCheckedChange = { viewModel.setUpdateNotifications(it) }
+                        onCheckedChange = { viewModel.setUpdateNotifications(it) },
+                        contentDescription = if (state.updateNotifications) "Notifications enabled" else "Notifications disabled"
                     )
                 }
 

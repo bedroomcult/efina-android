@@ -363,14 +363,17 @@ fun EfinaAppRoot(
                 )
             }
         }
-    }
 
-    update?.let { info ->
-        UpdateDialog(
-            version = info.version,
-            url = info.url,
-            onDismiss = { }
-        )
+        // Update dialog — shown inside EfinaTheme so it inherits proper theming.
+        var updateDismissed by remember { mutableStateOf(false) }
+        val updateInfo = update
+        if (updateInfo != null && !updateDismissed) {
+            UpdateDialog(
+                version = updateInfo.version,
+                url = updateInfo.url,
+                onDismiss = { updateDismissed = true }
+            )
+        }
     }
 }
 
@@ -393,11 +396,15 @@ private fun UpdateDialog(
                         data = Uri.parse(url)
                     }
                     LocalContext.current.startActivity(intent)
-                }
+                },
+                contentDescription = "Update to version $version"
             ) { Text("Update") }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) { Text("Later") }
+            TextButton(
+                onClick = onDismiss,
+                contentDescription = "Skip update for now"
+            ) { Text("Later") }
         }
     )
 }
