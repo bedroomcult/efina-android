@@ -29,6 +29,7 @@ import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.efina.app.domain.model.Transaction
@@ -121,6 +122,15 @@ fun TransactionDetailSheet(
             transaction.categoryName?.let { DetailRow("Category", it) }
             DetailRow("Account", transaction.accountName ?: "—")
             transaction.toAccountName?.let { DetailRow("To account", it) }
+            // Made by attribution: shown when a different family member created this row.
+            transaction.creatorUserId?.let { creatorId ->
+                if (creatorId != transaction.userId) {
+                    DetailRow(
+                        label = stringResource(R.string.made_by),
+                        value = transaction.creatorName ?: stringResource(R.string.private_account)
+                    )
+                }
+            }
 
             Spacer(Modifier.height(22.dp))
 

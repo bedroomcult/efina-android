@@ -50,6 +50,8 @@ fun TransactionDto.toDomain(): Transaction = Transaction(
     mood = mood,
     transferPairId = transfer_pair_id,
     familyId = family_id,
+    creatorUserId = creator_user_id,
+    creatorName = creator_name,
     createdAt = created_at
 )
 

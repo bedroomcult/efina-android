@@ -210,7 +210,11 @@ data class TransactionDto(
     val to_account_name: String? = null,
     val category_name: String? = null,
     val category_color: String? = null,
-    val category_icon: String? = null
+    val category_icon: String? = null,
+    /** The user who originally created this row. Stays unchanged on ownership transfer. */
+    val creator_user_id: Long? = null,
+    /** Resolved name of the creator (from the users table). */
+    val creator_name: String? = null
 )
 
 /**

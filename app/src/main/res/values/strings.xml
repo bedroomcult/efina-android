@@ -62,7 +62,10 @@
     <string name="select_category">Select Category</string>
     <string name="search_transactions">Search transactions</string>
     <string name="filter">Filter</string>
-    
+    <string name="private_account">Private Account</string>
+    <string name="made_by">Made by</string>
+    <string name="family">Family</string>
+
     <!-- Budgets -->
     <string name="create_budget">Create Budget</string>
     <string name="budget_amount">Budget Amount</string>

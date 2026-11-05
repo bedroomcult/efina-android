@@ -110,6 +110,10 @@ data class Transaction(
     val mood: String?,
     val transferPairId: String?,
     val familyId: Long? = null,
+    /** The user who originally created this row. Stays unchanged on ownership transfer. */
+    val creatorUserId: Long? = null,
+    /** Resolved name of the creator (from the users table). */
+    val creatorName: String? = null,
     val createdAt: String?
 )
 

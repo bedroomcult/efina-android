@@ -11,7 +11,9 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.efina.app.domain.model.Transaction
 import com.efina.app.domain.model.TransactionType
@@ -30,8 +32,10 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.filled.ArrowDownward
 import androidx.compose.material.icons.filled.ArrowUpward
+import androidx.compose.material.icons.filled.People
 import androidx.compose.material.icons.filled.SwapHoriz
 import androidx.compose.material.icons.filled.Tune
+
 import com.efina.app.ui.theme.LocalMoneyPalette
 import com.efina.app.ui.components.BadgeToastHost
 import com.efina.app.ui.components.BadgeTone
@@ -295,12 +299,45 @@ private fun TransactionRow(
                     style = MaterialTheme.typography.titleSmall,
                     maxLines = 1
                 )
-                Text(
-                    formatDate(tx.date) + (tx.accountName?.let { " · $it" } ?: ""),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 1
-                )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(
+                        text = formatDate(tx.date) +
+                            (tx.accountName?.let { " · $it" } ?: stringResource(R.string.private_account)),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 1
+                    )
+                    // Family badge: shown when a different family member created this row.
+                    if (tx.creatorUserId != null && tx.creatorUserId != currentUserId) {
+                        Spacer(Modifier.width(4.dp))
+                        Box(
+                            Modifier
+                                .background(MaterialTheme.colorScheme.primaryContainer, CircleShape)
+                                .padding(horizontal = 4.dp, vertical = 1.dp)
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier.padding(horizontal = 4.dp)
+                            ) {
+                                Icon(
+                                    imageVector = People,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.primary,
+                                    modifier = Modifier.size(10.dp)
+                                )
+                                Text(
+                                    text = stringResource(R.string.family),
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.primary,
+                                    fontWeight = FontWeight.SemiBold
+                                )
+                            }
+                        }
+                    }
+                }
             }
             Spacer(Modifier.width(8.dp))
             AmountText(
