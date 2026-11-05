@@ -12,6 +12,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.efina.app.domain.model.UpdateSettingsRequest
+import com.efina.app.domain.model.User
 import com.efina.app.ui.components.*
 import com.efina.app.ui.theme.EfinaCorners
 import com.efina.app.ui.theme.EfinaType
@@ -107,25 +108,10 @@ fun SettingsScreen(
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             state.user?.let { user ->
-                Surface(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = EfinaCorners.menu,
-                    color = MaterialTheme.colorScheme.surfaceContainerLow
-                ) {
-                    Column(Modifier.padding(16.dp)) {
-                        Text(user.name, style = EfinaType.titleMediumEmphasized)
-                        Text(
-                            user.email,
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                        Spacer(Modifier.height(6.dp))
-                        Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                            PillTag(if (user.isPro) "Pro" else "Free")
-                            if (user.isAdmin) PillTag("Admin")
-                        }
-                    }
-                }
+                ProfileCard(
+                    user = user,
+                    onClick = { /* open profile edit screen when wired */ }
+                )
             }
 
             if (settings != null) {
@@ -577,4 +563,100 @@ private fun Swatch(color: androidx.compose.ui.graphics.Color?) {
             .size(14.dp)
             .background(color ?: MaterialTheme.colorScheme.surfaceContainerHighest, CircleShape)
     )
+}
+
+/**
+ * Profile card showing the signed-in user's avatar, name, email and role badges.
+ *
+ * MD3 pattern: leading avatar (48dp touch target), two-line text block, trailing
+ * chevron. The whole card is tappable so the row itself is the interaction
+ * surface rather than relying on a tiny icon target.
+ *
+ * @param user the signed-in user
+ * @param onClick invoked when the card is tapped
+ */
+@Composable
+private fun ProfileCard(
+    user: User,
+    onClick: () -> Unit
+) {
+    val initials = user.name
+        .split(" ")
+        .map { it.firstOrNull()?.uppercase() ?: "" }
+        .joinToString("")
+        .take(2)
+
+    Surface(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick),
+        shape = EfinaCorners.menu,
+        color = MaterialTheme.colorScheme.surfaceContainerLow
+    ) {
+        Row(
+            modifier = Modifier
+                .padding(horizontal = 16.dp, vertical = 14.dp)
+                .heightIn(min = 72.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            // Avatar: 48dp minimum touch target per MD3 accessibility guidance.
+            Box(
+                modifier = Modifier
+                    .size(48.dp)
+                    .background(MaterialTheme.colorScheme.primaryContainer, CircleShape),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = initials,
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer,
+                    modifier = Modifier.align(Alignment.Center)
+                )
+            }
+
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = user.name,
+                    style = EfinaType.titleLargeEmphasized,
+                    maxLines = 1
+                )
+                Spacer(Modifier.height(4.dp))
+                Text(
+                    text = user.email,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1
+                )
+                Spacer(Modifier.height(8.dp))
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    PillTag(
+                        text = if (user.isPro) "Pro" else "Free",
+                        modifier = Modifier
+                    )
+                    if (user.isAdmin) {
+                        PillTag(
+                            text = "Admin",
+                            modifier = Modifier
+                        )
+                    }
+                    Text(
+                        text = "${user.accountCount} account${if (user.accountCount == 1) "" else "s"}",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+
+            Icon(
+                imageVector = Icons.Default.ChevronRight,
+                contentDescription = "Open profile",
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.size(24.dp)
+            )
+        }
+    }
 }
