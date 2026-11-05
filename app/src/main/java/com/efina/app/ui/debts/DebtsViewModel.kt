@@ -35,7 +35,9 @@ class DebtsViewModel @Inject constructor(
     private val _state = MutableStateFlow(DebtsUiState())
     val state: StateFlow<DebtsUiState> = _state.asStateFlow()
 
-    init { load() }
+    init { try { load() } catch (e: Exception) {
+        _state.value = _state.value.copy(loading = false, error = "Init failed: ${e.message}")
+    } }
 
     fun load() {
         _state.value = _state.value.copy(loading = true, error = null)

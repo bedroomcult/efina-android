@@ -40,7 +40,9 @@ class SettingsViewModel @Inject constructor(
         ThemePreference.persist = { value ->
             viewModelScope.launch { preferences.setTheme(value) }
         }
-        load()
+        try { load() } catch (e: Exception) {
+            _state.value = _state.value.copy(loading = false, error = "Init failed: ${e.message}")
+        }
     }
 
     fun load() {
