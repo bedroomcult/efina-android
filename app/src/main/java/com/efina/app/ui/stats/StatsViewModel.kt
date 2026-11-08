@@ -78,19 +78,43 @@ class StatsViewModel @Inject constructor(
                 .map { (name, list) -> CategorySlice(name, list.sumOf { it.amount }) }
                 .sortedByDescending { it.total }
 
-            val failed = txPage == null && transactions.isEmpty()
+            // Await each job once and store results, then inspect for failures.
+            val forecastResult = forecastJob.await()
+            val healthResult = healthJob.await()
+            val achievementsResult = achievementsJob.await()
+            val leaderboardResult = leaderboardJob.await()
+
+            // Track which jobs failed so we can surface an error instead of silently
+            // rendering empty lists.
+            val failedJobs = listOf(
+                txJob to txPage,
+                forecastJob to forecastResult,
+                healthJob to healthResult,
+                achievementsJob to achievementsResult,
+                leaderboardJob to leaderboardResult
+            ).filter { (job, result) -> result == null && job.exceptionOrNull() != null }
+
+            val allFailed = txPage == null && transactions.isEmpty() &&
+                forecastResult == null && healthResult == null &&
+                achievementsResult == null && leaderboardResult == null
+
             _state.value = StatsUiState(
                 loading = false,
                 income = income,
                 expense = expense,
                 byCategory = byCategory,
-                forecast = forecastJob.await().getOrNull(),
-                health = healthJob.await().getOrNull(),
-                achievements = achievementsJob.await().getOrDefault(emptyList()),
-                leaderboard = leaderboardJob.await().getOrDefault(emptyList()),
-                error = if (failed) {
-                    txJob.await().exceptionOrNull()?.message
-                        ?: "Could not load statistics."
+                forecast = forecastResult,
+                health = healthResult,
+                achievements = achievementsResult ?: emptyList(),
+                leaderboard = leaderboardResult ?: emptyList(),
+                error = if (allFailed) {
+                    failedJobs.firstOrNull()?.let { (job, _) ->
+                        job.exceptionOrNull()?.message
+                    } ?: "Could not load statistics."
+                } else if (failedJobs.isNotEmpty()) {
+                    failedJobs.firstOrNull()?.let { (job, _) ->
+                        job.exceptionOrNull()?.message
+                    } ?: null
                 } else null
             )
         }

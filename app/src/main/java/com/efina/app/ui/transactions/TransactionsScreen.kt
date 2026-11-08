@@ -271,7 +271,11 @@ private fun TransactionRow(
                         MaterialTheme.colorScheme.surfaceContainerHighest,
                         Icons.Filled.Tune
                     )
-                else -> throw IllegalStateException("Unknown transaction type: ${tx.type}")
+                else -> Triple(
+                    MaterialTheme.colorScheme.onSurfaceVariant,
+                    MaterialTheme.colorScheme.surfaceContainerHighest,
+                    Icons.Filled.Help
+                )
             }
             Box(
                 Modifier

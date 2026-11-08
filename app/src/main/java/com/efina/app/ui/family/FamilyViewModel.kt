@@ -41,7 +41,7 @@ class FamilyViewModel @Inject constructor(
                     // family rendered "0 members". Fetch each one's detail to get the
                     // actual roster; a failure keeps the summary rather than the sum.
                     val detailed = families.map { family ->
-                        repository.getFamily(family.id).getOrDefault(family)
+                        repository.getFamily(family.id).getOrNull() ?: family
                     }
                     _state.value = _state.value.copy(loading = false, families = detailed)
                 }

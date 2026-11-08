@@ -40,7 +40,15 @@ class DebtsViewModel @Inject constructor(
     fun load() {
         _state.value = _state.value.copy(loading = true, error = null)
         viewModelScope.launch {
-            val accounts = accountRepository.getAccounts().getOrDefault(emptyList())
+            val accountsResult = accountRepository.getAccounts()
+            val accounts = accountsResult.getOrNull() ?: emptyList()
+            if (accountsResult.exceptionOrNull() != null) {
+                _state.value = _state.value.copy(
+                    loading = false, accounts = accounts,
+                    error = accountsResult.exceptionOrNull()?.message
+                )
+                return@launch
+            }
             repository.getDebts()
                 .onSuccess {
                     _state.value = _state.value.copy(loading = false, debts = it, accounts = accounts)

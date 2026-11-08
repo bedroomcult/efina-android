@@ -60,12 +60,11 @@ class HomeViewModel @Inject constructor(
                 transactionRepository.getTransactions(
                     TransactionFilter(
                         // Summed below for the monthly totals, so this must cover the
-                        // whole month, not just the rows the dashboard displays. At
-                        // limit = 10 any user with more than ten transactions in the
-                        // month saw understated income and expense.
-                        // ponytail: 1000-row month cap; paginate or add a backend
-                        // aggregate if a month can ever exceed it.
-                        limit = 1000,
+                        // whole month, not just the rows the dashboard displays.
+                        // limit = 10000: effectively no cap for a single month; users
+                        // with >10k transactions in a month would need backend-side
+                        // aggregation (see ponytail note in original code).
+                        limit = 10000,
                         offset = 0,
                         startDate = startDate,
                         endDate = endDate
@@ -76,11 +75,21 @@ class HomeViewModel @Inject constructor(
             val goalJob = async { goalRepository.getGoals() }
             val healthJob = async { insightsRepository.getHealthScore() }
 
-            val accounts = accountsJob.await().getOrDefault(emptyList())
+            val accounts = accountsJob.await().getOrNull() ?: emptyList()
             val txPage = txJob.await().getOrNull()
-            val budgets = budgetJob.await().getOrDefault(emptyList())
-            val goals = goalJob.await().getOrDefault(emptyList())
+            val budgets = budgetJob.await().getOrNull() ?: emptyList()
+            val goals = goalJob.await().getOrNull() ?: emptyList()
             val health = healthJob.await().getOrNull()
+
+            // Track which jobs failed so we can surface an error instead of
+            // silently rendering empty panels.
+            val failedJobs = listOf(
+                accountsJob to accounts,
+                txJob to txPage,
+                budgetJob to budgets,
+                goalJob to goals,
+                healthJob to health
+            ).filter { (job, result) -> result == null && job.exceptionOrNull() != null }
 
             val transactions = txPage?.transactions ?: emptyList()
             val income = transactions.filter { it.type == TransactionType.INCOME }
@@ -88,14 +97,19 @@ class HomeViewModel @Inject constructor(
             val expense = transactions.filter { it.type == TransactionType.EXPENSE }
                 .sumOf { it.amount }
 
-            // Surface a total failure: previously every panel used
-            // getOrDefault(emptyList()), so offline rendered as zeros and "no
-            // transactions", indistinguishable from a real empty account.
-            val allFailed = accounts.isEmpty() && txPage == null &&
-                budgets.isEmpty() && goals.isEmpty()
+            // Surface a total failure: when every panel failed to load, show an error
+            // instead of zeros that look like a real empty account.
+            val allFailed = accounts.isEmpty() && txPage == null && budgets.isEmpty() && goals.isEmpty()
             val failureMessage = if (allFailed) {
-                (accountsJob.await().exceptionOrNull() ?: txJob.await().exceptionOrNull())
-                    ?.message ?: "Could not load your data. Pull to retry."
+                failedJobs.firstOrNull()?.let { (job, _) ->
+                    job.exceptionOrNull()?.message
+                } ?: "Could not load your data. Pull to retry."
+            } else if (failedJobs.isNotEmpty()) {
+                // Partial failure: at least one panel failed. Surface the first error
+                // but still show whatever data loaded.
+                failedJobs.firstOrNull()?.let { (job, _) ->
+                    job.exceptionOrNull()?.message
+                } ?: null
             } else null
 
             _state.value = HomeUiState(

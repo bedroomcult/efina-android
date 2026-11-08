@@ -119,13 +119,11 @@ class AuthRepositoryImpl @Inject constructor(
             .map { }
 
     override suspend fun logout(): Result<Unit> {
-        // DELETE auth/sessions invalidates the session row; ignore failures so a
-        // dead network cannot trap the user in a logged-in shell.
-        val result = runCatching { api.logout() }.getOrNull()
-        tokenManager.clearAll()
-        userState.value = null
-        return if (result != null && result.isSuccessful) Result.success(Unit)
-        else Result.success(Unit)
+        // DELETE auth/sessions invalidates the session row. Surface failures so the
+        // caller can decide whether to retry, rather than silently returning success.
+        return runCatching { api.logout() }
+            .map { Unit }
+            .onFailure { tokenManager.clearAll(); userState.value = null }
     }
 
     override fun isLoggedIn(): Boolean = tokenManager.isLoggedIn()
@@ -439,7 +437,12 @@ class FamilyRepositoryImpl @Inject constructor(
 
     override suspend fun acceptInvite(code: String): Result<FamilyGroup> =
         safeCall { api.acceptFamilyInvite(AcceptInviteRequestDto(code.trim().uppercase())) }
-            .map { it.family?.toDomain() ?: error("Invite accepted but no family returned") }
+            .map { it.family }
+            .mapNotNull { family -> family.toDomain() }
+            .map { family ->
+                if (family == null) throw IllegalStateException("Invite accepted but no family returned")
+                family
+            }
 
     override suspend fun removeMember(id: Long, userId: Long): Result<Unit> =
         safeCall { api.removeFamilyMember(id, RemoveMemberRequestDto(userId)) }.map { }

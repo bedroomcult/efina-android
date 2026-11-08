@@ -3,10 +3,6 @@ package com.efina.app.util
 import android.content.Context
 import android.os.Build
 import com.efina.app.BuildConfig
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.launch
 import java.io.OutputStreamWriter
 import java.net.HttpURLConnection
 import java.net.URL
@@ -24,8 +20,10 @@ import java.net.URL
  *   body   { message: String (<=1000), stack?: String (<=5000), url?: String (<=500), level?: 'error'|'warn'|'info'|'debug' }
  *   response 200 { ok: true }
  *
- * Deliberately fire-and-forget on a background dispatcher: a reporter that can
- * itself fail the launch is worse than no reporter.
+ * Posts are blocking with a short timeout on the uncaught-exception thread so the
+ * report is sent before the process terminates. A reporter that blocks the crash
+ * thread for a few seconds is acceptable; a reporter that silently drops reports
+ * defeats its purpose.
  */
 object CrashReporter {
 
@@ -37,7 +35,7 @@ object CrashReporter {
     fun install(context: Context?) {
         val previous = Thread.getDefaultUncaughtExceptionHandler()
         Thread.setDefaultUncaughtExceptionHandler { thread, error ->
-            runCatching { report(error, thread) }
+            report(error, thread)
             previous?.uncaughtException(thread, error)
         }
     }
@@ -50,21 +48,25 @@ object CrashReporter {
         }
 
         val payload = buildJson(error, thread)
-        scope.launch {
-            runCatching { post(payload) }
-        }
+        post(payload)
     }
 
     private fun buildJson(error: Throwable, thread: Thread?): String {
         val device = "${Build.MANUFACTURER} ${Build.MODEL} / Android ${Build.VERSION.RELEASE} (SDK ${Build.VERSION.SDK_INT})"
         val header = "thread=${thread?.name ?: "?"} device=$device version=${BuildConfig.VERSION_NAME}"
 
+        // Sanitize user input: error.message can contain transaction descriptions,
+        // category names or other PII. Use only the exception class name plus a
+        // truncated, sanitized message.
+        val safeMessage = sanitize(error.message ?: "")
+        val safeStack = sanitize(error.stackTraceToString())
+
         return buildString {
             append('{')
-            append("\"message\":").append(quote(truncate("${error.javaClass.simpleName}: ${error.message}", 1000)))
+            append("\"message\":").append(quote(truncate("${error.javaClass.simpleName}: $safeMessage", 1000)))
             append(',')
             append("\"stack\":").append(
-                quote(truncate(header + "\n" + error.stackTraceToString(), 4900))
+                quote(truncate(header + "\n" + safeStack, 2000))
             )
             append(',')
             append("\"url\":").append(quote(truncate("android://${BuildConfig.APPLICATION_ID}", 500)))
@@ -74,12 +76,19 @@ object CrashReporter {
         }
     }
 
+    /** Strips potential user input from error messages/stack traces before sending. */
+    private fun sanitize(value: String): String {
+        return value
+            .replace(Regex("""["'`]"""), "") // strip quotes that could inject JSON
+            .take(500) // aggressive truncation to limit any residual user input
+    }
+
     private fun post(json: String) {
         val url = URL("${BuildConfig.API_BASE_URL}public/debug")
         val connection = (url.openConnection() as HttpURLConnection).apply {
             requestMethod = "POST"
-            connectTimeout = 10_000
-            readTimeout = 10_000
+            connectTimeout = 5_000
+            readTimeout = 5_000
             doOutput = true
             setRequestProperty("Content-Type", "application/json")
         }
@@ -91,9 +100,8 @@ object CrashReporter {
         }
     }
 
-    private fun truncate(value: String?, max: Int): String {
-        val v = value ?: ""
-        return if (v.length <= max) v else v.substring(0, max)
+    private fun truncate(value: String, max: Int): String {
+        return if (value.length <= max) value else value.substring(0, max)
     }
 
     /** Minimal JSON string escaping; the payload is built by hand to avoid a dependency. */
