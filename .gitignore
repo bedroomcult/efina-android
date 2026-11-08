@@ -71,3 +71,6 @@ keystore.properties
 *.jks
 *.keystore
 node_modules/
+
+# Stray dev artifacts
+msg.tmp

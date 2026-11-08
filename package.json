@@ -1,0 +1,14 @@
+{
+  "name": "efina-android",
+  "private": true,
+  "description": "Native Android client for the Efina personal finance app",
+  "devDependencies": {
+    "@material/material-color-utilities": "^0.4.0"
+  },
+  "scripts": {
+    "gen-scheme": "node tools/gen-scheme.mjs",
+    "check-api-contract": "node tools/check-api-contract.mjs --strict",
+    "check-kotlin": "node tools/check-kotlin.mjs --strict",
+    "check-dto-shapes": "node tools/check-dto-shapes.mjs --strict"
+  }
+}

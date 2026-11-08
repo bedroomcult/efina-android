@@ -20,7 +20,7 @@ import { fileURLToPath } from 'node:url';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const ANDROID_ROOT = path.resolve(here, '..');
-const WEB_ROOT = process.env.EFINA_WEB_ROOT || '/storage/emulated/0/git/efina';
+const WEB_ROOT = process.env.EFINA_WEB_ROOT || path.resolve(here, '..', '..', 'efina');
 const API_DIR = path.join(WEB_ROOT, 'functions', 'api');
 const MANIFEST = path.join(ANDROID_ROOT, 'tools', 'backend-routes.json');
 const KOTLIN_API = path.join(

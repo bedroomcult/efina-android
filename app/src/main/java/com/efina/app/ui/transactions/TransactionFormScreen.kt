@@ -46,6 +46,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import com.efina.app.ui.components.PickerOption
 import com.efina.app.ui.components.PickerSheet
+import com.efina.app.ui.components.categoryLabel
+import com.efina.app.ui.components.AMOUNT_VALIDATION_REGEX
 import com.efina.app.ui.theme.parseHexColor
 import com.efina.app.ui.components.formatMoney
 
@@ -137,7 +139,7 @@ fun TransactionFormScreen(
             }
 
             AmountField(amount) { input ->
-                if (input.isEmpty() || input.matches(Regex("^\\d{0,15}(\\.\\d{0,2})?$"))) {
+                if (input.isEmpty() || input.matches(AMOUNT_VALIDATION_REGEX)) {
                     amount = input
                 }
             }
@@ -276,7 +278,7 @@ fun TransactionFormScreen(
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Text(
-                            text = chosen?.let { pickerLabel(selectable, it) } ?: "Choose a category",
+                            text = chosen?.let { categoryLabel(selectable.firstOrNull { it.id == it.parentId }, it) } ?: "Choose a category",
                             style = MaterialTheme.typography.bodyLarge,
                             color = if (chosen == null) MaterialTheme.colorScheme.onSurfaceVariant
                             else MaterialTheme.colorScheme.onSurface,
@@ -493,13 +495,6 @@ private fun normalizeDate(datePart: String, timePart: String): String {
  * seeded tree could not be selected at all.
  */
 /** "Food · Cafe" for a child, or the plain name for a root. */
-private fun pickerLabel(roots: List<com.efina.app.domain.model.Category>,
-                        chosen: com.efina.app.domain.model.Category): String {
-    if (chosen.parentId == null) return chosen.name
-    val parent = roots.firstOrNull { it.id == chosen.parentId }
-    return if (parent != null) "${parent.name} · ${chosen.name}" else chosen.name
-}
-
 @Composable
 private fun PickerField(
     label: String,

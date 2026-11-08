@@ -87,6 +87,16 @@ fun formatDate(iso: String?): String {
     }.getOrDefault(iso.take(10))
 }
 
+/** Builds a category display label: "Parent · Child" for children, plain name for roots. */
+fun categoryLabel(parent: com.efina.app.domain.model.Category?,
+                   child: com.efina.app.domain.model.Category): String {
+    if (child.parentId == null) return child.name
+    return if (parent != null) "${parent.name} · ${child.name}" else child.name
+}
+
+/** Validation regex for positive amounts: up to 15 integer digits, max 2 decimals. */
+val AMOUNT_VALIDATION_REGEX: Regex = Regex("^\\d{0,15}(\\.\\d{0,2})?$")
+
 // ── Tags and badges ─────────────────────────────────────────────────
 
 /** Pill tag, design.md: "chips, tags, version badges are full radius". */

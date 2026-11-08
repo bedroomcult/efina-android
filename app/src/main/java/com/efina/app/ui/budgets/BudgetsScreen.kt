@@ -205,7 +205,7 @@ fun BudgetsScreen(
                     OutlinedTextField(
                         value = editAmount,
                         onValueChange = { input ->
-                            if (input.isEmpty() || input.matches(Regex("^\\d{0,15}(\\.\\d{0,2})?$"))) editAmount = input
+                            if (input.isEmpty() || input.matches(AMOUNT_VALIDATION_REGEX)) editAmount = input
                         },
                         label = { Text("Limit") },
                         singleLine = true,
@@ -429,14 +429,9 @@ private fun CreateBudgetDialog(
             }
         }
     }
-    val chosenLabel = when {
-        chosen == null -> "Choose a category"
-        chosen.parentId == null -> chosen.name
-        else -> {
-            val parent = categories.firstOrNull { it.id == chosen.parentId }
-            if (parent != null) "${parent.name} · ${chosen.name}" else chosen.name
-        }
-    }
+    val chosenLabel = chosen?.let {
+        categoryLabel(categories.firstOrNull { it.id == it.parentId }, it)
+    } ?: "Choose a category"
 
     AlertDialog(
         onDismissRequest = onDismiss,
