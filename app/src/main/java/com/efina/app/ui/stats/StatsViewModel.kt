@@ -94,7 +94,7 @@ class StatsViewModel @Inject constructor(
                 leaderboardJob to leaderboardResult
             ).filter { (_, result) -> result.isFailure }
 
-            val allFailed = txPage == null && transactions.isEmpty() &&
+            val allFailed = txPageResult.isFailure && transactions.isEmpty() &&
                 forecastResult.isFailure && healthResult.isFailure &&
                 achievementsResult.isFailure && leaderboardResult.isFailure
 
