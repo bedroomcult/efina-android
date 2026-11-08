@@ -31,12 +31,8 @@ import javax.inject.Singleton
  * retried once. Only idempotent methods (GET/PUT/DELETE) should pass
  * `retryable = true`; POST writes are never auto-retried.
  */
-internal suspend fun <T> safeCall(
-    block: suspend () -> Response<T>,
-    retryable: Boolean = false,
-    onCsrfRefresh: suspend () -> Unit = {}
-): Result<T> {
-    val result = try {
+internal suspend fun <T> safeCall(block: suspend () -> Response<T>): Result<T> =
+    try {
         block().toResult()
     } catch (io: java.io.IOException) {
         Result.failure(
@@ -45,28 +41,6 @@ internal suspend fun <T> safeCall(
     } catch (e: Exception) {
         Result.failure(ApiException(0, e.message ?: "Unexpected error"))
     }
-
-    // CSRF retry: a stale CSRF token causes 403; refresh once and retry.
-    // Only idempotent calls (GET/PUT/DELETE) should pass retryable = true.
-    if (retryable && result.isFailure) {
-        val exception = result.exceptionOrNull()
-        if (exception is ApiException && exception.status == 403 &&
-            (exception.message ?: "").contains("CSRF", ignoreCase = true)) {
-            onCsrfRefresh()
-            return try {
-                block().toResult()
-            } catch (io: java.io.IOException) {
-                Result.failure(
-                    ApiException(0, "No connection. Check your network and try again.")
-                )
-            } catch (e: Exception) {
-                Result.failure(ApiException(0, e.message ?: "Unexpected error"))
-            }
-        }
-    }
-
-    return result
-}
 
 /**
  * Turns a Retrofit response into a Result, surfacing the backend's `error` string.
@@ -141,7 +115,7 @@ class AuthRepositoryImpl @Inject constructor(
     override fun currentUserFlow(): Flow<User?> = userState.asStateFlow()
 
     override suspend fun refreshCurrentUser(): Result<User> =
-        safeCall({ api.getCurrentUser() }, true, { refreshCsrfToken() })
+        safeCall { api.getCurrentUser() }
             .map { it.toDomain() }
             .onSuccess { userState.value = it }
 
