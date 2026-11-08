@@ -59,12 +59,20 @@ class PreferencesManager @Inject constructor(
         prefs[KEY_UPDATE_NOTIFICATIONS] ?: false
     }
     
+    val lastNotifiedVersion: Flow<String?> = dataStore.data.map { prefs ->
+        prefs[KEY_LAST_NOTIFIED_VERSION]
+    }
+    
     suspend fun setBiometricEnabled(enabled: Boolean) {
         dataStore.edit { prefs -> prefs[KEY_BIOMETRIC_ENABLED] = enabled }
     }
     
     suspend fun setUpdateNotifications(enabled: Boolean) {
         dataStore.edit { prefs -> prefs[KEY_UPDATE_NOTIFICATIONS] = enabled }
+    }
+    
+    suspend fun setLastNotifiedVersion(version: String?) {
+        dataStore.edit { prefs -> prefs[KEY_LAST_NOTIFIED_VERSION] = version }
     }
     
     companion object {
@@ -74,5 +82,6 @@ class PreferencesManager @Inject constructor(
         private val KEY_ONBOARDING_COMPLETE = booleanPreferencesKey(Constants.PREFS_ONBOARDING_COMPLETE)
         private val KEY_BIOMETRIC_ENABLED = booleanPreferencesKey(Constants.PREFS_BIOMETRIC_ENABLED)
         private val KEY_UPDATE_NOTIFICATIONS = booleanPreferencesKey(Constants.PREFS_UPDATE_NOTIFICATIONS)
+        private val KEY_LAST_NOTIFIED_VERSION = stringPreferencesKey(Constants.PREFS_LAST_NOTIFIED_VERSION)
     }
 }

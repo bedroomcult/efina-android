@@ -1,19 +1,29 @@
 package com.efina.app
 
+import android.Manifest
 import android.content.Intent
+import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.ActivityResultLauncher
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import com.efina.app.ui.EfinaAppRoot
 import com.efina.app.ui.routeForUri
+import com.efina.app.util.NotificationHelper
+import com.efina.app.util.PreferencesManager
 import com.efina.app.util.UpdateChecker
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.launch
 
@@ -23,8 +33,17 @@ class MainActivity : ComponentActivity() {
     @Inject
     lateinit var updateChecker: UpdateChecker
 
+    @Inject
+    lateinit var preferences: PreferencesManager
+
+    @Inject
+    lateinit var notificationHelper: NotificationHelper
+
     private val _updateAvailable = MutableStateFlow<UpdateChecker.UpdateInfo?>(null)
     val updateAvailable: StateFlow<UpdateChecker.UpdateInfo?> = _updateAvailable.asStateFlow()
+
+    /** Holds an update waiting for notification permission to be granted. */
+    private var pendingUpdateInfo: UpdateChecker.UpdateInfo? = null
 
     /**
      * The route an inbound link should land on.
@@ -36,6 +55,18 @@ class MainActivity : ComponentActivity() {
      * would just come to the front on whatever screen it was already showing.
      */
     private val pendingRoute = MutableStateFlow<String?>(null)
+
+    /** Launcher for the POST_NOTIFICATIONS runtime permission (API 33+). */
+    private val requestNotificationPermissionLauncher: ActivityResultLauncher<String> =
+        registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+            if (granted) {
+                pendingUpdateInfo?.let { updateInfo ->
+                    notificationHelper.notifyUpdate(updateInfo)
+                    preferences.setLastNotifiedVersion(updateInfo.version)
+                    pendingUpdateInfo = null
+                }
+            }
+        }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         installSplashScreen()
@@ -49,7 +80,34 @@ class MainActivity : ComponentActivity() {
 
         // Check for updates on startup if notifications are enabled
         lifecycleScope.launch {
-            _updateAvailable.value = updateChecker.checkForUpdatesIfEnabled(BuildConfig.VERSION_NAME)
+            val updateInfo = updateChecker.checkForUpdatesIfEnabled(BuildConfig.VERSION_NAME)
+            _updateAvailable.value = updateInfo
+
+            if (updateInfo != null) {
+                val lastNotified = preferences.lastNotifiedVersion.first()
+                if (lastNotified == updateInfo.version) {
+                    // Already notified about this version — skip duplicate notification.
+                    return@launch
+                }
+
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+                    ContextCompat.checkSelfPermission(
+                        this@MainActivity,
+                        Manifest.permission.POST_NOTIFICATIONS
+                    ) != PackageManager.PERMISSION_GRANTED
+                ) {
+                    // Need runtime permission before posting; store the update info
+                    // and request it from the user.
+                    pendingUpdateInfo = updateInfo
+                    requestNotificationPermissionLauncher.launch(
+                        Manifest.permission.POST_NOTIFICATIONS
+                    )
+                } else {
+                    // API < 33 or permission already granted — post straight away.
+                    notificationHelper.notifyUpdate(updateInfo)
+                    preferences.setLastNotifiedVersion(updateInfo.version)
+                }
+            }
         }
 
         // EfinaAppRoot owns the theme, because the palette is driven by the
