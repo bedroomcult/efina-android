@@ -105,5 +105,4 @@ jobs:
           if-no-files-found: ignore
 
       - name: Lint
-        run: ./gradlew lintDebug --no-daemon
-        continue-on-error: true
+        run: ./gradlew lintDebug --no-daemon --stacktrace

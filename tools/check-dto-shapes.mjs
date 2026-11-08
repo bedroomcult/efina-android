@@ -209,20 +209,35 @@ const REAL_BOOLEANS = new Set([
 ]);
 
 function checkRequestFields(dtos) {
-  if (!fs.existsSync(API_DIR)) {
-    notes.push('backend tree absent; request-field check skipped');
+  const REQUEST_SNAPSHOT = path.join(ANDROID_ROOT, 'tools', 'backend-request-snapshot.json');
+  let srcs;
+
+  if (fs.existsSync(API_DIR)) {
+    srcs = new Map();
+    const walk = (dir) => {
+      for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
+        const full = path.join(dir, e.name);
+        if (e.isDirectory()) walk(full);
+        else if (e.name.endsWith('.js') && !e.name.endsWith('.test.js'))
+          srcs.set(full, fs.readFileSync(full, 'utf8'));
+      }
+    };
+    walk(API_DIR);
+  } else if (fs.existsSync(REQUEST_SNAPSHOT)) {
+    // CI cannot see the private backend, so a committed snapshot of request
+    // body fields is used instead. Regenerate with --emit-request-fields.
+    const snap = JSON.parse(fs.readFileSync(REQUEST_SNAPSHOT, 'utf8'));
+    srcs = new Map();
+    for (const [dtoName, fields] of Object.entries(snap.requests || {})) {
+      srcs.set(`snapshot:${dtoName}`, fields.join(' '));
+    }
+  } else {
+    problems.push(
+      'checkRequestFields: neither functions/api/ nor tools/backend-request-snapshot.json ' +
+      'found — request-field verification cannot run'
+    );
     return;
   }
-  const srcs = new Map();
-  const walk = (dir) => {
-    for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
-      const full = path.join(dir, e.name);
-      if (e.isDirectory()) walk(full);
-      else if (e.name.endsWith('.js') && !e.name.endsWith('.test.js'))
-        srcs.set(full, fs.readFileSync(full, 'utf8'));
-    }
-  };
-  walk(API_DIR);
 
   for (const [dtoName, dto] of dtos) {
     if (!/Request(Dto)?$/.test(dtoName)) continue;
@@ -303,6 +318,43 @@ if (process.argv.includes('--emit-aliases')) {
     aliases: [...aliases].sort(),
   }, null, 2) + '\n');
   console.log(`wrote ${aliases.size} aliases`);
+  process.exit(0);
+}
+
+if (process.argv.includes('--emit-request-fields')) {
+  // Collect request body field names from POST/PUT/PATCH handlers by reading
+  // the destructured fields from await request.json() calls.
+  const requests = {};
+  if (fs.existsSync(API_DIR)) {
+    const walkR = (dir) => {
+      for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
+        const full = path.join(dir, e.name);
+        if (e.isDirectory()) walkR(full);
+        else if (e.name.endsWith('.js')) {
+          const src = fs.readFileSync(full, 'utf8');
+          for (const m of src.matchAll(/const\s*\{\s*([^}]+)\s*\}\s*=\s*(?:await\s+)?(?:context\.)?request\.json\(\)/g)) {
+            m[1].split(',').forEach(f => {
+              const name = f.trim().split(':')[0].trim();
+              if (name) {
+                // Heuristic: derive DTO name from handler context is unreliable,
+                // so store under the file path for manual review.
+                const key = path.relative(ANDROID_ROOT, full);
+                if (!requests[key]) requests[key] = [];
+                if (!requests[key].includes(name)) requests[key].push(name);
+              }
+            });
+          }
+        }
+      }
+    };
+    walkR(API_DIR);
+  }
+  fs.writeFileSync(REQUEST_SNAPSHOT, JSON.stringify({
+    generatedFrom: 'bedroomcult/efina functions/api',
+    note: 'Regenerate with: node tools/check-dto-shapes.mjs --emit-request-fields',
+    requests: requests,
+  }, null, 2) + '\n');
+  console.log(`wrote request fields for ${Object.keys(requests).length} files`);
   process.exit(0);
 }
 

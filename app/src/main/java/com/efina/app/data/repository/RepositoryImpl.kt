@@ -25,9 +25,18 @@ import javax.inject.Singleton
  * start with no network crashed the app instead of showing an error.
  *
  * Every repository method now goes through here, so no call site can forget.
+ *
+ * CSRF retry: when `retryable` is true and the call fails with a 403 CSRF error,
+ * `onCsrfRefresh` is invoked (typically `refreshCsrfToken()`) and the block is
+ * retried once. Only idempotent methods (GET/PUT/DELETE) should pass
+ * `retryable = true`; POST writes are never auto-retried.
  */
-internal suspend fun <T> safeCall(block: suspend () -> Response<T>): Result<T> =
-    try {
+internal suspend fun <T> safeCall(
+    block: suspend () -> Response<T>,
+    retryable: Boolean = false,
+    onCsrfRefresh: suspend () -> Unit = {}
+): Result<T> {
+    val result = try {
         block().toResult()
     } catch (io: java.io.IOException) {
         Result.failure(
@@ -36,6 +45,26 @@ internal suspend fun <T> safeCall(block: suspend () -> Response<T>): Result<T> =
     } catch (e: Exception) {
         Result.failure(ApiException(0, e.message ?: "Unexpected error"))
     }
+
+    if (retryable && result is Result.Failure) {
+        val exception = result.exceptionOrNull()
+        if (exception is ApiException && exception.status == 403 &&
+            (exception.message ?: "").contains("CSRF", ignoreCase = true)) {
+            onCsrfRefresh()
+            return try {
+                block().toResult()
+            } catch (io: java.io.IOException) {
+                Result.failure(
+                    ApiException(0, "No connection. Check your network and try again.")
+                )
+            } catch (e: Exception) {
+                Result.failure(ApiException(0, e.message ?: "Unexpected error"))
+            }
+        }
+    }
+
+    return result
+}
 
 /**
  * Turns a Retrofit response into a Result, surfacing the backend's `error` string.
@@ -110,7 +139,11 @@ class AuthRepositoryImpl @Inject constructor(
     override fun currentUserFlow(): Flow<User?> = userState.asStateFlow()
 
     override suspend fun refreshCurrentUser(): Result<User> =
-        safeCall { api.getCurrentUser() }.map { it.toDomain() }
+        safeCall(
+            block = { api.getCurrentUser() },
+            retryable = true,
+            onCsrfRefresh = { refreshCsrfToken() }
+        ).map { it.toDomain() }
             .onSuccess { userState.value = it }
 
     override suspend fun refreshCsrfToken(): Result<Unit> =

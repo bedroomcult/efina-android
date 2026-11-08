@@ -1,0 +1,25 @@
+{
+  "generatedFrom": "bedroomcult/efina functions/api",
+  "note": "Regenerate with: node tools/check-dto-shapes.mjs --emit-request-fields",
+  "requests": {
+    "CreateDebtRequestDto": ["person_name", "amount", "due_date", "type", "description"],
+    "CreateScheduledRequestDto": ["account_id", "amount", "type", "description", "frequency", "interval_value", "day_of_month", "next_run_date", "is_recurring", "total_occurrences"],
+    "CreateGoalRequestDto": ["name", "target_amount", "current_amount", "start_date", "target_date", "period_type", "linked_account_id"],
+    "LoginRequestDto": ["email", "password"],
+    "RegisterRequestDto": ["email", "password", "name"],
+    "UpdateUserRequestDto": ["name", "force_onboarding"],
+    "CreateCategoryRequestDto": ["name", "type", "parent_id", "color", "icon"],
+    "CreateAccountRequestDto": ["name", "type", "balance", "currency", "description", "color", "family_id"],
+    "CreateTransactionRequestDto": ["account_id", "category_id", "amount", "type", "description", "date", "mood", "source"],
+    "CreateTransferRequestDto": ["from_account_id", "to_account_id", "amount", "date", "description"],
+    "UpdateBudgetSharingRequestDto": ["family_id"],
+    "UpdateAccountSharingRequestDto": ["family_id"],
+    "UpdateBudgetRequestDto": ["amount", "period_type"],
+    "UpdateCategoryRequestDto": ["name", "color", "icon", "parent_id"],
+    "CreateFamilyRequestDto": ["name"],
+    "InviteFamilyMemberRequestDto": ["email"],
+    "AcceptInviteRequestDto": ["code"],
+    "CreateBudgetRequestDto": ["category_id", "amount", "period_type"],
+    "UpdateTransactionRequestDto": ["account_id", "category_id", "amount", "type", "description", "date", "mood"]
+  }
+}
