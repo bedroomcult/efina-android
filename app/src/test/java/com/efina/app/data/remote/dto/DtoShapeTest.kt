@@ -97,6 +97,23 @@ class DtoShapeTest {
     }
 
     @Test
+    fun `category is_shared decodes from sqlite integers`() {
+        // GET /categories returns family_id/is_shared from D1 as raw 0/1 integers.
+        val shared = json.decodeFromString(
+            CategoryDto.serializer(),
+            """{"id":1,"name":"Food","is_shared":1,"family_id":7}"""
+        )
+        assertTrue("category with is_shared=1 must decode as shared", shared.is_shared)
+
+        val personal = json.decodeFromString(
+            CategoryDto.serializer(),
+            """{"id":2,"name":"Food","is_shared":0,"family_id":null}"""
+        )
+        assertFalse("category with is_shared=0 must not decode as shared", personal.is_shared)
+        assertNull(personal.family_id)
+    }
+
+    @Test
     fun `account balance edit always sends update_strategy`() {
         // accounts/[id].js only writes the reconciliation transaction when
         // update_strategy is present; without it the PUT takes the plain-UPDATE

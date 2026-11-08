@@ -246,6 +246,12 @@ private fun CategoryRow(
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
+                if (category.isShared) {
+                    PillTag(
+                        text = "Shared",
+                        modifier = Modifier.align(Alignment.End)
+                    )
+                }
             }
             if (!category.isSystem) {
                 IconButton(onClick = onDelete) {

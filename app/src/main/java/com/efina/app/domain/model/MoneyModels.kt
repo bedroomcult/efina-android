@@ -173,6 +173,8 @@ data class Category(
     val parentId: Long?,
     val parentName: String? = null,
     val isSystem: Boolean = false,
+    /** True when this category is shared with the caller's family. */
+    val isShared: Boolean = false,
     /** "income" or "expense"; POST categories requires it. */
     val type: String? = null,
     /**

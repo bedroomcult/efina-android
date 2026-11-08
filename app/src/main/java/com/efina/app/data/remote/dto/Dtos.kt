@@ -289,6 +289,9 @@ data class CategoryDto(
     val created_at: String? = null,
     /** Present on some list responses. */
     val type: String? = null,
+    /** True when the category is shared with the caller's family. */
+    @Serializable(with = LenientBoolean::class)
+    val is_shared: Boolean = false,
     /** GET categories returns roots with their children nested one level deep. */
     val subcategories: List<CategoryDto> = emptyList()
 )

@@ -62,6 +62,7 @@ fun CategoryDto.toDomain(): Category = Category(
     icon = icon,
     parentId = parent_id,
     isSystem = is_system == 1,
+    isShared = is_shared,
     type = type,
     children = subcategories.map { it.toDomain() }
 )
