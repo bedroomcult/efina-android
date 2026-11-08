@@ -64,8 +64,8 @@ class StatsViewModel @Inject constructor(
             val achievementsJob = async { insightsRepository.getAchievements() }
             val leaderboardJob = async { insightsRepository.getLeaderboard(10) }
 
-            val txPage = txJob.await().getOrNull()
-            val transactions = txPage?.transactions ?: emptyList()
+            val txPageResult = runCatching { txJob.await() }
+            val transactions = txPageResult.getOrNull()?.transactions ?: emptyList()
 
             val income = transactions.filter { it.type == TransactionType.INCOME }
                 .sumOf { it.amount }
@@ -79,41 +79,41 @@ class StatsViewModel @Inject constructor(
                 .sortedByDescending { it.total }
 
             // Await each job once and store results, then inspect for failures.
-            val forecastResult = forecastJob.await()
-            val healthResult = healthJob.await()
-            val achievementsResult = achievementsJob.await()
-            val leaderboardResult = leaderboardJob.await()
+            val forecastResult = runCatching { forecastJob.await() }
+            val healthResult = runCatching { healthJob.await() }
+            val achievementsResult = runCatching { achievementsJob.await() }
+            val leaderboardResult = runCatching { leaderboardJob.await() }
 
             // Track which jobs failed so we can surface an error instead of silently
             // rendering empty lists.
             val failedJobs = listOf(
-                txJob to txPage,
+                txJob to txPageResult,
                 forecastJob to forecastResult,
                 healthJob to healthResult,
                 achievementsJob to achievementsResult,
                 leaderboardJob to leaderboardResult
-            ).filter { (job, result) -> result == null && job.exceptionOrNull() != null }
+            ).filter { (_, result) -> result.isFailure }
 
             val allFailed = txPage == null && transactions.isEmpty() &&
-                forecastResult == null && healthResult == null &&
-                achievementsResult == null && leaderboardResult == null
+                forecastResult.isFailure && healthResult.isFailure &&
+                achievementsResult.isFailure && leaderboardResult.isFailure
 
             _state.value = StatsUiState(
                 loading = false,
                 income = income,
                 expense = expense,
                 byCategory = byCategory,
-                forecast = forecastResult,
-                health = healthResult,
-                achievements = achievementsResult ?: emptyList(),
-                leaderboard = leaderboardResult ?: emptyList(),
+                forecast = forecastResult.getOrNull(),
+                health = healthResult.getOrNull(),
+                achievements = achievementsResult.getOrDefault(emptyList()),
+                leaderboard = leaderboardResult.getOrDefault(emptyList()),
                 error = if (allFailed) {
-                    failedJobs.firstOrNull()?.let { (job, _) ->
-                        job.exceptionOrNull()?.message
+                    failedJobs.firstOrNull()?.let { (_, result) ->
+                        result.exceptionOrNull()?.message
                     } ?: "Could not load statistics."
                 } else if (failedJobs.isNotEmpty()) {
-                    failedJobs.firstOrNull()?.let { (job, _) ->
-                        job.exceptionOrNull()?.message
+                    failedJobs.firstOrNull()?.let { (_, result) ->
+                        result.exceptionOrNull()?.message
                     } ?: null
                 } else null
             )

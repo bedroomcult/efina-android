@@ -27,8 +27,6 @@ import java.net.URL
  */
 object CrashReporter {
 
-    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
-
     /** Rate limit: one report per unique top stack frame per process. */
     private val seen = mutableSetOf<String>()
 

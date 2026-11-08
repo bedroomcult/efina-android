@@ -75,21 +75,27 @@ class HomeViewModel @Inject constructor(
             val goalJob = async { goalRepository.getGoals() }
             val healthJob = async { insightsRepository.getHealthScore() }
 
-            val accounts = accountsJob.await().getOrNull() ?: emptyList()
-            val txPage = txJob.await().getOrNull()
-            val budgets = budgetJob.await().getOrNull() ?: emptyList()
-            val goals = goalJob.await().getOrNull() ?: emptyList()
-            val health = healthJob.await().getOrNull()
+            val accountsResult = runCatching { accountsJob.await() }
+            val txPageResult = runCatching { txJob.await() }
+            val budgetsResult = runCatching { budgetJob.await() }
+            val goalsResult = runCatching { goalJob.await() }
+            val healthResult = runCatching { healthJob.await() }
+
+            val accounts = accountsResult.getOrDefault(emptyList())
+            val txPage = txPageResult.getOrNull()
+            val budgets = budgetsResult.getOrDefault(emptyList())
+            val goals = goalsResult.getOrDefault(emptyList())
+            val health = healthResult.getOrNull()
 
             // Track which jobs failed so we can surface an error instead of
             // silently rendering empty panels.
             val failedJobs = listOf(
-                accountsJob to accounts,
-                txJob to txPage,
-                budgetJob to budgets,
-                goalJob to goals,
-                healthJob to health
-            ).filter { (job, result) -> result == null && job.exceptionOrNull() != null }
+                accountsJob to accountsResult,
+                txJob to txPageResult,
+                budgetJob to budgetsResult,
+                goalJob to goalsResult,
+                healthJob to healthResult
+            ).filter { (_, result) -> result.isFailure }
 
             val transactions = txPage?.transactions ?: emptyList()
             val income = transactions.filter { it.type == TransactionType.INCOME }
@@ -101,14 +107,14 @@ class HomeViewModel @Inject constructor(
             // instead of zeros that look like a real empty account.
             val allFailed = accounts.isEmpty() && txPage == null && budgets.isEmpty() && goals.isEmpty()
             val failureMessage = if (allFailed) {
-                failedJobs.firstOrNull()?.let { (job, _) ->
-                    job.exceptionOrNull()?.message
+                failedJobs.firstOrNull()?.let { (_, result) ->
+                    result.exceptionOrNull()?.message
                 } ?: "Could not load your data. Pull to retry."
             } else if (failedJobs.isNotEmpty()) {
                 // Partial failure: at least one panel failed. Surface the first error
                 // but still show whatever data loaded.
-                failedJobs.firstOrNull()?.let { (job, _) ->
-                    job.exceptionOrNull()?.message
+                failedJobs.firstOrNull()?.let { (_, result) ->
+                    result.exceptionOrNull()?.message
                 } ?: null
             } else null
 

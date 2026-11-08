@@ -443,12 +443,8 @@ class FamilyRepositoryImpl @Inject constructor(
 
     override suspend fun acceptInvite(code: String): Result<FamilyGroup> =
         safeCall { api.acceptFamilyInvite(AcceptInviteRequestDto(code.trim().uppercase())) }
-            .map { it.family }
-            .mapNotNull { family -> family.toDomain() }
-            .map { family ->
-                if (family == null) throw IllegalStateException("Invite accepted but no family returned")
-                family
-            }
+            .map { it.family ?: throw IllegalStateException("Invite accepted but no family returned") }
+            .map { family -> family.toDomain() }
 
     override suspend fun removeMember(id: Long, userId: Long): Result<Unit> =
         safeCall { api.removeFamilyMember(id, RemoveMemberRequestDto(userId)) }.map { }
