@@ -141,7 +141,7 @@ class AuthRepositoryImpl @Inject constructor(
     override fun currentUserFlow(): Flow<User?> = userState.asStateFlow()
 
     override suspend fun refreshCurrentUser(): Result<User> =
-        safeCall({ api.getCurrentUser() }, retryable = true) { refreshCsrfToken() }
+        safeCall({ api.getCurrentUser() }, true, { refreshCsrfToken() })
             .map { it.toDomain() }
             .onSuccess { userState.value = it }
 
