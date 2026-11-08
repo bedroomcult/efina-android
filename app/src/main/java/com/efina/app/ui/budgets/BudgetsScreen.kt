@@ -6,6 +6,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Groups
 import androidx.compose.material3.*
@@ -131,12 +132,12 @@ fun BudgetsScreen(
 
     if (showCategoryPicker) {
         val selectable = state.categories
-            .filter { it.type == null || it.type.equals(com.efina.app.domain.model.TransactionType.EXPENSE, true) }
+            .filter { it.type == null || it.type.equals("expense", true) }
         CategoryPickerSheet(
             roots = selectable,
             selectedId = categoryId,
-            onSelect = { id ->
-                categoryId = id
+            onSelect = { category ->
+                categoryId = category.id
                 showCategoryPicker = false
                 creating = true
             },
