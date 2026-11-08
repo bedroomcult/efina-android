@@ -71,7 +71,7 @@ class PreferencesManager @Inject constructor(
         dataStore.edit { prefs -> prefs[KEY_UPDATE_NOTIFICATIONS] = enabled }
     }
     
-    suspend fun setLastNotifiedVersion(version: String?) {
+    suspend fun setLastNotifiedVersion(version: String) {
         dataStore.edit { prefs -> prefs[KEY_LAST_NOTIFIED_VERSION] = version }
     }
     
