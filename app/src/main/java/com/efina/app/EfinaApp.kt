@@ -1,8 +1,6 @@
 package com.efina.app
 
 import android.app.Application
-import androidx.hilt.work.HiltWorkerFactory
-import androidx.work.Configuration
 import com.efina.app.util.CrashReporter
 import com.efina.app.ui.theme.ThemePreference
 import kotlinx.coroutines.flow.first
@@ -11,10 +9,7 @@ import dagger.hilt.android.HiltAndroidApp
 import javax.inject.Inject
 
 @HiltAndroidApp
-class EfinaApp : Application(), Configuration.Provider {
-
-    @Inject
-    lateinit var workerFactory: HiltWorkerFactory
+class EfinaApp : Application() {
 
     @Inject
     lateinit var preferences: com.efina.app.util.PreferencesManager
@@ -31,9 +26,4 @@ class EfinaApp : Application(), Configuration.Provider {
             ThemePreference.apply(preferences.theme.first())
         }
     }
-
-    override val workManagerConfiguration: Configuration
-        get() = Configuration.Builder()
-            .setWorkerFactory(workerFactory)
-            .build()
 }
