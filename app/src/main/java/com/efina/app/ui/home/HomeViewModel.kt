@@ -87,14 +87,14 @@ class HomeViewModel @Inject constructor(
             val goals = goalsResult.getOrDefault(emptyList())
             val health = healthResult.getOrNull()
 
-            // Track which jobs failed so we can surface an error instead of
-            // silently rendering empty panels.
+            // Track which critical jobs failed so we can surface an error instead of
+            // silently rendering empty panels. Health score is optional — a failure
+            // there just means no health card is shown, not an error message.
             val failedJobs = listOf(
                 accountsJob to accountsResult,
                 txJob to txPageResult,
                 budgetJob to budgetsResult,
-                goalJob to goalsResult,
-                healthJob to healthResult
+                goalJob to goalsResult
             ).filter { (_, result) -> result.isFailure }
 
             val transactions = txPage?.transactions ?: emptyList()
