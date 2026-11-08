@@ -274,7 +274,7 @@ private fun TransactionRow(
                 else -> Triple(
                     MaterialTheme.colorScheme.onSurfaceVariant,
                     MaterialTheme.colorScheme.surfaceContainerHighest,
-                    Icons.Default.Help
+                    Icons.Default.Add
                 )
             }
             Box(
