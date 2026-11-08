@@ -75,11 +75,11 @@ class HomeViewModel @Inject constructor(
             val goalJob = async { goalRepository.getGoals() }
             val healthJob = async { insightsRepository.getHealthScore() }
 
-            val accountsResult = runCatching { accountsJob.await() }
-            val txPageResult = runCatching { txJob.await() }
-            val budgetsResult = runCatching { budgetJob.await() }
-            val goalsResult = runCatching { goalJob.await() }
-            val healthResult = runCatching { healthJob.await() }
+            val accountsResult = accountsJob.await()
+            val txPageResult = txJob.await()
+            val budgetsResult = budgetJob.await()
+            val goalsResult = goalJob.await()
+            val healthResult = healthJob.await()
 
             val accounts = accountsResult.getOrDefault(emptyList())
             val txPage = txPageResult.getOrNull()

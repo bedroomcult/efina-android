@@ -64,7 +64,7 @@ class StatsViewModel @Inject constructor(
             val achievementsJob = async { insightsRepository.getAchievements() }
             val leaderboardJob = async { insightsRepository.getLeaderboard(10) }
 
-            val txPageResult = runCatching { txJob.await() }
+            val txPageResult = txJob.await()
             val transactions = txPageResult.getOrNull()?.transactions ?: emptyList()
 
             val income = transactions.filter { it.type == TransactionType.INCOME }
@@ -79,10 +79,10 @@ class StatsViewModel @Inject constructor(
                 .sortedByDescending { it.total }
 
             // Await each job once and store results, then inspect for failures.
-            val forecastResult = runCatching { forecastJob.await() }
-            val healthResult = runCatching { healthJob.await() }
-            val achievementsResult = runCatching { achievementsJob.await() }
-            val leaderboardResult = runCatching { leaderboardJob.await() }
+            val forecastResult = forecastJob.await()
+            val healthResult = healthJob.await()
+            val achievementsResult = achievementsJob.await()
+            val leaderboardResult = leaderboardJob.await()
 
             // Track which jobs failed so we can surface an error instead of silently
             // rendering empty lists.
