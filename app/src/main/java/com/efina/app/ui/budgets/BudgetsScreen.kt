@@ -46,6 +46,10 @@ fun BudgetsScreen(
     // does not replay the staggered reveal.
     RevealLatch.currentScreen = "budgets"
     var creating by remember { mutableStateOf(false) }
+    var showCategoryPicker by remember { mutableStateOf(false) }
+    var categoryId by remember { mutableStateOf<Long?>(null) }
+    var amount by remember { mutableStateOf("") }
+    var period by remember { mutableStateOf(com.efina.app.domain.model.PeriodType.MONTHLY) }
     var pendingDelete by remember { mutableStateOf<Budget?>(null) }
     var editing by remember { mutableStateOf<Budget?>(null) }
     var detail by remember { mutableStateOf<Budget?>(null) }
@@ -125,13 +129,40 @@ fun BudgetsScreen(
         }
     }
 
+    if (showCategoryPicker) {
+        val selectable = state.categories
+            .filter { it.type == null || it.type.equals(com.efina.app.domain.model.TransactionType.EXPENSE, true) }
+        CategoryPickerSheet(
+            roots = selectable,
+            selectedId = categoryId,
+            onSelect = { id ->
+                categoryId = id
+                showCategoryPicker = false
+                creating = true
+            },
+            onDismiss = { showCategoryPicker = false }
+        )
+    }
+
     if (creating) {
         CreateBudgetDialog(
             categories = state.categories,
+            categoryId = categoryId,
+            amount = amount,
+            period = period,
             saving = state.saving,
             onDismiss = { creating = false },
-            onCreate = { request ->
-                viewModel.create(request) { creating = false }
+            onCategoryTap = { creating = false; showCategoryPicker = true },
+            onAmountChange = { amount = it },
+            onPeriodChange = { period = it },
+            onCreate = { catId, amt, per ->
+                viewModel.create(
+                    CreateBudgetRequest(
+                        categoryId = catId,
+                        amount = amt.toDouble(),
+                        periodType = per
+                    )
+                ) { creating = false }
             }
         )
     }
@@ -379,13 +410,32 @@ private fun BudgetCard(
 @Composable
 private fun CreateBudgetDialog(
     categories: List<com.efina.app.domain.model.Category>,
+    categoryId: Long?,
+    amount: String,
+    period: com.efina.app.domain.model.PeriodType,
     saving: Boolean,
     onDismiss: () -> Unit,
-    onCreate: (CreateBudgetRequest) -> Unit
+    onCategoryTap: () -> Unit,
+    onAmountChange: (String) -> Unit,
+    onPeriodChange: (com.efina.app.domain.model.PeriodType) -> Unit,
+    onCreate: (Long, String, com.efina.app.domain.model.PeriodType) -> Unit
 ) {
-    var categoryId by remember { mutableStateOf(categories.firstOrNull()?.id) }
-    var amount by remember { mutableStateOf("") }
-    var period by remember { mutableStateOf(PeriodType.MONTHLY) }
+    val chosen = categoryId?.let { id ->
+        categories.firstNotNullOfOrNull { root ->
+            when {
+                root.id == id -> root
+                else -> root.children.firstOrNull { it.id == id }
+            }
+        }
+    }
+    val chosenLabel = when {
+        chosen == null -> "Choose a category"
+        chosen.parentId == null -> chosen.name
+        else -> {
+            val parent = categories.firstOrNull { it.id == chosen.parentId }
+            if (parent != null) "${parent.name} · ${chosen.name}" else chosen.name
+        }
+    }
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -399,34 +449,39 @@ private fun CreateBudgetDialog(
                         style = MaterialTheme.typography.bodySmall
                     )
                 } else {
-                    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        categories.take(8).forEach { cat ->
-                            FilterChip(
-                                selected = categoryId == cat.id,
-                                onClick = { categoryId = cat.id },
-                                label = { Text(cat.name) },
-                                shape = EfinaCorners.pill
-                            )
-                        }
+                    OutlinedButton(
+                        onClick = onCategoryTap,
+                        shape = EfinaCorners.menu,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text(
+                            text = chosenLabel,
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = if (chosen == null) MaterialTheme.colorScheme.onSurfaceVariant
+                            else MaterialTheme.colorScheme.onSurface,
+                            maxLines = 1,
+                            modifier = Modifier.weight(1f)
+                        )
+                        Icon(
+                            Icons.Filled.ArrowDropDown,
+                            contentDescription = "Show categories",
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
                     }
                 }
                 OutlinedTextField(
                     value = amount,
-                    onValueChange = { input ->
-                        if (input.isEmpty() || input.matches(Regex("^\\d{0,15}(\\.\\d{0,2})?$"))) {
-                            amount = input
-                        }
-                    },
+                    onValueChange = onAmountChange,
                     label = { Text("Limit") },
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                     shape = EfinaCorners.menu
                 )
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    PeriodType.entries.forEach { p ->
+                    com.efina.app.domain.model.PeriodType.entries.forEach { p ->
                         FilterChip(
                             selected = period == p,
-                            onClick = { period = p },
+                            onClick = { onPeriodChange(p) },
                             label = { Text(p.label) },
                             shape = EfinaCorners.pill
                         )
@@ -438,13 +493,7 @@ private fun CreateBudgetDialog(
             TextButton(
                 enabled = !saving && categoryId != null && (amount.toDoubleOrNull() ?: 0.0) > 0.0,
                 onClick = {
-                    onCreate(
-                        CreateBudgetRequest(
-                            categoryId = categoryId!!,
-                            amount = amount.toDouble(),
-                            periodType = period
-                        )
-                    )
+                    onCreate(categoryId!!, amount, period)
                 }
             ) { Text("Create") }
         },
