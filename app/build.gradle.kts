@@ -80,6 +80,14 @@ android {
         buildConfig = true
     }
 
+    lint {
+        // Kotlin 2.0 + AGP lint crashes on NonNullableMutableLiveDataDetector
+        // (IncompatibleClassChangeError). Disable lint for release builds until
+        // AGP supports Kotlin 2.0.
+        checkReleaseBuilds = false
+        abortOnError = false
+    }
+
 
     packaging {
         resources {
