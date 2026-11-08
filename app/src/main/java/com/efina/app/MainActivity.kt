@@ -61,8 +61,10 @@ class MainActivity : ComponentActivity() {
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
             if (granted) {
                 pendingUpdateInfo?.let { updateInfo ->
-                    notificationHelper.notifyUpdate(updateInfo)
-                    preferences.setLastNotifiedVersion(updateInfo.version)
+                    lifecycleScope.launch {
+                        notificationHelper.notifyUpdate(updateInfo)
+                        preferences.setLastNotifiedVersion(updateInfo.version)
+                    }
                     pendingUpdateInfo = null
                 }
             }
