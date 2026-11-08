@@ -46,7 +46,9 @@ internal suspend fun <T> safeCall(
         Result.failure(ApiException(0, e.message ?: "Unexpected error"))
     }
 
-    if (retryable && result is Result.Failure) {
+    // CSRF retry: a stale CSRF token causes 403; refresh once and retry.
+    // Only idempotent calls (GET/PUT/DELETE) should pass retryable = true.
+    if (retryable && result.isFailure) {
         val exception = result.exceptionOrNull()
         if (exception is ApiException && exception.status == 403 &&
             (exception.message ?: "").contains("CSRF", ignoreCase = true)) {
@@ -139,11 +141,8 @@ class AuthRepositoryImpl @Inject constructor(
     override fun currentUserFlow(): Flow<User?> = userState.asStateFlow()
 
     override suspend fun refreshCurrentUser(): Result<User> =
-        safeCall(
-            block = { api.getCurrentUser() },
-            retryable = true,
-            onCsrfRefresh = { refreshCsrfToken() }
-        ).map { it.toDomain() }
+        safeCall({ api.getCurrentUser() }, retryable = true) { refreshCsrfToken() }
+            .map { it.toDomain() }
             .onSuccess { userState.value = it }
 
     override suspend fun refreshCsrfToken(): Result<Unit> =

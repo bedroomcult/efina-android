@@ -90,7 +90,10 @@ android {
 
 dependencies {
     // Security
-    implementation("androidx.security:security-crypto:1.0.0")
+    // NOTE: security-crypto has no stable release; 1.1.0-alpha06 is the latest.
+    // At-rest token encryption depends on it. Track androidx.security releases
+    // and upgrade when a stable version ships.
+    implementation("androidx.security:security-crypto:1.1.0-alpha06")
     
     // Core Android
     implementation("androidx.core:core-ktx:1.12.0")
