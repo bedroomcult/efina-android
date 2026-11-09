@@ -151,7 +151,7 @@ dependencies {
     implementation("androidx.core:core-splashscreen:1.0.1")
     
     // Charts
-    implementation("io.github.ehsannarmani:compose-charts:1.0.0")
+    implementation("io.github.ehsannarmani:compose-charts:0.0.11")
     
     // Testing
     testImplementation("junit:junit:4.13.2")
