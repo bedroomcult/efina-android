@@ -35,12 +35,16 @@ fun CashFlowScreen(viewModel: CashFlowViewModel = hiltViewModel()) {
                 }
             } else if (state.points.isEmpty()) {
                 Column(Modifier.fillMaxSize()) {
-                    Text(
-                        "No transaction data for the last 30 days.",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.fillMaxWidth().align(Alignment.Center)
-                    )
+                    Box(
+                        modifier = Modifier.fillMaxWidth(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            "No transaction data for the last 30 days.",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
                 }
             } else {
                 Column(Modifier.fillMaxSize()) {
@@ -89,15 +93,21 @@ private fun StatChip(
     color: Color,
     container: Color,
 ) {
-    Column(Modifier.background(container, EfinaCorners.menu).padding(16.dp)) {
-        Text(label, style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant)
-        Spacer(Modifier.height(4.dp))
-        Text(
-            formatCurrency(amount),
-            style = MaterialTheme.typography.titleMedium,
-            color = color
-        )
+    Surface(
+        modifier = Modifier.padding(16.dp),
+        shape = EfinaCorners.menu,
+        color = container
+    ) {
+        Column(Modifier.padding(16.dp)) {
+            Text(label, style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Spacer(Modifier.height(4.dp))
+            Text(
+                formatCurrency(amount),
+                style = MaterialTheme.typography.titleMedium,
+                color = color
+            )
+        }
     }
 }
 

@@ -37,7 +37,7 @@ fun CashFlowLineChart(
 
                 val xAxis = xAxis
                 xAxis.position = XAxis.XAxisPosition.BOTTOM
-                xAxis.isDrawGridLinesEnabled = false
+                xAxis.setDrawGridLinesEnabled(false)
                 xAxis.granularity = 1f
                 xAxis.labelCount = points.size.coerceAtLeast(1).coerceAtMost(10)
                 xAxis.valueFormatter = object : ValueFormatter() {
@@ -50,7 +50,7 @@ fun CashFlowLineChart(
                 val leftAxis = axisLeft
                 leftAxis.isEnabled = true
                 leftAxis.labelCount = 5
-                leftAxis.isDrawGridLinesEnabled = false
+                leftAxis.setDrawGridLinesEnabled(false)
 
                 val rightAxis = axisRight
                 rightAxis.isEnabled = false
@@ -77,8 +77,8 @@ fun CashFlowLineChart(
                 val lineData = LineData(dataSet)
                 lineData.setDrawValues(false)
 
-                chart.data = lineData
-                chart.invalidate()
+                setData(lineData)
+                postInvalidate()
             }
         },
     )
