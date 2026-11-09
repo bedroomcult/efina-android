@@ -58,12 +58,11 @@ fun CashFlowLineChart(
         },
         update = { chart ->
             chart.apply {
-                val dataSet = LineDataSet(
-                    points.mapIndexed { index, point ->
-                        Entry(index.toFloat(), point.value.toFloat())
-                    },
-                    "Net Flow"
-                ).apply {
+                val entries = points.mapIndexed { index, point ->
+                    Entry(index.toFloat(), point.value.toFloat())
+                }
+
+                val dataSet = LineDataSet(entries, "Net Flow").apply {
                     setColor(0xFF10B981.toInt())
                     setCircleColor(0xFF10B981.toInt())
                     circleRadius = 3f
