@@ -1,15 +1,22 @@
 package com.efina.app.ui.components.charts
 
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material3.Surface
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import ir.ehsannarmani.compose_charts.LineChart
+import ir.ehsannarmani.compose_charts.models.DotProperties
+import ir.ehsannarmani.compose_charts.models.LabelProperties
+import ir.ehsannarmani.compose_charts.models.Line
+import ir.ehsannarmani.compose_charts.models.ZeroLineProperties
 
 data class CashFlowPoint(
     val date: String,
@@ -23,7 +30,7 @@ fun CashFlowLineChart(
     modifier: Modifier = Modifier,
 ) {
     if (points.isEmpty()) {
-        Box(
+        androidx.compose.foundation.layout.Box(
             modifier = modifier.fillMaxWidth().height(200.dp),
             contentAlignment = Alignment.Center
         ) {
@@ -32,77 +39,39 @@ fun CashFlowLineChart(
         return
     }
 
-    val minValue = points.minOfOrNull { it.value } ?: 0.0
-    val maxValue = points.maxOfOrNull { it.value } ?: 0.0
-    val range = if (maxValue == minValue) 1.0 else maxValue - minValue
+    val values = points.map { it.value }
+    val minValue = values.minOrNull() ?: 0.0
+    val maxValue = values.maxOrNull() ?: 0.0
 
-    Box(
+    LineChart(
         modifier = modifier.fillMaxWidth().height(200.dp),
-        contentAlignment = Alignment.Center
-    ) {
-        Column(modifier = Modifier.fillMaxSize()) {
-            // Zero line
-            if (minValue < 0 && maxValue > 0) {
-                Surface(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(1.dp)
-                        .align(Alignment.CenterHorizontally),
-                    color = Color(0xFF9CA3AF)
-                ) { }
-            }
-
-            // Chart area with points and connecting lines
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 24.dp)
-            ) {
-                val pointCount = points.size
-                val spacing = if (pointCount > 1) 1f / (pointCount - 1) else 0f
-
-                for (i in points.indices) {
-                    val point = points[i]
-                    val normalizedY = (point.value.toFloat() - minValue.toFloat()) / range.toFloat()
-                    val yFromTop = 1f - normalizedY
-
-                    Column(
-                        modifier = Modifier
-                            .weight(1f)
-                            .align(Alignment.Bottom)
-                            .padding(top = (yFromTop * 70f).dp)
-                    ) {
-                        // Connecting line to previous point
-                        if (i > 0) {
-                            Surface(
-                                modifier = Modifier
-                                    .width(1.dp)
-                                    .fillMaxHeight()
-                                    .align(Alignment.CenterHorizontally),
-                                color = Color(0xFF10B981)
-                            ) { }
-                        }
-
-                        // Point dot
-                        Surface(
-                            modifier = Modifier
-                                .size(6.dp)
-                                .align(Alignment.CenterHorizontally)
-                                .padding(bottom = 2.dp),
-                            color = Color(0xFF10B981),
-                            shape = CircleShape
-                        ) { }
-
-                        // Date label
-                        Text(
-                            text = point.displayDate,
-                            color = Color(0xFF6B7280),
-                            fontSize = 10.sp,
-                            modifier = Modifier.align(Alignment.CenterHorizontally)
-                        )
-                    }
-                }
-            }
-        }
-    }
+        data = listOf(
+            Line(
+                label = "Net Flow",
+                values = values,
+                color = Brush.solid(Color(0xFF10B981)),
+                dotProperties = DotProperties(
+                    enabled = true,
+                    radius = 4.dp,
+                    color = Brush.solid(Color(0xFF10B981)),
+                    strokeWidth = 2.dp,
+                    strokeColor = Brush.solid(Color(0xFF10B981))
+                )
+            )
+        ),
+        curvedEdges = false,
+        labelProperties = LabelProperties(
+            enabled = true,
+            labels = points.map { it.displayDate },
+            textStyle = TextStyle.Default.copy(fontSize = 10.sp),
+            padding = 8.dp
+        ),
+        zeroLineProperties = ZeroLineProperties(
+            enabled = minValue < 0 && maxValue > 0,
+            color = Brush.solid(Color(0xFF9CA3AF)),
+            thickness = 1.dp
+        ),
+        maxValue = if (maxValue == minValue) maxValue + 1.0 else maxValue,
+        minValue = if (maxValue == minValue) minValue - 1.0 else minValue
+    )
 }
