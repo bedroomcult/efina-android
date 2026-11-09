@@ -44,7 +44,7 @@ fun HomeScreen(
     onNavigateToTransactions: () -> Unit,
     onNavigateToBudgets: () -> Unit,
     onNavigateToGoals: () -> Unit,
-    onNavigateToStats: () -> Unit,
+    onNavigateToCashFlow: () -> Unit,
     onNavigateToSettings: () -> Unit,
     viewModel: HomeViewModel = hiltViewModel()
 ) {

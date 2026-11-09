@@ -35,6 +35,7 @@ import com.efina.app.ui.scheduled.ScheduledScreen
 import com.efina.app.ui.family.FamilyScreen
 import com.efina.app.ui.home.HomeScreen
 import com.efina.app.ui.settings.SettingsScreen
+import com.efina.app.ui.cashflow.CashFlowScreen
 import com.efina.app.ui.stats.StatsScreen
 import com.efina.app.ui.transactions.TransactionFormScreen
 import com.efina.app.ui.transactions.TransactionsScreen
@@ -101,7 +102,7 @@ sealed class Screen(val route: String) {
     }
     data object Budgets : Screen("budgets")
     data object Goals : Screen("goals")
-    data object Stats : Screen("stats")
+    data object CashFlow : Screen("cashflow")
     data object Settings : Screen("settings")
     data object Categories : Screen("categories")
     data object Family : Screen("family")
@@ -115,7 +116,7 @@ private val bottomNavItems = listOf(
     NavItem(Screen.Home, Icons.Default.Home, "Home"),
     NavItem(Screen.Transactions, Icons.Default.Receipt, "Activity"),
     NavItem(Screen.Budgets, Icons.Default.PieChart, "Budgets"),
-    NavItem(Screen.Stats, Icons.Default.BarChart, "Stats"),
+    NavItem(Screen.CashFlow, Icons.Default.MonetizationOn, "Cash Flow"),
     NavItem(Screen.Settings, Icons.Default.Person, "Profile")
 )
 
@@ -220,7 +221,7 @@ fun EfinaAppRoot(
                         onNavigateToTransactions = { navController.navigate(Screen.Transactions.route) },
                         onNavigateToBudgets = { navController.navigate(Screen.Budgets.route) },
                         onNavigateToGoals = { navController.navigate(Screen.Goals.route) },
-                        onNavigateToStats = { navController.navigate(Screen.Stats.route) },
+                        onNavigateToCashFlow = { navController.navigate(Screen.CashFlow.route) },
                         onNavigateToSettings = { navController.navigate(Screen.Settings.route) }
                     )
                 }
@@ -316,10 +317,10 @@ fun EfinaAppRoot(
                     ReloadOnChange(DataEvents.Domain.GOALS, DataEvents.Domain.ACCOUNTS) { gVm.load() }
                     GoalsScreen(viewModel = gVm)
                 }
-                composable(Screen.Stats.route) {
-                    val sVm: com.efina.app.ui.stats.StatsViewModel = hiltViewModel()
-                    ReloadOnChange(DataEvents.Domain.TRANSACTIONS) { sVm.load() }
-                    StatsScreen(viewModel = sVm)
+                composable(Screen.CashFlow.route) {
+                    val cfVm: com.efina.app.ui.cashflow.CashFlowViewModel = hiltViewModel()
+                    ReloadOnChange(DataEvents.Domain.TRANSACTIONS) { cfVm.load() }
+                    CashFlowScreen(viewModel = cfVm)
                 }
 
                 composable(Screen.Settings.route) {
