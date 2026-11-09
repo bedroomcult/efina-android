@@ -2,7 +2,7 @@ package com.efina.app.ui.cashflow
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.efina.app.data.repository.TransactionRepository
+import com.efina.app.domain.repository.TransactionRepository
 import com.efina.app.domain.model.Transaction
 import com.efina.app.domain.model.TransactionFilter
 import com.efina.app.domain.model.TransactionType
