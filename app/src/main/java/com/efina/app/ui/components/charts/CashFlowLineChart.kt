@@ -29,9 +29,8 @@ data class CashFlowPoint(
  * Composable wrapper around MPAndroidChart's [LineChart].
  *
  * Renders a line chart showing cumulative net cash flow over time. The line color
- * is derived from the Material theme's primary color, with a semi-transparent fill
- * underneath. Positive values (above zero) indicate net income; negative values
- * (below zero) indicate net expense.
+ * is emerald green, with a semi-transparent fill underneath. Positive values
+ * (above zero) indicate net income; negative values (below zero) indicate net expense.
  *
  * @param points The data points to render, ordered by date ascending.
  * @param modifier Compose modifier for layout.
@@ -41,8 +40,6 @@ fun CashFlowLineChart(
     points: List<CashFlowPoint>,
     modifier: Modifier = Modifier,
 ) {
-    val primaryColor = androidx.compose.ui.graphics.Color(0xFF10B981).toArgb()
-
     AndroidView(
         modifier = modifier,
         factory = { context ->
@@ -82,7 +79,7 @@ fun CashFlowLineChart(
                 leftAxis.isDrawGridLinesEnabled = false
                 leftAxis.valueFormatter = object : ValueFormatter() {
                     override fun getFormattedLabel(value: Float): String {
-                        return formatCurrency(value)
+                        return formatCategoryValue(value)
                     }
                 }
 
@@ -98,24 +95,22 @@ fun CashFlowLineChart(
                 }
 
                 val dataSet = LineDataSet(entries, "Net Flow").apply {
-                    setColor(primaryColor)
-                    setCircleColor(primaryColor)
+                    setColor(0xFF10B981.toInt())
+                    setCircleColor(0xFF10B981.toInt())
                     circleRadius = 3f
                     circleHoleRadius = 1.5f
                     lineWidth = 2f
                     setDrawFilled(true)
-                    fillColor = primaryColor
+                    fillColor = 0xFF10B981.toInt()
                     fillAlpha = 80
                     setDrawValues(false)
-                    setDrawCircleHighlight(true)
-                    setHighLightColor(primaryColor)
                 }
 
                 val lineData = LineData(dataSet)
                 lineData.setDrawValues(false)
 
-                data = lineData
-                invalidate()
+                chart.data = lineData
+                chart.invalidate()
             }
         },
     )
@@ -124,7 +119,7 @@ fun CashFlowLineChart(
 /**
  * Format a numeric value for display on the Y axis.
  */
-private fun formatCurrency(value: Float): String {
+private fun formatCategoryValue(value: Float): String {
     return when {
         value >= 1000 -> "${(value / 1000).toInt()}K"
         value <= -1000 -> "-${(-value / 1000).toInt()}K"

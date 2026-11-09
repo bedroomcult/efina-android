@@ -5,6 +5,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.efina.app.ui.components.charts.CashFlowLineChart
@@ -15,6 +16,8 @@ import com.efina.app.ui.theme.LocalMoneyPalette
 import com.efina.app.ui.components.ContentWidth
 import com.efina.app.ui.components.WidthCapped
 import com.efina.app.ui.theme.RevealLatch
+import com.efina.app.ui.components.LoadingList
+import com.efina.app.ui.components.ErrorState
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -41,7 +44,6 @@ fun CashFlowScreen(viewModel: CashFlowViewModel = hiltViewModel()) {
                 }
             } else {
                 Column(Modifier.fillMaxSize()) {
-                    // Header stats
                     Row(Modifier.fillMaxWidth().spacingBy(8.dp)) {
                         StatChip(
                             "Income", state.totalIncome,
@@ -57,7 +59,6 @@ fun CashFlowScreen(viewModel: CashFlowViewModel = hiltViewModel()) {
 
                     Spacer(Modifier.height(16.dp))
 
-                    // Chart
                     Surface(
                         modifier = Modifier.fillMaxWidth(),
                         shape = EfinaCorners.menu,
@@ -82,8 +83,8 @@ fun CashFlowScreen(viewModel: CashFlowViewModel = hiltViewModel()) {
 private fun StatChip(
     label: String,
     amount: Double,
-    color: androidx.compose.ui.graphics.Color,
-    container: androidx.compose.ui.graphics.Color,
+    color: Color,
+    container: Color,
 ) {
     Column(Modifier.background(container, EfinaCorners.menu).padding(16.dp)) {
         Text(label, style = MaterialTheme.typography.labelSmall,
@@ -102,6 +103,6 @@ private fun formatCurrency(amount: Double): String {
     return when {
         abs >= 1_000_000 -> "${(abs / 1_000_000).toInt()}M"
         abs >= 1_000 -> "${(abs / 1_000).toInt()}K"
-        else -> "${amount.toInt()}"
+        else -> amount.toInt().toString()
     }
 }

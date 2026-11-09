@@ -25,7 +25,7 @@ private val DEEP_LINK_ROUTES = mapOf(
     "/transactions" to Screen.Transactions.route,
     "/budgets" to Screen.Budgets.route,
     "/goals" to Screen.Goals.route,
-    "/statistics" to Screen.Stats.route,
+    "/statistics" to Screen.CashFlow.route,
     "/settings" to Screen.Settings.route,
     "/profile" to Screen.Settings.route,
     "/family" to Screen.Family.route,

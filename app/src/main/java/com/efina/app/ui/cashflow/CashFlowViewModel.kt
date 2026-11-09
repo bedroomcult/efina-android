@@ -6,6 +6,7 @@ import com.efina.app.domain.repository.TransactionRepository
 import com.efina.app.domain.model.Transaction
 import com.efina.app.domain.model.TransactionFilter
 import com.efina.app.domain.model.TransactionType
+import com.efina.app.ui.components.charts.CashFlowPoint
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
