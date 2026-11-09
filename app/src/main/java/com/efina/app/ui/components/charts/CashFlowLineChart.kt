@@ -7,8 +7,8 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -49,13 +49,13 @@ fun CashFlowLineChart(
             Line(
                 label = "Net Flow",
                 values = values,
-                color = Brush.solid(Color(0xFF10B981)),
+                color = SolidColor(Color(0xFF10B981)),
                 dotProperties = DotProperties(
                     enabled = true,
                     radius = 4.dp,
-                    color = Brush.solid(Color(0xFF10B981)),
+                    color = SolidColor(Color(0xFF10B981)),
                     strokeWidth = 2.dp,
-                    strokeColor = Brush.solid(Color(0xFF10B981))
+                    strokeColor = SolidColor(Color(0xFF10B981))
                 )
             )
         ),
@@ -68,7 +68,7 @@ fun CashFlowLineChart(
         ),
         zeroLineProperties = ZeroLineProperties(
             enabled = minValue < 0 && maxValue > 0,
-            color = Brush.solid(Color(0xFF9CA3AF)),
+            color = SolidColor(Color(0xFF9CA3AF)),
             thickness = 1.dp
         ),
         maxValue = if (maxValue == minValue) maxValue + 1.0 else maxValue,
