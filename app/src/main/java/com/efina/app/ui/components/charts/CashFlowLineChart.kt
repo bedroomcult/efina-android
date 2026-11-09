@@ -43,13 +43,13 @@ fun CashFlowLineChart(
         Column(modifier = Modifier.fillMaxSize()) {
             // Zero line
             if (minValue < 0 && maxValue > 0) {
-                Box(
+                Surface(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(1.dp)
-                        .background(Color(0xFF9CA3AF))
-                        .align(Alignment.CenterHorizontally)
-                )
+                        .align(Alignment.CenterHorizontally),
+                    color = Color(0xFF9CA3AF)
+                ) { }
             }
 
             // Chart area with points and connecting lines
@@ -74,13 +74,13 @@ fun CashFlowLineChart(
                     ) {
                         // Connecting line to previous point
                         if (i > 0) {
-                            Box(
+                            Surface(
                                 modifier = Modifier
                                     .width(1.dp)
                                     .fillMaxHeight()
-                                    .background(Color(0xFF10B981))
-                                    .align(Alignment.CenterHorizontally)
-                            )
+                                    .align(Alignment.CenterHorizontally),
+                                color = Color(0xFF10B981)
+                            ) { }
                         }
 
                         // Point dot
@@ -91,7 +91,7 @@ fun CashFlowLineChart(
                                 .padding(bottom = 2.dp),
                             color = Color(0xFF10B981),
                             shape = CircleShape
-                        )
+                        ) { }
 
                         // Date label
                         Text(
