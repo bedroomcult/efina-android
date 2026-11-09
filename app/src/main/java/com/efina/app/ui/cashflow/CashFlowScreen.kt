@@ -5,7 +5,6 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.efina.app.ui.components.charts.CashFlowLineChart
@@ -27,7 +26,7 @@ fun CashFlowScreen(viewModel: CashFlowViewModel = hiltViewModel()) {
 
     WidthCapped(ContentWidth.List) {
         Column(Modifier.fillMaxSize().padding(16.dp)) {
-            if (state.isLoading) {
+            if (state.loading) {
                 LoadingList(rows = 6, modifier = Modifier.fillMaxWidth())
             } else if (state.error != null) {
                 Column(Modifier.fillMaxSize()) {
@@ -44,7 +43,10 @@ fun CashFlowScreen(viewModel: CashFlowViewModel = hiltViewModel()) {
                 }
             } else {
                 Column(Modifier.fillMaxSize()) {
-                    Row(Modifier.fillMaxWidth().spacingBy(8.dp)) {
+                    Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
                         StatChip(
                             "Income", state.totalIncome,
                             LocalMoneyPalette.current.income,
