@@ -44,22 +44,14 @@ fun CashFlowLineChart(
         modifier = modifier,
         factory = { context ->
             LineChart(context).apply {
-                // Chart appearance
                 setTouchEnabled(true)
                 setDragEnabled(true)
                 setScaleEnabled(false)
                 setPinchZoom(false)
                 setDoubleTapToZoomEnabled(false)
-                setHighlightPerDragEnabled(true)
-                setHighlightPerTapEnabled(true)
-
-                // Disable description text
                 description.isEnabled = false
-
-                // Disable legend (not needed for a single-line chart)
                 legend.isEnabled = false
 
-                // X axis: dates at the bottom
                 val xAxis = xAxis
                 xAxis.position = XAxis.XAxisPosition.BOTTOM
                 xAxis.isDrawGridLinesEnabled = false
@@ -72,16 +64,10 @@ fun CashFlowLineChart(
                     }
                 }
 
-                // Y axis: currency values
                 val leftAxis = axisLeft
                 leftAxis.isEnabled = true
                 leftAxis.labelCount = 5
                 leftAxis.isDrawGridLinesEnabled = false
-                leftAxis.valueFormatter = object : ValueFormatter() {
-                    override fun getFormattedLabel(value: Float): String {
-                        return formatCategoryValue(value)
-                    }
-                }
 
                 val rightAxis = axisRight
                 rightAxis.isEnabled = false
@@ -89,7 +75,6 @@ fun CashFlowLineChart(
         },
         update = { chart ->
             chart.apply {
-                // Build entries from points
                 val entries = points.mapIndexed { index, point ->
                     Entry(index.toFloat(), point.value.toFloat())
                 }
@@ -114,15 +99,4 @@ fun CashFlowLineChart(
             }
         },
     )
-}
-
-/**
- * Format a numeric value for display on the Y axis.
- */
-private fun formatCategoryValue(value: Float): String {
-    return when {
-        value >= 1000 -> "${(value / 1000).toInt()}K"
-        value <= -1000 -> "-${(-value / 1000).toInt()}K"
-        else -> value.toInt().toString()
-    }
 }
