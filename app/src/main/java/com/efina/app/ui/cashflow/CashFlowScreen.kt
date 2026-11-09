@@ -39,7 +39,7 @@ fun CashFlowScreen(viewModel: CashFlowViewModel = hiltViewModel()) {
                         "No transaction data for the last 30 days.",
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.align(Alignment.Center)
+                        modifier = Modifier.fillMaxWidth().align(Alignment.Center)
                     )
                 }
             } else {
