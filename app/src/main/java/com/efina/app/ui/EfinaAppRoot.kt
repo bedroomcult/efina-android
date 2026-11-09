@@ -102,7 +102,7 @@ sealed class Screen(val route: String) {
     }
     data object Budgets : Screen("budgets")
     data object Goals : Screen("goals")
-    data object CashFlow : Screen("cashflow")
+    data object Statistics : Screen("statistics")
     data object Settings : Screen("settings")
     data object Categories : Screen("categories")
     data object Family : Screen("family")
@@ -116,7 +116,7 @@ private val bottomNavItems = listOf(
     NavItem(Screen.Home, Icons.Default.Home, "Home"),
     NavItem(Screen.Transactions, Icons.Default.Receipt, "Activity"),
     NavItem(Screen.Budgets, Icons.Default.PieChart, "Budgets"),
-    NavItem(Screen.CashFlow, Icons.Default.MonetizationOn, "Cash Flow"),
+    NavItem(Screen.Statistics, Icons.Default.BarChart, "Statistics"),
     NavItem(Screen.Settings, Icons.Default.Person, "Profile")
 )
 
@@ -221,7 +221,7 @@ fun EfinaAppRoot(
                         onNavigateToTransactions = { navController.navigate(Screen.Transactions.route) },
                         onNavigateToBudgets = { navController.navigate(Screen.Budgets.route) },
                         onNavigateToGoals = { navController.navigate(Screen.Goals.route) },
-                        onNavigateToCashFlow = { navController.navigate(Screen.CashFlow.route) },
+                        onNavigateToStatistics = { navController.navigate(Screen.Statistics.route) },
                         onNavigateToSettings = { navController.navigate(Screen.Settings.route) }
                     )
                 }
@@ -317,7 +317,7 @@ fun EfinaAppRoot(
                     ReloadOnChange(DataEvents.Domain.GOALS, DataEvents.Domain.ACCOUNTS) { gVm.load() }
                     GoalsScreen(viewModel = gVm)
                 }
-                composable(Screen.CashFlow.route) {
+                composable(Screen.Statistics.route) {
                     val cfVm: com.efina.app.ui.cashflow.CashFlowViewModel = hiltViewModel()
                     ReloadOnChange(DataEvents.Domain.TRANSACTIONS) { cfVm.load() }
                     CashFlowScreen(viewModel = cfVm)

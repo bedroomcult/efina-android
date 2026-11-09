@@ -23,10 +23,10 @@ import com.efina.app.ui.components.ErrorState
 @Composable
 fun CashFlowScreen(viewModel: CashFlowViewModel = hiltViewModel()) {
     val state by viewModel.state.collectAsState()
-    RevealLatch.currentScreen = "cashflow"
+    RevealLatch.currentScreen = "statistics"
 
     WidthCapped(ContentWidth.List) {
-        Column(Modifier.fillMaxSize().padding(16.dp)) {
+        Column(Modifier.fillMaxSize().padding(16.dp).background(MaterialTheme.colorScheme.background)) {
             if (state.loading) {
                 LoadingList(rows = 6, modifier = Modifier.fillMaxWidth())
             } else if (state.error != null) {
@@ -72,7 +72,7 @@ fun CashFlowScreen(viewModel: CashFlowViewModel = hiltViewModel()) {
                         color = MaterialTheme.colorScheme.surfaceContainerLow
                     ) {
                         Column(Modifier.padding(16.dp)) {
-                            Text("Cash Flow", style = MaterialTheme.typography.titleMedium)
+                            Text("Statistics", style = MaterialTheme.typography.titleMedium)
                             Spacer(Modifier.height(8.dp))
                             CashFlowLineChart(
                                 points = state.points,
