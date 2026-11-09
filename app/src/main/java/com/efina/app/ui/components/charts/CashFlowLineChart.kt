@@ -1,20 +1,20 @@
 package com.efina.app.ui.components.charts
 
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.DrawScope
+import androidx.compose.ui.graphics.Offset
 import androidx.compose.ui.graphics.Path
-import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.StrokeCap
 import androidx.compose.ui.graphics.drawscope.StrokeJoin
 import androidx.compose.ui.graphics.drawstyle.StrokeStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.unit.toDp
 
 data class CashFlowPoint(
     val date: String,
@@ -28,23 +28,23 @@ fun CashFlowLineChart(
     modifier: Modifier = Modifier,
 ) {
     if (points.isEmpty()) {
-        androidx.compose.foundation.layout.Box(
+        Box(
             modifier = modifier.fillMaxWidth().height(200.dp),
             contentAlignment = Alignment.Center
         ) {
-            androidx.compose.material3.Text("No data")
+            Text("No data")
         }
         return
     }
 
-    ChartCanvas(
+    CanvasChart(
         modifier = modifier.fillMaxWidth().height(200.dp),
         points = points,
     )
 }
 
 @Composable
-private fun ChartCanvas(
+private fun CanvasChart(
     modifier: Modifier,
     points: List<CashFlowPoint>,
 ) {
@@ -77,8 +77,8 @@ private fun ChartCanvas(
         if (minValue < 0 && maxValue > 0) {
             drawLine(
                 color = Color(0xFF9CA3AF),
-                start = androidx.compose.ui.graphics.Offset(paddingLeft, zeroY),
-                end = androidx.compose.ui.graphics.Offset(width - paddingRight, zeroY),
+                start = Offset(paddingLeft, zeroY),
+                end = Offset(width - paddingRight, zeroY),
                 strokeWidth = 1f
             )
         }
@@ -93,7 +93,7 @@ private fun ChartCanvas(
                 drawText(
                     text = label,
                     color = Color(0xFF6B7280),
-                    topLeft = androidx.compose.ui.graphics.Offset(x - textWidth / 2, height - paddingBottom + 4f),
+                    topLeft = Offset(x - textWidth / 2, height - paddingBottom + 4f),
                     fontSize = 10.sp
                 )
             }
@@ -109,7 +109,7 @@ private fun ChartCanvas(
             drawText(
                 text = label,
                 color = Color(0xFF6B7280),
-                topLeft = androidx.compose.ui.graphics.Offset(4f, y - 6f),
+                topLeft = Offset(4f, y - 6f),
                 fontSize = 10.sp
             )
         }
@@ -160,7 +160,7 @@ private fun ChartCanvas(
                 }
                 drawCircle(
                     color = Color(0xFF10B981),
-                    center = androidx.compose.ui.graphics.Offset(x, clampedY),
+                    center = Offset(x, clampedY),
                     radius = 3f
                 )
             }
