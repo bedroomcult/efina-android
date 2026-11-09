@@ -1,19 +1,18 @@
 package com.efina.app.ui.components.charts
 
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Canvas
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Path
-import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.ui.graphics.StrokeJoin
-import androidx.compose.ui.graphics.StrokeStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
@@ -38,142 +37,80 @@ fun CashFlowLineChart(
         return
     }
 
-    ChartCanvas(
+    val minValue = points.minOfOrNull { it.value } ?: 0.0
+    val maxValue = points.maxOfOrNull { it.value } ?: 0.0
+    val range = if (maxValue == minValue) 1.0 else maxValue - minValue
+
+    Box(
         modifier = modifier.fillMaxWidth().height(200.dp),
-        points = points,
-    )
-}
-
-@Composable
-private fun ChartCanvas(
-    modifier: Modifier,
-    points: List<CashFlowPoint>,
-) {
-    Canvas(modifier = modifier) {
-        val size = this.size
-        val width = size.width
-        val height = size.height
-
-        val paddingLeft = 32f
-        val paddingRight = 16f
-        val paddingTop = 24f
-        val paddingBottom = 32f
-
-        val plotWidth = width - paddingLeft - paddingRight
-        val plotHeight = height - paddingTop - paddingBottom
-
-        val values = points.map { it.value }
-        val minValue = values.minOrNull() ?: 0.0
-        val maxValue = values.maxOrNull() ?: 0.0
-        val range = if (maxValue == minValue) 1.0 else maxValue - minValue
-
-        // Zero line position
-        val zeroY = if (minValue < 0 && maxValue > 0) {
-            paddingTop + plotHeight * (1f - ((0f - minValue.toFloat()) / range.toFloat()).toFloat())
-        } else {
-            paddingTop + plotHeight
-        }
-
-        // Draw zero line
-        if (minValue < 0 && maxValue > 0) {
-            drawLine(
-                color = Color(0xFF9CA3AF),
-                start = Offset(paddingLeft, zeroY),
-                end = Offset(width - paddingRight, zeroY),
-                strokeWidth = 1f
-            )
-        }
-
-        // Draw X-axis labels
-        val labelStep = points.size.coerceAtLeast(2).coerceAtMost(6)
-        for (i in points.indices) {
-            if (i % labelStep == 0 || i == points.size - 1) {
-                val x = paddingLeft + plotWidth * i / (points.size - 1)
-                val label = points[i].displayDate
-                val textWidth = textMeasurer.measure(label).size.width
-                drawText(
-                    text = label,
-                    color = Color(0xFF6B7280),
-                    topLeft = Offset(x - textWidth / 2, height - paddingBottom + 4f),
-                    fontSize = 10.sp
+        contentAlignment = Alignment.Center
+    ) {
+        Column(modifier = Modifier.fillMaxSize()) {
+            // Zero line
+            if (minValue < 0 && maxValue > 0) {
+                val zeroPos = (0f - minValue.toFloat()) / range.toFloat()
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(1.dp)
+                        .align(Alignment.CenterHorizontally),
+                    color = Color(0xFF9CA3AF)
                 )
             }
-        }
 
-        // Draw Y-axis labels
-        val ySteps = 5
-        for (i in 0..ySteps) {
-            val value = minValue + range * i / ySteps
-            val y = paddingTop + plotHeight * (1f - i / ySteps.toFloat())
-            val label = formatValue(value)
-            val textWidth = textMeasurer.measure(label).size.width
-            drawText(
-                text = label,
-                color = Color(0xFF6B7280),
-                topLeft = Offset(4f, y - 6f),
-                fontSize = 10.sp
-            )
-        }
+            // Chart area with points and connecting lines
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 24.dp)
+            ) {
+                val pointCount = points.size
+                val spacing = if (pointCount > 1) 1f / (pointCount - 1) else 0f
 
-        // Draw line path
-        if (points.size >= 2) {
-            val path = Path()
-            for (i in points.indices) {
-                val x = paddingLeft + plotWidth * i / (points.size - 1)
-                val clampedY = if (points[i].value >= 0) {
-                    zeroY - plotHeight * points[i].value.toFloat() / range.toFloat()
-                } else {
-                    zeroY + plotHeight * (-points[i].value.toFloat()) / range.toFloat()
-                }
-                if (i == 0) {
-                    path.moveTo(x, clampedY)
-                } else {
-                    path.lineTo(x, clampedY)
+                for (i in points.indices) {
+                    val point = points[i]
+                    val xPos = if (pointCount > 1) i * spacing else 0.5f
+                    val normalizedY = (point.value.toFloat() - minValue.toFloat()) / range.toFloat()
+                    val yFromTop = 1f - normalizedY
+
+                    Column(
+                        modifier = Modifier
+                            .weight(1f)
+                            .align(Alignment.Bottom)
+                            .padding(top = (yFromTop * 70f).dp)
+                    ) {
+                        // Connecting line to previous point
+                        if (i > 0) {
+                            Box(
+                                modifier = Modifier
+                                    .width(1.dp)
+                                    .fillMaxHeight()
+                                    .align(Alignment.CenterHorizontally),
+                                color = Color(0xFF10B981)
+                            )
+                        }
+
+                        // Point dot
+                        Box(
+                            modifier = Modifier
+                                .size(6.dp)
+                                .align(Alignment.CenterHorizontally)
+                                .padding(bottom = 2.dp),
+                            color = Color(0xFF10B981),
+                            shape = CircleShape
+                        )
+
+                        // Date label
+                        Text(
+                            text = point.displayDate,
+                            style = Text.Default,
+                            color = Color(0xFF6B7280),
+                            fontSize = 10.sp,
+                            modifier = Modifier.align(Alignment.CenterHorizontally)
+                        )
+                    }
                 }
             }
-
-            // Draw fill below line
-            val fillPath = Path(path).apply {
-                lineTo(width - paddingRight, zeroY)
-                lineTo(paddingLeft, zeroY)
-                close()
-            }
-            drawPath(
-                path = fillPath,
-                color = Color(0xFF10B981).copy(alpha = 0.2f)
-            )
-
-            // Draw line
-            drawPath(
-                path = path,
-                color = Color(0xFF10B981),
-                strokeWidth = 2f,
-                style = StrokeStyle(width = 2f, cap = StrokeCap.Round, join = StrokeJoin.Round)
-            )
-
-            // Draw points
-            for (i in points.indices) {
-                val x = paddingLeft + plotWidth * i / (points.size - 1)
-                val clampedY = if (points[i].value >= 0) {
-                    zeroY - plotHeight * points[i].value.toFloat() / range.toFloat()
-                } else {
-                    zeroY + plotHeight * (-points[i].value.toFloat()) / range.toFloat()
-                }
-                drawCircle(
-                    color = Color(0xFF10B981),
-                    center = Offset(x, clampedY),
-                    radius = 3f
-                )
-            }
         }
-    }
-}
-
-private fun formatValue(value: Double): String {
-    val abs = Math.abs(value)
-    return when {
-        abs >= 1_000_000 -> "${(abs / 1_000_000).toInt()}M"
-        abs >= 1_000 -> "${(abs / 1_000).toInt()}K"
-        else -> value.toInt().toString()
     }
 }
