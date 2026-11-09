@@ -7,12 +7,13 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Canvas
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Offset
 import androidx.compose.ui.graphics.Path
-import androidx.compose.ui.graphics.drawscope.StrokeCap
-import androidx.compose.ui.graphics.drawscope.StrokeJoin
-import androidx.compose.ui.graphics.drawstyle.StrokeStyle
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.StrokeJoin
+import androidx.compose.ui.graphics.StrokeStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
@@ -37,19 +38,19 @@ fun CashFlowLineChart(
         return
     }
 
-    CanvasChart(
+    ChartCanvas(
         modifier = modifier.fillMaxWidth().height(200.dp),
         points = points,
     )
 }
 
 @Composable
-private fun CanvasChart(
+private fun ChartCanvas(
     modifier: Modifier,
     points: List<CashFlowPoint>,
 ) {
-    androidx.compose.ui.graphics.Canvas(modifier = modifier) {
-        val size = size
+    Canvas(modifier = modifier) {
+        val size = this.size
         val width = size.width
         val height = size.height
 
