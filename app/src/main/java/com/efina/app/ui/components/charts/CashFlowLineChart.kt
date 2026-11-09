@@ -1,13 +1,8 @@
 package com.efina.app.ui.components.charts
 
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -48,13 +43,12 @@ fun CashFlowLineChart(
         Column(modifier = Modifier.fillMaxSize()) {
             // Zero line
             if (minValue < 0 && maxValue > 0) {
-                val zeroPos = (0f - minValue.toFloat()) / range.toFloat()
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(1.dp)
-                        .align(Alignment.CenterHorizontally),
-                    color = Color(0xFF9CA3AF)
+                        .background(Color(0xFF9CA3AF))
+                        .align(Alignment.CenterHorizontally)
                 )
             }
 
@@ -69,7 +63,6 @@ fun CashFlowLineChart(
 
                 for (i in points.indices) {
                     val point = points[i]
-                    val xPos = if (pointCount > 1) i * spacing else 0.5f
                     val normalizedY = (point.value.toFloat() - minValue.toFloat()) / range.toFloat()
                     val yFromTop = 1f - normalizedY
 
@@ -85,13 +78,13 @@ fun CashFlowLineChart(
                                 modifier = Modifier
                                     .width(1.dp)
                                     .fillMaxHeight()
-                                    .align(Alignment.CenterHorizontally),
-                                color = Color(0xFF10B981)
+                                    .background(Color(0xFF10B981))
+                                    .align(Alignment.CenterHorizontally)
                             )
                         }
 
                         // Point dot
-                        Box(
+                        Surface(
                             modifier = Modifier
                                 .size(6.dp)
                                 .align(Alignment.CenterHorizontally)
@@ -103,7 +96,6 @@ fun CashFlowLineChart(
                         // Date label
                         Text(
                             text = point.displayDate,
-                            style = Text.Default,
                             color = Color(0xFF6B7280),
                             fontSize = 10.sp,
                             modifier = Modifier.align(Alignment.CenterHorizontally)
