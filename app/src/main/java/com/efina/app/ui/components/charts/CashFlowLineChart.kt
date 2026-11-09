@@ -27,8 +27,8 @@ fun CashFlowLineChart(
         modifier = modifier,
         factory = { context ->
             LineChart(context).apply {
-                setTouchEnabled(false)
-                setDragEnabled(false)
+                setTouchEnabled(true)
+                setDragEnabled(true)
                 setScaleEnabled(false)
                 setPinchZoom(false)
                 setDoubleTapToZoomEnabled(false)
@@ -58,11 +58,12 @@ fun CashFlowLineChart(
         },
         update = { chart ->
             chart.apply {
-                val entries = points.mapIndexed { index, point ->
-                    Entry(index.toFloat(), point.value.toFloat())
-                }
-
-                val dataSet = LineDataSet(entries, "Net Flow").apply {
+                val dataSet = LineDataSet(
+                    points.mapIndexed { index, point ->
+                        Entry(index.toFloat(), point.value.toFloat())
+                    },
+                    "Net Flow"
+                ).apply {
                     setColor(0xFF10B981.toInt())
                     setCircleColor(0xFF10B981.toInt())
                     circleRadius = 3f
