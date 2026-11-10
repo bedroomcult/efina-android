@@ -58,18 +58,29 @@ fun StatsScreen(viewModel: StatsViewModel = hiltViewModel()) {
         ) {
             // Time-range segmented button filter
             val selectedIndex by remember { mutableStateOf(TimeRange.entries.indexOf(state.timeRange)) }
-            SegmentedButtonRow(
-                selected = selectedIndex,
-                onSelectedItemChange = { i ->
-                    viewModel.load(TimeRange.entries[i])
-                },
-                modifier = Modifier.fillMaxWidth()
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 TimeRange.entries.forEachIndexed { index, range ->
-                    SegmentedButtonItem(
-                        selected = index == selectedIndex,
-                        label = { Text(range.label) }
-                    )
+                    val isSelected = index == selectedIndex
+                    Button(
+                        onClick = { selectedIndex = index; viewModel.load(TimeRange.entries[index]) },
+                        modifier = Modifier.weight(1f),
+                        colors = if (isSelected) {
+                            androidx.compose.material3.ButtonDefaults.buttonColors(
+                                containerColor = MaterialTheme.colorScheme.primary
+                            )
+                        } else {
+                            androidx.compose.material3.ButtonDefaults.buttonColors()
+                        }
+                    ) {
+                        androidx.compose.material3.Text(
+                            text = range.label,
+                            style = MaterialTheme.typography.labelMedium,
+                            color = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface
+                        )
+                    }
                 }
             }
 
