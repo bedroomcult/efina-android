@@ -35,7 +35,6 @@ import com.efina.app.ui.scheduled.ScheduledScreen
 import com.efina.app.ui.family.FamilyScreen
 import com.efina.app.ui.home.HomeScreen
 import com.efina.app.ui.settings.SettingsScreen
-import com.efina.app.ui.cashflow.CashFlowScreen
 import com.efina.app.ui.stats.StatsScreen
 import com.efina.app.ui.transactions.TransactionFormScreen
 import com.efina.app.ui.transactions.TransactionsScreen
@@ -318,9 +317,7 @@ fun EfinaAppRoot(
                     GoalsScreen(viewModel = gVm)
                 }
                 composable(Screen.Statistics.route) {
-                    val cfVm: com.efina.app.ui.cashflow.CashFlowViewModel = hiltViewModel()
-                    ReloadOnChange(DataEvents.Domain.TRANSACTIONS) { cfVm.load() }
-                    CashFlowScreen(viewModel = cfVm)
+                    StatsScreen(viewModel = hiltViewModel())
                 }
 
                 composable(Screen.Settings.route) {

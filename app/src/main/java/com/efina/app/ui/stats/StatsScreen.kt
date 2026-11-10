@@ -2,14 +2,14 @@ package com.efina.app.ui.stats
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.efina.app.ui.components.charts.CashFlowLineChart
+import com.efina.app.ui.components.charts.CashFlowPoint
 import com.efina.app.ui.components.*
 import com.efina.app.ui.theme.EfinaCorners
 import com.efina.app.ui.theme.EfinaSemantic
@@ -18,7 +18,6 @@ import com.efina.app.ui.theme.LocalMoneyPalette
 import androidx.compose.foundation.layout.BoxWithConstraints
 import com.efina.app.ui.components.ContentWidth
 import com.efina.app.ui.theme.RevealLatch
-import androidx.compose.foundation.lazy.rememberLazyListState
 import com.efina.app.ui.components.ScrollToTopFab
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -45,7 +44,7 @@ fun StatsScreen(viewModel: StatsViewModel = hiltViewModel()) {
     ) { padding ->
         if (state.error != null) {
             Column(Modifier.fillMaxSize().padding(16.dp)) {
-                ErrorState(message = state.error!!, onRetry = { viewModel.load() })
+                ErrorState(message = state.error!!, onRetry = { viewModel.load(state.timeRange) })
             }
             return@Scaffold
         }
@@ -55,82 +54,112 @@ fun StatsScreen(viewModel: StatsViewModel = hiltViewModel()) {
             return@Scaffold
         }
 
-        LazyColumn(
-            state = listState,
-            modifier = Modifier.padding(padding),
-            contentPadding = PaddingValues(16.dp, 8.dp, 16.dp, 96.dp),
-            verticalArrangement = Arrangement.spacedBy(14.dp)
+        Column(
+            modifier = Modifier.padding(padding).padding(16.dp)
+                .background(MaterialTheme.colorScheme.background)
         ) {
-            item {
-                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    StatTile(
-                        "Income", state.income, LocalMoneyPalette.current.income,
-                        MaterialTheme.colorScheme.surfaceContainerLow, Modifier.weight(1f)
-                    )
-                    StatTile(
-                        "Expense", state.expense, LocalMoneyPalette.current.expense,
-                        MaterialTheme.colorScheme.surfaceContainerLow, Modifier.weight(1f)
+            // Time-range segmented button filter
+            SegmentedButton(
+                selectedItem = state.timeRange,
+                onItemSelected = { viewModel.load(it) },
+                modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp)
+            ) {
+                TimeRange.entries.forEach { range ->
+                    SegmentedButtonItem(
+                        value = range,
+                        onClick = { },
+                        label = { Text(range.label) }
                     )
                 }
             }
 
-            item {
+            Spacer(Modifier.height(16.dp))
+
+            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                StatTile(
+                    "Income", state.income, LocalMoneyPalette.current.income,
+                    MaterialTheme.colorScheme.surfaceContainerLow, Modifier.weight(1f)
+                )
+                StatTile(
+                    "Expense", state.expense, LocalMoneyPalette.current.expense,
+                    MaterialTheme.colorScheme.surfaceContainerLow, Modifier.weight(1f)
+                )
+            }
+
+            Spacer(Modifier.height(12.dp))
+
+            Surface(
+                modifier = Modifier.fillMaxWidth(),
+                shape = EfinaCorners.menu,
+                color = MaterialTheme.colorScheme.surfaceContainerLow
+            ) {
+                Column(Modifier.padding(16.dp)) {
+                    Text("Net this month", style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Spacer(Modifier.height(4.dp))
+                    Text(
+                        formatMoney(state.net),
+                        style = EfinaType.amountMedium,
+                        color = if (state.net >= 0) LocalMoneyPalette.current.income
+                        else LocalMoneyPalette.current.expense
+                    )
+                    Text(
+                        "Savings rate ${"%.0f".format(state.savingsRate)}%",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+
+            Spacer(Modifier.height(12.dp))
+
+            Surface(
+                modifier = Modifier.fillMaxWidth(),
+                shape = EfinaCorners.menu,
+                color = MaterialTheme.colorScheme.surfaceContainerLow
+            ) {
+                Column(Modifier.padding(16.dp)) {
+                    Text("Cash flow", style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Spacer(Modifier.height(8.dp))
+                    CashFlowLineChart(
+                        points = state.chartPoints,
+                        modifier = Modifier.fillMaxWidth().height(200.dp)
+                    )
+                }
+            }
+
+            if (state.health != null) {
+                Spacer(Modifier.height(12.dp))
                 Surface(
                     modifier = Modifier.fillMaxWidth(),
                     shape = EfinaCorners.menu,
                     color = MaterialTheme.colorScheme.surfaceContainerLow
                 ) {
                     Column(Modifier.padding(16.dp)) {
-                        Text("Net this month", style = MaterialTheme.typography.labelMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        Spacer(Modifier.height(4.dp))
+                        Text("Financial health", style = MaterialTheme.typography.titleSmall)
+                        Spacer(Modifier.height(6.dp))
                         Text(
-                            formatMoney(state.net),
+                            "${state.health!!.score}/100",
                             style = EfinaType.amountMedium,
-                            color = if (state.net >= 0) LocalMoneyPalette.current.income
-                            else LocalMoneyPalette.current.expense
+                            color = when {
+                                state.health!!.score >= 70 -> EfinaSemantic.safe
+                                state.health!!.score >= 40 -> EfinaSemantic.caution
+                                else -> MaterialTheme.colorScheme.error
+                            }
                         )
-                        Text(
-                            "Savings rate ${"%.0f".format(state.savingsRate)}%",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                }
-            }
-
-            if (state.health != null) {
-                item {
-                    Surface(
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = EfinaCorners.menu,
-                        color = MaterialTheme.colorScheme.surfaceContainerLow
-                    ) {
-                        Column(Modifier.padding(16.dp)) {
-                            Text("Financial health", style = MaterialTheme.typography.titleSmall)
-                            Spacer(Modifier.height(6.dp))
-                            Text(
-                                "${state.health!!.score}/100",
-                                style = EfinaType.amountMedium,
-                                color = when {
-                                    state.health!!.score >= 70 -> EfinaSemantic.safe
-                                    state.health!!.score >= 40 -> EfinaSemantic.caution
-                                    else -> MaterialTheme.colorScheme.error
-                                }
-                            )
-                            state.health!!.factors.entries.take(4).forEach { (key, factor) ->
-                                Row(Modifier.fillMaxWidth().padding(top = 6.dp)) {
-                                    Text(
-                                        key.replace('_', ' ').replaceFirstChar { it.uppercase() },
-                                        style = MaterialTheme.typography.bodySmall,
-                                        modifier = Modifier.weight(1f)
-                                    )
-                                    Text(
-                                        factor.value ?: factor.label ?: "${factor.score}",
-                                        style = MaterialTheme.typography.labelSmall,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                                    )
-                                }
+                        state.health!!.factors.entries.take(4).forEach { (key, factor) ->
+                            Row(Modifier.fillMaxWidth().padding(top = 6.dp)) {
+                                Text(
+                                    key.replace('_', ' ').replaceFirstChar { it.uppercase() },
+                                    style = MaterialTheme.typography.bodySmall,
+                                    modifier = Modifier.weight(1f)
+                                )
+                                Text(
+                                    factor.value ?: factor.label ?: "${factor.score}",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
                             }
                         }
                     }
@@ -138,8 +167,9 @@ fun StatsScreen(viewModel: StatsViewModel = hiltViewModel()) {
             }
 
             if (state.byCategory.isNotEmpty()) {
-                item { SectionHeader("Where it went") }
-                items(state.byCategory) { slice ->
+                Spacer(Modifier.height(12.dp))
+                SectionHeader("Where it went")
+                state.byCategory.forEach { slice ->
                     val max = state.byCategory.maxOf { it.total }.coerceAtLeast(1.0)
                     Column(Modifier.fillMaxWidth()) {
                         Row {
@@ -167,8 +197,9 @@ fun StatsScreen(viewModel: StatsViewModel = hiltViewModel()) {
             }
 
             if (state.forecast != null && state.forecast!!.points.isNotEmpty()) {
-                item { SectionHeader("Forecast") }
-                items(state.forecast!!.points.take(3)) { point ->
+                Spacer(Modifier.height(12.dp))
+                SectionHeader("Forecast")
+                state.forecast!!.points.take(3).forEach { point ->
                     Row(Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
                         Text(point.month, style = MaterialTheme.typography.bodyMedium,
                             modifier = Modifier.weight(1f))
@@ -182,8 +213,9 @@ fun StatsScreen(viewModel: StatsViewModel = hiltViewModel()) {
             }
 
             if (state.achievements.isNotEmpty()) {
-                item { SectionHeader("Achievements") }
-                items(state.achievements.take(5)) { a ->
+                Spacer(Modifier.height(12.dp))
+                SectionHeader("Achievements")
+                state.achievements.take(5).forEach { a ->
                     Row(
                         Modifier.fillMaxWidth().padding(vertical = 6.dp),
                         verticalAlignment = Alignment.CenterVertically
@@ -210,8 +242,9 @@ fun StatsScreen(viewModel: StatsViewModel = hiltViewModel()) {
             }
 
             if (state.leaderboard.isNotEmpty()) {
-                item { SectionHeader("Leaderboard") }
-                items(state.leaderboard) { entry ->
+                Spacer(Modifier.height(12.dp))
+                SectionHeader("Leaderboard")
+                state.leaderboard.forEach { entry ->
                     Row(Modifier.fillMaxWidth().padding(vertical = 5.dp)) {
                         Text(
                             "#${entry.rank}",
@@ -253,4 +286,3 @@ private fun StatTile(
         AnimatedMoney(amount = amount, style = EfinaType.amountSmall, color = contentColor)
     }
 }
-

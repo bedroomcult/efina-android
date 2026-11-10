@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.efina.app.domain.model.*
 import com.efina.app.domain.repository.*
+import com.efina.app.ui.components.charts.CashFlowPoint
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -15,6 +16,21 @@ import java.util.Calendar
 import java.util.Locale
 import javax.inject.Inject
 
+enum class TimeRange(val label: String, val days: Int) {
+    Days7("7 days", 7),
+    Days30("30 days", 30),
+    Days365("365 days", 365);
+
+    fun toDateRange(): Pair<String, String> {
+        val cal = Calendar.getInstance()
+        val end = cal.clone() as Calendar
+        val start = cal.clone() as Calendar
+        start.add(Calendar.DAY_OF_YEAR, -days)
+        val fmt = SimpleDateFormat("yyyy-MM-dd", Locale.US)
+        return "${fmt.format(start.time)}T00:00:00" to "${fmt.format(end.time)}T23:59:59"
+    }
+}
+
 data class StatsUiState(
     val loading: Boolean = true,
     val income: Double = 0.0,
@@ -24,7 +40,9 @@ data class StatsUiState(
     val health: HealthScore? = null,
     val achievements: List<Achievement> = emptyList(),
     val leaderboard: List<LeaderboardEntry> = emptyList(),
-    val error: String? = null
+    val error: String? = null,
+    val timeRange: TimeRange = TimeRange.Days7,
+    val chartPoints: List<CashFlowPoint> = emptyList()
 ) {
     val net: Double get() = income - expense
     val savingsRate: Float
@@ -47,12 +65,12 @@ class StatsViewModel @Inject constructor(
     private val _state = MutableStateFlow(StatsUiState())
     val state: StateFlow<StatsUiState> = _state.asStateFlow()
 
-    init { load() }
+    init { load(TimeRange.Days7) }
 
-    fun load() {
-        _state.value = _state.value.copy(loading = true, error = null)
+    fun load(range: TimeRange) {
+        _state.value = _state.value.copy(loading = true, error = null, timeRange = range)
         viewModelScope.launch {
-            val (start, end) = currentMonthRange()
+            val (start, end) = range.toDateRange()
 
             val txJob = async {
                 transactionRepository.getTransactions(
@@ -77,6 +95,8 @@ class StatsViewModel @Inject constructor(
                 .groupBy { it.categoryName ?: "Uncategorised" }
                 .map { (name, list) -> CategorySlice(name, list.sumOf { it.amount }) }
                 .sortedByDescending { it.total }
+
+            val chartPoints = buildChartPoints(transactions, range)
 
             // Await each job once and store results, then inspect for failures.
             val forecastResult = forecastJob.await()
@@ -107,6 +127,8 @@ class StatsViewModel @Inject constructor(
                 health = healthResult.getOrNull(),
                 achievements = achievementsResult.getOrDefault(emptyList()),
                 leaderboard = leaderboardResult.getOrDefault(emptyList()),
+                timeRange = range,
+                chartPoints = chartPoints,
                 error = if (allFailed) {
                     failedJobs.firstOrNull()?.let { (_, result) ->
                         result.exceptionOrNull()?.message
@@ -117,6 +139,75 @@ class StatsViewModel @Inject constructor(
                     } ?: null
                 } else null
             )
+        }
+    }
+
+    /** Bucket transactions into chart points based on the selected range. */
+    private fun buildChartPoints(transactions: List<Transaction>, range: TimeRange): List<CashFlowPoint> {
+        val netByDate = transactions.groupBy { it.date.substringBefore('T') }
+            .mapValues { (_, list) ->
+                list.sumOf { t ->
+                    when (t.type) {
+                        TransactionType.INCOME -> t.amount
+                        TransactionType.ADJUSTMENT -> if (t.amount >= 0) t.amount else -t.amount.abs()
+                        else -> -t.amount.abs()
+                    }
+                }
+            }
+
+        return when (range) {
+            TimeRange.Days7 -> {
+                val fmt = SimpleDateFormat("EEE", Locale.US)
+                val dateFmt = SimpleDateFormat("yyyy-MM-dd", Locale.US)
+                (0 until 7).map { i ->
+                    val cal = Calendar.getInstance()
+                    cal.add(Calendar.DAY_OF_YEAR, -(6 - i))
+                    val dateKey = dateFmt.format(cal.time)
+                    CashFlowPoint(
+                        date = dateKey,
+                        displayDate = fmt.format(cal.time),
+                        value = netByDate[dateKey] ?: 0.0
+                    )
+                }
+            }
+            TimeRange.Days30 -> {
+                val fmt = SimpleDateFormat("MMM d", Locale.US)
+                val dateFmt = SimpleDateFormat("yyyy-MM-dd", Locale.US)
+                (0 until 10).map { i ->
+                    val end = Calendar.getInstance()
+                    end.add(Calendar.DAY_OF_YEAR, -(i * 3))
+                    val start = Calendar.getInstance()
+                    start.add(Calendar.DAY_OF_YEAR, -((i + 1) * 3))
+                    val dateKey = dateFmt.format(start.time)
+                    val total = netByDate.entries.sumOf { (dk, v) ->
+                        val d = dateFmt.parse(dk) ?: return@sumOf 0.0
+                        val cd = Calendar.getInstance()
+                        cd.time = d
+                        if (cd.after(start) && cd.beforeOrEqual(end)) v else 0.0
+                    }
+                    CashFlowPoint(
+                        date = dateKey,
+                        displayDate = fmt.format(start.time),
+                        value = total
+                    )
+                }.reversed()
+            }
+            TimeRange.Days365 -> {
+                val fmt = SimpleDateFormat("MMM", Locale.US)
+                (0 until 12).map { i ->
+                    val cal = Calendar.getInstance()
+                    cal.add(Calendar.MONTH, -(11 - i))
+                    val yearMonth = SimpleDateFormat("yyyy-MM", Locale.US).format(cal.time)
+                    val total = netByDate.entries.sumOf { (dk, v) ->
+                        if (dk.startsWith(yearMonth)) v else 0.0
+                    }
+                    CashFlowPoint(
+                        date = yearMonth,
+                        displayDate = fmt.format(cal.time),
+                        value = total
+                    )
+                }
+            }
         }
     }
 
