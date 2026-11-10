@@ -57,7 +57,7 @@ fun StatsScreen(viewModel: StatsViewModel = hiltViewModel()) {
                 .background(MaterialTheme.colorScheme.background)
         ) {
             // Time-range segmented button filter
-            val selectedIndex by remember { mutableStateOf(TimeRange.entries.indexOf(state.timeRange)) }
+            var selectedIndex by remember { mutableStateOf(TimeRange.entries.indexOf(state.timeRange)) }
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
