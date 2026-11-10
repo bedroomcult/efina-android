@@ -1,7 +1,7 @@
 package com.efina.app.ui.stats
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.gestures.*
+import androidx.compose.foundation.gestures.verticalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons.Default
 import androidx.compose.material.icons.filled.KeyboardArrowUp
@@ -28,7 +28,7 @@ import com.efina.app.ui.theme.RevealLatch
 @Composable
 fun StatsScreen(viewModel: StatsViewModel = hiltViewModel()) {
     val state by viewModel.state.collectAsState()
-    val scrollState = rememberScrollState()
+    val scrollState = remember { ScrollState() }
     val coroutineScope = rememberCoroutineScope()
     // Marks this screen as having played its entrance, so returning to the tab
     // does not replay the staggered reveal.
