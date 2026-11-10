@@ -24,7 +24,6 @@ import com.efina.app.ui.components.ScrollToTopFab
 @Composable
 fun StatsScreen(viewModel: StatsViewModel = hiltViewModel()) {
     val state by viewModel.state.collectAsState()
-    val listState = rememberLazyListState()
     // Marks this screen as having played its entrance, so returning to the tab
     // does not replay the staggered reveal.
     RevealLatch.currentScreen = "stats"
@@ -59,15 +58,17 @@ fun StatsScreen(viewModel: StatsViewModel = hiltViewModel()) {
                 .background(MaterialTheme.colorScheme.background)
         ) {
             // Time-range segmented button filter
+            val selected by remember { mutableStateOf(TimeRange.entries.indexOf(state.timeRange)) }
             SegmentedButton(
-                selectedItem = state.timeRange,
-                onItemSelected = { viewModel.load(it) },
-                modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp)
+                selected = selected,
+                onClick = { i ->
+                    viewModel.load(TimeRange.entries[i])
+                },
+                modifier = Modifier.fillMaxWidth()
             ) {
-                TimeRange.entries.forEach { range ->
+                TimeRange.entries.forEachIndexed { index, range ->
                     SegmentedButtonItem(
-                        value = range,
-                        onClick = { },
+                        selected = index == selected,
                         label = { Text(range.label) }
                     )
                 }

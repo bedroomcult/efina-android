@@ -149,8 +149,8 @@ class StatsViewModel @Inject constructor(
                 list.sumOf { t ->
                     when (t.type) {
                         TransactionType.INCOME -> t.amount
-                        TransactionType.ADJUSTMENT -> if (t.amount >= 0) t.amount else -t.amount.abs()
-                        else -> -t.amount.abs()
+                        TransactionType.ADJUSTMENT -> if (t.amount >= 0) t.amount else -Math.abs(t.amount)
+                        else -> -Math.abs(t.amount)
                     }
                 }
             }
@@ -183,7 +183,7 @@ class StatsViewModel @Inject constructor(
                         val d = dateFmt.parse(dk) ?: return@sumOf 0.0
                         val cd = Calendar.getInstance()
                         cd.time = d
-                        if (cd.after(start) && cd.beforeOrEqual(end)) v else 0.0
+                        if (cd.after(start) && !cd.after(end)) v else 0.0
                     }
                     CashFlowPoint(
                         date = dateKey,
