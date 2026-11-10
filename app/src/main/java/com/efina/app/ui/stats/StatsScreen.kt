@@ -24,6 +24,7 @@ import com.efina.app.ui.components.ScrollToTopFab
 @Composable
 fun StatsScreen(viewModel: StatsViewModel = hiltViewModel()) {
     val state by viewModel.state.collectAsState()
+    val listState = rememberLazyListState()
     // Marks this screen as having played its entrance, so returning to the tab
     // does not replay the staggered reveal.
     RevealLatch.currentScreen = "stats"
@@ -36,9 +37,10 @@ fun StatsScreen(viewModel: StatsViewModel = hiltViewModel()) {
         modifier = Modifier.padding(horizontal = side),
         topBar = {
             TopAppBar(
-                title = { Text("Statistics", style = EfinaType.titleLargeEmphasized) }
+                title = { Text("Statistics", style = EfinaType.titleLargeEmphasized, color = MaterialTheme.colorScheme.onSurface) }
             )
         },
+        floatingActionButton = { ScrollToTopFab(listState) },
     ) { padding ->
         if (state.error != null) {
             Column(Modifier.fillMaxSize().padding(16.dp)) {
@@ -52,33 +54,38 @@ fun StatsScreen(viewModel: StatsViewModel = hiltViewModel()) {
             return@Scaffold
         }
 
-        Column(
+        LazyColumn(
+            state = listState,
             modifier = Modifier.padding(padding).padding(16.dp)
-                .background(MaterialTheme.colorScheme.background)
+                .background(MaterialTheme.colorScheme.background),
+            contentPadding = PaddingValues(0.dp, 0.dp, 16.dp, 88.dp),
         ) {
-            // Time-range segmented button filter
-            var selectedIndex by remember { mutableStateOf(TimeRange.entries.indexOf(state.timeRange)) }
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
+            // Time-range segmented button filter (pill style matching expense|income|transfer)
+            val moneyColors = listOf(
+                LocalMoneyPalette.current.income,
+                LocalMoneyPalette.current.expense,
+                LocalMoneyPalette.current.transfer
+            )
+            SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
                 TimeRange.entries.forEachIndexed { index, range ->
                     val isSelected = index == selectedIndex
-                    Button(
-                        onClick = { selectedIndex = index; viewModel.load(TimeRange.entries[index]) },
-                        modifier = Modifier.weight(1f),
-                        colors = if (isSelected) {
-                            androidx.compose.material3.ButtonDefaults.buttonColors(
-                                containerColor = MaterialTheme.colorScheme.primary
-                            )
-                        } else {
-                            androidx.compose.material3.ButtonDefaults.buttonColors()
-                        }
+                    val accent = moneyColors[index]
+                    SegmentedButton(
+                        selected = isSelected,
+                        onClick = { viewModel.load(TimeRange.entries[index]) },
+                        shape = SegmentedButtonDefaults.itemShape(index, TimeRange.entries.size),
+                        colors = SegmentedButtonDefaults.colors(
+                            activeContainerColor = accent,
+                            activeContentColor = Color.White,
+                            inactiveContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                            inactiveContentColor = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
                     ) {
-                        androidx.compose.material3.Text(
+                        Text(
                             text = range.label,
                             style = MaterialTheme.typography.labelMedium,
-                            color = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface
+                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                            color = if (isSelected) Color.White else MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
                 }
@@ -141,36 +148,38 @@ fun StatsScreen(viewModel: StatsViewModel = hiltViewModel()) {
             }
 
             if (state.health != null) {
-                Spacer(Modifier.height(12.dp))
-                Surface(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = EfinaCorners.menu,
-                    color = MaterialTheme.colorScheme.surfaceContainerLow
-                ) {
-                    Column(Modifier.padding(16.dp)) {
-                        Text("Financial health", style = MaterialTheme.typography.titleSmall)
-                        Spacer(Modifier.height(6.dp))
-                        Text(
-                            "${state.health!!.score}/100",
-                            style = EfinaType.amountMedium,
-                            color = when {
-                                state.health!!.score >= 70 -> EfinaSemantic.safe
-                                state.health!!.score >= 40 -> EfinaSemantic.caution
-                                else -> MaterialTheme.colorScheme.error
-                            }
-                        )
-                        state.health!!.factors.entries.take(4).forEach { (key, factor) ->
-                            Row(Modifier.fillMaxWidth().padding(top = 6.dp)) {
-                                Text(
-                                    key.replace('_', ' ').replaceFirstChar { it.uppercase() },
-                                    style = MaterialTheme.typography.bodySmall,
-                                    modifier = Modifier.weight(1f)
-                                )
-                                Text(
-                                    factor.value ?: factor.label ?: "${factor.score}",
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
+                item {
+                    Spacer(Modifier.height(12.dp))
+                    Surface(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = EfinaCorners.menu,
+                        color = MaterialTheme.colorScheme.surfaceContainerLow
+                    ) {
+                        Column(Modifier.padding(16.dp)) {
+                            Text("Financial health", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onSurface)
+                            Spacer(Modifier.height(6.dp))
+                            Text(
+                                "${state.health!!.score}/100",
+                                style = EfinaType.amountMedium,
+                                color = when {
+                                    state.health!!.score >= 70 -> EfinaSemantic.safe
+                                    state.health!!.score >= 40 -> EfinaSemantic.caution
+                                    else -> MaterialTheme.colorScheme.error
+                                }
+                            )
+                            state.health!!.factors.entries.take(4).forEach { (key, factor) ->
+                                Row(Modifier.fillMaxWidth().padding(top = 6.dp)) {
+                                    Text(
+                                        key.replace('_', ' ').replaceFirstChar { it.uppercase() },
+                                        style = MaterialTheme.typography.bodySmall,
+                                        modifier = Modifier.weight(1f)
+                                    )
+                                    Text(
+                                        factor.value ?: factor.label ?: "${factor.score}",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
                             }
                         }
                     }
@@ -178,21 +187,25 @@ fun StatsScreen(viewModel: StatsViewModel = hiltViewModel()) {
             }
 
             if (state.byCategory.isNotEmpty()) {
-                Spacer(Modifier.height(12.dp))
-                SectionHeader("Where it went")
-                state.byCategory.forEach { slice ->
+                item {
+                    Spacer(Modifier.height(12.dp))
+                    SectionHeader("Where it went")
+                }
+                items(state.byCategory) { slice ->
                     val max = state.byCategory.maxOf { it.total }.coerceAtLeast(1.0)
                     Column(Modifier.fillMaxWidth()) {
                         Row {
                             Text(
                                 slice.name,
                                 style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurface,
                                 modifier = Modifier.weight(1f),
                                 maxLines = 1
                             )
                             Text(
                                 formatMoney(slice.total),
-                                style = MaterialTheme.typography.labelMedium
+                                style = MaterialTheme.typography.labelMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
                         Spacer(Modifier.height(4.dp))
@@ -208,11 +221,14 @@ fun StatsScreen(viewModel: StatsViewModel = hiltViewModel()) {
             }
 
             if (state.forecast != null && state.forecast!!.points.isNotEmpty()) {
-                Spacer(Modifier.height(12.dp))
-                SectionHeader("Forecast")
-                state.forecast!!.points.take(3).forEach { point ->
+                item {
+                    Spacer(Modifier.height(12.dp))
+                    SectionHeader("Forecast")
+                }
+                items(state.forecast!!.points.take(3)) { point ->
                     Row(Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
                         Text(point.month, style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.weight(1f))
                         Text(
                             formatMoney(point.predictedExpense),
@@ -224,15 +240,17 @@ fun StatsScreen(viewModel: StatsViewModel = hiltViewModel()) {
             }
 
             if (state.achievements.isNotEmpty()) {
-                Spacer(Modifier.height(12.dp))
-                SectionHeader("Achievements")
-                state.achievements.take(5).forEach { a ->
+                item {
+                    Spacer(Modifier.height(12.dp))
+                    SectionHeader("Achievements")
+                }
+                items(state.achievements.take(5)) { a ->
                     Row(
                         Modifier.fillMaxWidth().padding(vertical = 6.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Column(Modifier.weight(1f)) {
-                            Text(a.name, style = MaterialTheme.typography.bodyMedium, maxLines = 1)
+                            Text(a.name, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurface, maxLines = 1)
                             a.description?.let {
                                 Text(
                                     it,
@@ -253,9 +271,11 @@ fun StatsScreen(viewModel: StatsViewModel = hiltViewModel()) {
             }
 
             if (state.leaderboard.isNotEmpty()) {
-                Spacer(Modifier.height(12.dp))
-                SectionHeader("Leaderboard")
-                state.leaderboard.forEach { entry ->
+                item {
+                    Spacer(Modifier.height(12.dp))
+                    SectionHeader("Leaderboard")
+                }
+                items(state.leaderboard) { entry ->
                     Row(Modifier.fillMaxWidth().padding(vertical = 5.dp)) {
                         Text(
                             "#${entry.rank}",
@@ -266,6 +286,7 @@ fun StatsScreen(viewModel: StatsViewModel = hiltViewModel()) {
                         Text(
                             entry.name,
                             style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurface,
                             modifier = Modifier.weight(1f),
                             maxLines = 1
                         )

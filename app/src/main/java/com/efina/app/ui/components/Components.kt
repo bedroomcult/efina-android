@@ -214,14 +214,15 @@ fun SectionHeader(
     title: String,
     modifier: Modifier = Modifier,
     subtitle: String? = null,
-    action: (@Composable () -> Unit)? = null
+    action: (@Composable () -> Unit)? = null,
+    color: Color = MaterialTheme.colorScheme.onSurface
 ) {
     Row(
         modifier = modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Column(Modifier.weight(1f)) {
-            Text(title, style = EfinaType.titleLargeEmphasized)
+            Text(title, style = EfinaType.titleLargeEmphasized, color = color)
             if (subtitle != null) {
                 Text(
                     subtitle,
