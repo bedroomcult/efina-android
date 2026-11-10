@@ -64,6 +64,7 @@ fun StatsScreen(viewModel: StatsViewModel = hiltViewModel()) {
             contentPadding = PaddingValues(0.dp, 0.dp, 16.dp, 88.dp),
         ) {
             // Time-range segmented button filter (pill style matching expense|income|transfer)
+            val selectedIndex = TimeRange.entries.indexOf(state.timeRange)
             val moneyColors = listOf(
                 LocalMoneyPalette.current.income,
                 LocalMoneyPalette.current.expense,
