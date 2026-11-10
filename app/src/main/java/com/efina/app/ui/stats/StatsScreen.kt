@@ -39,7 +39,6 @@ fun StatsScreen(viewModel: StatsViewModel = hiltViewModel()) {
                 title = { Text("Statistics", style = EfinaType.titleLargeEmphasized) }
             )
         },
-        floatingActionButton = { ScrollToTopFab(listState) },
     ) { padding ->
         if (state.error != null) {
             Column(Modifier.fillMaxSize().padding(16.dp)) {
@@ -67,7 +66,7 @@ fun StatsScreen(viewModel: StatsViewModel = hiltViewModel()) {
                 modifier = Modifier.fillMaxWidth()
             ) {
                 TimeRange.entries.forEachIndexed { index, range ->
-                    SegmentedButtonItem(
+                    Button(
                         selected = index == selected,
                         label = { Text(range.label) }
                     )
