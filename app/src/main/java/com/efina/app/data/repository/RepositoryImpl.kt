@@ -125,11 +125,27 @@ class AuthRepositoryImpl @Inject constructor(
             .map { }
 
     override suspend fun logout(): Result<Unit> {
-        // DELETE auth/sessions invalidates the session row. Surface failures so the
-        // caller can decide whether to retry, rather than silently returning success.
-        return runCatching { api.logout() }
-            .map { Unit }
-            .onFailure { tokenManager.clearAll(); userState.value = null }
+        // Revoke server-side first (the token is still attached), then clear locally
+        // no matter what the server says. The old code only cleared on an exception,
+        // so a 401 (expired token) or a 200 (successful revoke) both left the token
+        // in storage, and the next launch restored a dead session.
+        return try {
+            val response = api.logout()
+            if (response.isSuccessful) {
+                Result.success(Unit)
+            } else {
+                Result.failure(ApiException(response.code(), "Logout failed (${response.code()})"))
+            }
+        } catch (e: Exception) {
+            Result.failure(ApiException(0, e.message ?: "Logout failed"))
+        } finally {
+            clearSession()
+        }
+    }
+
+    override fun clearSession() {
+        tokenManager.clearAll()
+        userState.value = null
     }
 
     override fun isLoggedIn(): Boolean = tokenManager.isLoggedIn()

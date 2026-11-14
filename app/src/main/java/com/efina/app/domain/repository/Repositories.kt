@@ -21,6 +21,8 @@ interface AuthRepository {
      */
     suspend fun refreshCsrfToken(): Result<Unit>
     suspend fun logout(): Result<Unit>
+    /** Clears the local session immediately, without a network call. */
+    fun clearSession()
     fun isLoggedIn(): Boolean
 }
 

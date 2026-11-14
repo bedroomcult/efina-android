@@ -36,6 +36,11 @@ object SessionEvents {
         _unauthorized.tryEmit(Unit)
     }
 
+    /** Clears the replayed 401 so a later collector does not log out a fresh session. */
+    fun resetUnauthorized() {
+        _unauthorized.resetReplayCache()
+    }
+
     private val _csrfExpired = MutableSharedFlow<Unit>(replay = 1, extraBufferCapacity = 1)
 
     /** A 403 the client believes is a stale CSRF token. Handled by AuthViewModel. */

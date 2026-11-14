@@ -155,6 +155,20 @@ fun EfinaAppRoot(
 
     val startDestination = if (authState.isLoggedIn) Screen.Home.route else Screen.Login.route
 
+    // A 401 anywhere clears the session. The NavHost's startDestination is only
+    // read on first composition, so without this the user stays on a data screen
+    // showing "Session expired" and can never reach the login form.
+    LaunchedEffect(authState.isLoggedIn) {
+        if (!authState.isLoggedIn &&
+            navController.currentDestination != null &&
+            navController.currentBackStackEntry?.destination?.route != Screen.Login.route
+        ) {
+            navController.navigate(Screen.Login.route) {
+                popUpTo(0) { inclusive = true }
+            }
+        }
+    }
+
     // Apply an inbound deep link once the graph exists and the user is signed in.
     // Keyed on the StateFlow so a link arriving while the app runs also navigates.
     val link by deepLinkRoute.collectAsState()

@@ -39,6 +39,8 @@ class AuthViewModel @Inject constructor(
     val state: StateFlow<AuthUiState> = _state.asStateFlow()
 
     init {
+        // A stale 401 from a previous ViewModel must not log out a fresh session.
+        SessionEvents.resetUnauthorized()
         // Collector first: restore() fires a network call, and a 401 arriving
         // before anyone is listening would be dropped (SharedFlow with replay=0
         // and no subscriber). Order here is load-bearing.
@@ -68,12 +70,15 @@ class AuthViewModel @Inject constructor(
         viewModelScope.launch {
             SessionEvents.unauthorized.collect {
                 if (_state.value.isLoggedIn) {
-                    repository.logout()
+                    // Clear locally first: the token is already dead, so a network
+                    // revoke would only add latency before the user can sign in.
+                    repository.clearSession()
                     _state.value = AuthUiState(
                         checked = true,
                         error = "Session expired, please sign in again."
                     )
                 }
+                SessionEvents.resetUnauthorized()
             }
         }
     }
@@ -94,10 +99,13 @@ class AuthViewModel @Inject constructor(
             repository.refreshCurrentUser()
                 .onSuccess { _state.value = AuthUiState(checked = true, user = it, hasSession = true) }
                 .onFailure {
-                    // A 401 already cleared the session via SessionEvents; anything
-                    // else (offline, 500) must not destroy a valid token.
+                    // A 401 means the session is dead: clear it here as well as
+                    // via SessionEvents, so a dropped event cannot leave a stale
+                    // token behind. Anything else (offline, 500) must not destroy
+                    // a valid token.
                     val status = (it as? ApiException)?.status
                     if (status == 401) {
+                        repository.clearSession()
                         _state.value = AuthUiState(
                             checked = true,
                             error = "Session expired, please sign in again."
