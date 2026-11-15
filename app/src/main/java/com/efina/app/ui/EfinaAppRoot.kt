@@ -244,12 +244,15 @@ fun EfinaAppRoot(
                 Box(
                     Modifier
                         .weight(1f)
+                        .background(MaterialTheme.colorScheme.background)
                         .nestedScroll(dockScroll)
                 ) {
                     // SharedTransitionLayout hosts the account-icon shared element for
                     // the list-to-detail flight. Tab switches fade-through; detail
                     // screens slide in expressively. Both collapse when animations
-                    // are disabled via EfinaMotion.
+                    // are disabled via EfinaMotion. The opaque background above is
+                    // load-bearing: without it the window shows through while the
+                    // outgoing tab fades and the incoming one scales in.
                     SharedTransitionLayout(Modifier.fillMaxSize()) {
                     val sharedScope = this
                     NavHost(

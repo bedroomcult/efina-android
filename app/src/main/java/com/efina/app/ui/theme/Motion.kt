@@ -79,7 +79,7 @@ object EfinaMotion {
             initialScale = 0.98f
         )
 
-    fun tabExit(): ExitTransition = fadeOut(tween(duration(120)))
+    fun tabExit(): ExitTransition = fadeOut(tween(duration(180)))
 
     /** Detail screens slide in from the right; pop reverses the direction. */
     fun detailEnter(): EnterTransition =
