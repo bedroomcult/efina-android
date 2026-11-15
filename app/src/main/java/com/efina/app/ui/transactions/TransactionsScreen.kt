@@ -4,6 +4,7 @@ import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -51,6 +52,7 @@ fun TransactionsScreen(
     viewModel: TransactionsViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsState()
+    val pagedItems = viewModel.paged.collectAsLazyPagingItems()
     val haptics = rememberHaptics()
     // Marks this screen as having played its entrance, so returning to the tab
     // does not replay the staggered reveal. Set in an effect, not during
@@ -138,7 +140,7 @@ fun TransactionsScreen(
                     contentPadding = PaddingValues(16.dp, 0.dp, 16.dp, 96.dp),
                     verticalArrangement = Arrangement.spacedBy(2.dp)
                 ) {
-                    itemsIndexed(state.transactions, key = { _, t -> t.id }) { index, tx ->
+                    itemsIndexed(pagedItems.itemSnapshotList.items, key = { _, t -> t.id }) { index, tx ->
                         TransactionRow(
                             tx = tx,
                             modifier = efinaAnimateItem(revealModifier(index)),
@@ -150,17 +152,9 @@ fun TransactionsScreen(
                             currentUserId = state.currentUserId
                         )
                     }
-                    if (state.loadingMore) {
-                        item {
-                            Box(
-                                Modifier.fillMaxWidth().padding(16.dp),
-                                contentAlignment = Alignment.Center
-                            ) { CircularProgressIndicator(Modifier.size(24.dp), strokeWidth = 2.dp) }
-                        }
-                    }
                     item {
                         Text(
-                            text = "Showing ${state.transactions.size} of ${state.total}",
+                            text = "Showing ${pagedItems.itemCount}",
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp)

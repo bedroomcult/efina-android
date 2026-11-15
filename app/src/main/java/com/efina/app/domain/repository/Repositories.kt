@@ -60,6 +60,16 @@ interface TransactionRepository {
     /** The local mirror, as a stream. See [AccountRepository.observeAccounts]. */
     fun observeTransactions(): Flow<List<Transaction>> =
         flow { emit(getTransactions(TransactionFilter(limit = 500)).getOrNull()?.transactions ?: emptyList()) }
+
+    /**
+     * The mirrored window, paged.
+     *
+     * The mirror already holds the whole 12-month window, so paging here is a
+     * local query rather than a network walk: scrolling never waits and works
+     * offline. Filters and search become SQL.
+     */
+    fun pagedTransactions(filter: TransactionFilter): Flow<androidx.paging.PagingData<Transaction>> =
+        flow { emit(androidx.paging.PagingData.empty()) }
     suspend fun createTransaction(request: CreateTransactionRequest): Result<Transaction>
     suspend fun updateTransaction(id: Long, request: UpdateTransactionRequest): Result<Transaction>
     suspend fun deleteTransaction(id: Long): Result<Unit>

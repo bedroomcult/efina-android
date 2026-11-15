@@ -207,6 +207,24 @@ class OfflineTransactionRepository @Inject constructor(
     override fun observeTransactions(): Flow<List<Transaction>> =
         db.transactionDao().observeAll().map { rows -> rows.map { it.toDomainEntity() } }
 
+    override fun pagedTransactions(
+        filter: TransactionFilter,
+    ): Flow<androidx.paging.PagingData<Transaction>> =
+        androidx.paging.Pager(
+            config = androidx.paging.PagingConfig(pageSize = 50, enablePlaceholders = false),
+            pagingSourceFactory = {
+                db.transactionDao().pagingSource(
+                    type = filter.type?.value,
+                    accountId = filter.accountId,
+                    categoryId = filter.categoryId,
+                    startDate = filter.startDate,
+                    endDate = filter.endDate,
+                    search = filter.search?.takeIf { it.isNotBlank() },
+                    familyOnly = filter.familyOnly,
+                )
+            },
+        ).flow.map { paging -> paging.map { it.toDomainEntity() } }
+
     override suspend fun getTransactions(filter: TransactionFilter): Result<TransactionPage> =
         safeCall {
             api.getTransactions(

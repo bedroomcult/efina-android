@@ -10,6 +10,10 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.flatMapLatest
+import androidx.paging.cachedIn
+import androidx.paging.PagingData
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 import com.efina.app.domain.repository.AuthRepository
@@ -93,6 +97,20 @@ class TransactionsViewModel @Inject constructor(
 
     /** Kept for callers that used to force a reload. */
     fun load() = refresh()
+
+    /**
+     * The paged list.
+     *
+     * Re-created whenever the filter changes, and cached so a rotation or a trip
+     * to another tab does not re-query. Because the mirror holds the whole
+     * window, paging is a local query: scrolling never waits and works offline.
+     */
+    @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
+    val paged: kotlinx.coroutines.flow.Flow<androidx.paging.PagingData<com.efina.app.domain.model.Transaction>> =
+        _state.map { it.filter }
+            .distinctUntilChanged()
+            .flatMapLatest { filter -> repository.pagedTransactions(filter) }
+            .cachedIn(viewModelScope)
 
     /**
      * No-op now.
