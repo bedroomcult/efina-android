@@ -134,6 +134,16 @@ class AuthViewModel @Inject constructor(
         }
     }
 
+    fun loginWithGoogle(credential: String) {
+        if (_state.value.loading) return
+        _state.value = _state.value.copy(loading = true, error = null)
+        viewModelScope.launch {
+            repository.loginWithGoogle(credential)
+                .onSuccess { _state.value = AuthUiState(checked = true, user = it, hasSession = true) }
+                .onFailure { _state.value = _state.value.copy(loading = false, error = it.message) }
+        }
+    }
+
     fun register(name: String, email: String, password: String) {
         if (_state.value.loading) return
         _state.value = _state.value.copy(loading = true, error = null)

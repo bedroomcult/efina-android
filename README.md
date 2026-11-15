@@ -56,6 +56,17 @@ Signed releases come from `.github/workflows/release.yml` on a `v*` tag, which
 reads `ANDROID_KEYSTORE_CONTENT`, `ANDROID_KEYSTORE_PASSWORD`, `ANDROID_KEY_ALIAS`
 and `ANDROID_KEY_PASSWORD` from repository secrets.
 
+## Google Sign-In
+
+The login screen uses Credential Manager with the web OAuth client ID in
+`BuildConfig.GOOGLE_WEB_CLIENT_ID`. The backend verifies the ID token audience
+against the same client ID.
+
+One Google Cloud Console step is required outside this repo: create an **Android**
+OAuth client for package `com.efina.app` with the SHA-1 of the signing key
+(debug keystore for local builds, release keystore for CI). Without it,
+Credential Manager returns `DEVELOPER_ERROR` and the button shows a failure badge.
+
 ## Verification
 
 Neither check needs Gradle, so both run anywhere:

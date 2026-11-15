@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.Flow
 
 interface AuthRepository {
     suspend fun login(email: String, password: String): Result<User>
+    suspend fun loginWithGoogle(credential: String): Result<User>
     suspend fun register(name: String, email: String, password: String): Result<User>
     /** Restores the session from encrypted storage without a network call. */
     fun currentUserFlow(): Flow<User?>

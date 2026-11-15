@@ -97,6 +97,11 @@ class AuthRepositoryImpl @Inject constructor(
             .onSuccess { persist(it) }
             .map { it.user.toDomain() }
 
+    override suspend fun loginWithGoogle(credential: String): Result<User> =
+        safeCall { api.loginWithGoogle(GoogleLoginRequestDto(credential)) }
+            .onSuccess { persist(it) }
+            .map { it.user.toDomain() }
+
     override suspend fun register(name: String, email: String, password: String): Result<User> =
         safeCall { api.register(RegisterRequestDto(email.trim(), password, name.ifBlank { null })) }
             .onSuccess { persist(it) }

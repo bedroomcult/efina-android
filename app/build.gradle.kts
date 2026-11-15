@@ -34,6 +34,8 @@ android {
 
         // API Configuration
         buildConfigField("String", "API_BASE_URL", "\"https://efina.himz.my.id/api/\"")
+        // Web OAuth client ID; the backend verifies the ID token audience against it.
+        buildConfigField("String", "GOOGLE_WEB_CLIENT_ID", "\"677062331013-1r5cf3etriii0pdsqrc1ks4q6ddhs67j.apps.googleusercontent.com\"")
     }
 
     signingConfigs {
@@ -138,6 +140,11 @@ dependencies {
     
     // Coroutines
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.10.0")
+
+    // Google Sign-In (Credential Manager)
+    implementation("androidx.credentials:credentials:1.3.0")
+    implementation("androidx.credentials:credentials-play-services-auth:1.3.0")
+    implementation("com.google.android.libraries.identity.googleid:googleid:1.1.0")
     
     // Room Database
     implementation("androidx.room:room-runtime:2.6.1")

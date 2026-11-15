@@ -18,7 +18,15 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.credentials.CredentialManager
+import androidx.credentials.GetCredentialRequest
+import androidx.credentials.exceptions.GetCredentialException
+import com.google.android.libraries.identity.googleid.GetGoogleIdOption
+import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
+import com.efina.app.BuildConfig
+import kotlinx.coroutines.launch
 import com.efina.app.ui.theme.EfinaCorners
 import com.efina.app.ui.theme.EfinaType
 import com.efina.app.ui.components.BadgeToastHost
@@ -50,6 +58,46 @@ fun LoginScreen(
     var name by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
     var localError by remember { mutableStateOf<String?>(null) }
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    var googleLoading by remember { mutableStateOf(false) }
+
+    fun signInWithGoogle() {
+        if (state.loading || googleLoading) return
+        googleLoading = true
+        scope.launch {
+            try {
+                val credentialManager = CredentialManager.create(context)
+                val googleIdOption = GetGoogleIdOption.Builder()
+                    // false so any Google account can sign in, not just previously
+                    // authorized ones; the backend creates the user on first link.
+                    .setFilterByAuthorizedAccounts(false)
+                    .setAutoSelectEnabled(false)
+                    .setServerClientId(BuildConfig.GOOGLE_WEB_CLIENT_ID)
+                    .build()
+                val request = GetCredentialRequest.Builder()
+                    .addCredentialOption(googleIdOption)
+                    .build()
+                val result = credentialManager.getCredential(
+                    request = request,
+                    context = context
+                )
+                val credential = result.credential
+                if (credential.type == GoogleIdTokenCredential.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL) {
+                    val googleCredential = GoogleIdTokenCredential.createFrom(credential.data)
+                    viewModel.loginWithGoogle(googleCredential.idToken)
+                } else {
+                    badge = "Google sign-in returned an unexpected credential"
+                }
+            } catch (e: GetCredentialException) {
+                badge = e.message ?: "Google sign-in was cancelled"
+            } catch (e: Exception) {
+                badge = e.message ?: "Google sign-in failed"
+            } finally {
+                googleLoading = false
+            }
+        }
+    }
 
     LaunchedEffect(state.isLoggedIn) {
         if (state.isLoggedIn) onLoginSuccess()
@@ -181,6 +229,26 @@ fun LoginScreen(
                         if (registerMode) "Create account" else "Sign in",
                         fontWeight = FontWeight.Bold
                     )
+                }
+            }
+
+            Spacer(Modifier.height(16.dp))
+
+            OutlinedButton(
+                onClick = { signInWithGoogle() },
+                enabled = !state.loading && !googleLoading,
+                shape = EfinaCorners.menu,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(52.dp)
+            ) {
+                if (googleLoading) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(20.dp),
+                        strokeWidth = 2.dp
+                    )
+                } else {
+                    Text("Continue with Google", fontWeight = FontWeight.SemiBold)
                 }
             }
 
