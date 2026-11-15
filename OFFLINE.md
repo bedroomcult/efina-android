@@ -159,18 +159,35 @@ already applies them atomically in a `DB.batch`: `createTransfer`,
 
 ## What is not built yet
 
-- **Paging 3 is wired into the DAO but not the screen.** `TransactionDao.pagingSource`
-  exists; `TransactionsScreen` renders the whole mirrored window instead.
-- **Conflicts screen** — the table, the DAO and the counts exist; the screen and
-  its route do not. Conflicts are parked and counted, but not yet resolvable.
-- **Full-sync progress screen** for a first launch after update.
-- **Stale markers** on insights (health score, forecast, achievements), which are
-  computed server-side and cannot refresh offline.
-- **Settings → Sync section** (status, last synced, Sync now, kill switch).
-- **Idempotency on budgets, goals, debts, categories, scheduled** — transactions
-  and accounts are covered; the rest are not yet.
-- **Tests** for the Android side: unit, Room in-memory, MockWebServer, work-testing.
-- **The old network-only implementations** (`AccountRepositoryImpl`,
-  `TransactionRepositoryImpl`, …) are still in `RepositoryImpl.kt`, unbound and
-  unused. They should be deleted once the offline path has been exercised on a
-  device.
+Only one thing, and it is not code:
+
+- **Nothing has been run on a device.** Everything here is proven by the
+  compiler, by 5 Android test classes and by 72 backend tests against real
+  SQLite, plus an end-to-end run against the deployed backend (one
+  Idempotency-Key, two POSTs, one row, for six entities). No one has installed
+  the APK and gone offline. Treat the first device run as the real acceptance
+  test, particularly for SQLCipher key retrieval in the background worker and
+  for the first-launch full sync.
+
+Deliberately out of scope:
+
+- **The web app does not consume `/api/sync`.** It keeps using the per-resource
+  endpoints and its own localStorage cache. The backend changes are additive so
+  it is unaffected.
+
+## Test coverage
+
+Android (`./gradlew testDebugUnitTest`, wired into CI):
+
+| Class | Covers |
+|---|---|
+| `SyncClassifierTest` | the whole failure policy, including the easy-to-get-wrong cases: 404 on a create is a conflict not "already gone"; a second 403 after a CSRF refresh is a refusal, not a retry |
+| `MirrorRulesTest` | a real in-memory Room DB: a delta pull never clobbers a pending edit, applies when synced, inserts unknown rows; a visibility wipe clears the mirror without touching the queue; queue count/delete/server-id binding |
+| `ReplayRequestTest` | MockWebServer: the `Idempotency-Key` and `X-Base-Sync-Seq` headers on the wire, CSRF/session headers, a bodyless DELETE |
+| `SyncWorkerEnqueueTest` | work-testing: unique work with KEEP so two triggers cannot race the queue; requires a network |
+
+Backend (`npx vitest run functions/`): 72 tests over the migration and its
+triggers, the delta endpoint, idempotency/replay, the tombstone fan-out and the
+visibility version. The 15 failures on `master` are pre-existing — 12 are
+miniflare failing to start in this environment, 3 are known gaps in the
+transaction mock — and are unchanged by this work.
