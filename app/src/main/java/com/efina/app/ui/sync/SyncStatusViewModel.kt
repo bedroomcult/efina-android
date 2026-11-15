@@ -36,9 +36,6 @@ data class SyncUiState(
 ) {
     val showOfflineBanner: Boolean get() = !online
     val showReauthBanner: Boolean get() = needsReauth && pendingCount > 0
-
-    /** The first sync has not landed and the last attempt failed. */
-    val firstSyncFailed: Boolean get() = lastSyncedAt == null && lastError != null
 }
 
 @HiltViewModel
