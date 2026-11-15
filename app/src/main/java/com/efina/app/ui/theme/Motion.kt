@@ -110,7 +110,7 @@ object EfinaMotion {
 fun SharedTransitionScope.accountIconBounds(
     accountId: Long,
     animatedVisibilityScope: AnimatedVisibilityScope
-): Modifier = sharedBounds(
+): Modifier = Modifier.sharedBounds(
     sharedContentState = rememberSharedContentState(key = "account-icon-$accountId"),
     animatedVisibilityScope = animatedVisibilityScope,
     enter = fadeIn(tween(if (EfinaMotion.enabled) 120 else 0)),
