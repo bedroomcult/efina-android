@@ -104,6 +104,16 @@ class SyncEngine @Inject constructor(
         // ---- 2. pull -------------------------------------------------------
         val pulled = try {
             pull()
+        } catch (e: SessionExpired) {
+            // A 401 during the pull is the same condition as during the flush:
+            // the queue is kept and the user is asked to sign in. Treating it as
+            // a transient failure would retry forever against a dead token.
+            markNeedsReauth()
+            return@withContext Outcome(
+                flushed = flushed,
+                conflicts = conflicts,
+                needsReauth = true,
+            )
         } catch (e: Exception) {
             return@withContext Outcome(
                 flushed = flushed,

@@ -64,7 +64,7 @@ class OfflineCategoryRepository @Inject constructor(
             // rebuild the one-level tree the picker expects.
             val byParent = rows.groupBy { it.parentId }
             (byParent[null] ?: emptyList()).map { root ->
-                root.toDomain(
+                root.toDomainEntity(
                     children = (byParent[root.id] ?: emptyList()).map { it.toDomainEntity() }
                 )
             }
