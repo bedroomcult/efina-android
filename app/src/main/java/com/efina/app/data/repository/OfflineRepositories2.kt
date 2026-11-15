@@ -7,7 +7,8 @@ import com.efina.app.data.local.EfinaDatabase
 import com.efina.app.data.local.GoalEntity
 import com.efina.app.data.local.PendingState
 import com.efina.app.data.local.ScheduledEntity
-import com.efina.app.data.local.toDomain
+import com.efina.app.data.local.toDomain as toDomainEntity
+import com.efina.app.data.remote.dto.toDomain
 import com.efina.app.data.local.toEntity
 import com.efina.app.data.remote.api.EfinaApi
 import com.efina.app.data.remote.dto.toDto
@@ -64,7 +65,7 @@ class OfflineCategoryRepository @Inject constructor(
             val byParent = rows.groupBy { it.parentId }
             (byParent[null] ?: emptyList()).map { root ->
                 root.toDomain(
-                    children = (byParent[root.id] ?: emptyList()).map { it.toDomain() }
+                    children = (byParent[root.id] ?: emptyList()).map { it.toDomainEntity() }
                 )
             }
         }
@@ -111,7 +112,7 @@ class OfflineCategoryRepository @Inject constructor(
             ),
             baseSyncSeq = null,
         )
-        return Result.success(entity.toDomain())
+        return Result.success(entity.toDomainEntity())
     }
 
     override suspend fun updateCategory(id: Long, request: UpdateCategoryRequest): Result<Category> {
@@ -138,7 +139,7 @@ class OfflineCategoryRepository @Inject constructor(
             ),
             baseSyncSeq = existing.syncSeq,
         )
-        return Result.success(updated.toDomain())
+        return Result.success(updated.toDomainEntity())
     }
 
     override suspend fun deleteCategory(id: Long): Result<Unit> {
@@ -171,7 +172,7 @@ class OfflineBudgetRepository @Inject constructor(
 ) : BudgetRepository {
 
     override fun observeBudgets(): Flow<List<Budget>> =
-        db.budgetDao().observeAll().map { rows -> rows.map { it.toDomain() } }
+        db.budgetDao().observeAll().map { rows -> rows.map { it.toDomainEntity() } }
 
     override suspend fun getBudgets(): Result<List<Budget>> =
         safeCall { api.getBudgets() }
@@ -210,7 +211,7 @@ class OfflineBudgetRepository @Inject constructor(
             ),
             baseSyncSeq = null,
         )
-        return Result.success(entity.toDomain())
+        return Result.success(entity.toDomainEntity())
     }
 
     override suspend fun updateBudget(id: Long, request: UpdateBudgetRequest): Result<Budget> {
@@ -236,7 +237,7 @@ class OfflineBudgetRepository @Inject constructor(
             ),
             baseSyncSeq = existing.syncSeq,
         )
-        return Result.success(updated.toDomain())
+        return Result.success(updated.toDomainEntity())
     }
 
     override suspend fun deleteBudget(id: Long): Result<Unit> {
@@ -292,7 +293,7 @@ class OfflineGoalRepository @Inject constructor(
 ) : GoalRepository {
 
     override fun observeGoals(): Flow<List<Goal>> =
-        db.goalDao().observeAll().map { rows -> rows.map { it.toDomain() } }
+        db.goalDao().observeAll().map { rows -> rows.map { it.toDomainEntity() } }
 
     override suspend fun getGoals(): Result<List<Goal>> =
         safeCall { api.getGoals() }
@@ -327,7 +328,7 @@ class OfflineGoalRepository @Inject constructor(
             ),
             baseSyncSeq = null,
         )
-        return Result.success(entity.toDomain())
+        return Result.success(entity.toDomainEntity())
     }
 
     override suspend fun updateGoal(id: Long, request: UpdateGoalRequest): Result<Goal> {
@@ -356,7 +357,7 @@ class OfflineGoalRepository @Inject constructor(
             ),
             baseSyncSeq = existing.syncSeq,
         )
-        return Result.success(updated.toDomain())
+        return Result.success(updated.toDomainEntity())
     }
 
     override suspend fun deleteGoal(id: Long): Result<Unit> {
@@ -411,7 +412,7 @@ class OfflineDebtRepository @Inject constructor(
 ) : DebtRepository {
 
     override fun observeDebts(): Flow<List<Debt>> =
-        db.debtDao().observeAll().map { rows -> rows.map { it.toDomain() } }
+        db.debtDao().observeAll().map { rows -> rows.map { it.toDomainEntity() } }
 
     override suspend fun getDebts(): Result<List<Debt>> =
         safeCall { api.getDebts() }
@@ -453,7 +454,7 @@ class OfflineDebtRepository @Inject constructor(
             ),
             baseSyncSeq = null,
         )
-        return Result.success(entity.toDomain())
+        return Result.success(entity.toDomainEntity())
     }
 
     override suspend fun updateDebt(id: Long, request: UpdateDebtRequest): Result<Debt> {
@@ -486,7 +487,7 @@ class OfflineDebtRepository @Inject constructor(
             ),
             baseSyncSeq = existing.syncSeq,
         )
-        return Result.success(updated.toDomain())
+        return Result.success(updated.toDomainEntity())
     }
 
     override suspend fun deleteDebt(id: Long): Result<Unit> {
@@ -542,7 +543,7 @@ class OfflineScheduledRepository @Inject constructor(
 ) : ScheduledRepository {
 
     override fun observeScheduled(): Flow<List<ScheduledTransaction>> =
-        db.scheduledDao().observeAll().map { rows -> rows.map { it.toDomain() } }
+        db.scheduledDao().observeAll().map { rows -> rows.map { it.toDomainEntity() } }
 
     override suspend fun getScheduled(): Result<List<ScheduledTransaction>> =
         safeCall { api.getScheduled() }
@@ -587,7 +588,7 @@ class OfflineScheduledRepository @Inject constructor(
             ),
             baseSyncSeq = null,
         )
-        return Result.success(entity.toDomain())
+        return Result.success(entity.toDomainEntity())
     }
 
     override suspend fun deleteScheduled(id: Long): Result<Unit> {

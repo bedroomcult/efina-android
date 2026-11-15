@@ -2,7 +2,8 @@ package com.efina.app.data.repository
 
 import com.efina.app.data.local.EfinaDatabase
 import com.efina.app.data.local.PendingState
-import com.efina.app.data.local.toDomain
+import com.efina.app.data.local.toDomain as toDomainEntity
+import com.efina.app.data.remote.dto.toDomain
 import com.efina.app.data.local.toEntity
 import com.efina.app.data.remote.api.EfinaApi
 import com.efina.app.data.remote.dto.toDto
@@ -48,7 +49,7 @@ class OfflineAccountRepository @Inject constructor(
     private val json = Json { encodeDefaults = true }
 
     override fun observeAccounts(): Flow<List<Account>> =
-        db.accountDao().observeAll().map { rows -> rows.map { it.toDomain() } }
+        db.accountDao().observeAll().map { rows -> rows.map { it.toDomainEntity() } }
 
     /**
      * Refresh the mirror from the server.
@@ -101,7 +102,7 @@ class OfflineAccountRepository @Inject constructor(
             ),
             baseSyncSeq = null,
         )
-        return Result.success(entity.toDomain())
+        return Result.success(entity.toDomainEntity())
     }
 
     override suspend fun updateAccount(id: Long, request: UpdateAccountRequest): Result<Account> {
@@ -132,7 +133,7 @@ class OfflineAccountRepository @Inject constructor(
             ),
             baseSyncSeq = existing.syncSeq,
         )
-        return Result.success(updated.toDomain())
+        return Result.success(updated.toDomainEntity())
     }
 
     override suspend fun deleteAccount(id: Long): Result<Unit> {
@@ -204,7 +205,7 @@ class OfflineTransactionRepository @Inject constructor(
     private val json = Json { encodeDefaults = true }
 
     override fun observeTransactions(): Flow<List<Transaction>> =
-        db.transactionDao().observeAll().map { rows -> rows.map { it.toDomain() } }
+        db.transactionDao().observeAll().map { rows -> rows.map { it.toDomainEntity() } }
 
     override suspend fun getTransactions(filter: TransactionFilter): Result<TransactionPage> =
         safeCall {
@@ -282,7 +283,7 @@ class OfflineTransactionRepository @Inject constructor(
             ),
             baseSyncSeq = null,
         )
-        return Result.success(entity.toDomain())
+        return Result.success(entity.toDomainEntity())
     }
 
     override suspend fun updateTransaction(
@@ -317,7 +318,7 @@ class OfflineTransactionRepository @Inject constructor(
             ),
             baseSyncSeq = existing.syncSeq,
         )
-        return Result.success(updated.toDomain())
+        return Result.success(updated.toDomainEntity())
     }
 
     override suspend fun deleteTransaction(id: Long): Result<Unit> {
