@@ -1,5 +1,6 @@
 package com.efina.app.ui.accounts
 
+import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
@@ -127,6 +128,7 @@ fun AccountSharingScreen(
 
             Text("Members", style = MaterialTheme.typography.titleMedium)
 
+            Column(Modifier.animateContentSize()) {
             if (state.membersLoading) {
                 LoadingList(rows = 2)
             } else {
@@ -154,6 +156,7 @@ fun AccountSharingScreen(
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
+            }
             }
 
             if (account.canAdmin) {

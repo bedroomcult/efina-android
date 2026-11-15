@@ -1,6 +1,7 @@
 package com.efina.app.ui.home
 
 import androidx.compose.foundation.background
+import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.*
@@ -192,6 +193,7 @@ fun HomeScreen(
                             val b = data.budgets[i]
                             Surface(
                                 modifier = Modifier.fillMaxWidth()
+                                    .animateContentSize()
                                     .then(efinaAnimateItem())
                                     .springClick(EfinaCorners.menu, onClick = onNavigateToBudgets),
                                 shape = EfinaCorners.menu,
@@ -235,6 +237,7 @@ fun HomeScreen(
                             val g = data.goals[i]
                             Surface(
                                 modifier = Modifier.fillMaxWidth()
+                                    .animateContentSize()
                                     .then(efinaAnimateItem())
                                     .springClick(EfinaCorners.menu, onClick = onNavigateToGoals),
                                 shape = EfinaCorners.menu,
@@ -379,6 +382,7 @@ private fun RecentRow(
 ) {
     Surface(
         modifier = modifier.fillMaxWidth()
+            .animateContentSize()
             .springClick(EfinaCorners.menu, onClick = onClick),
         shape = EfinaCorners.groupInner,
         color = MaterialTheme.colorScheme.surfaceContainerLow,

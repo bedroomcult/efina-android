@@ -1,6 +1,7 @@
 package com.efina.app.ui.budgets
 
 import androidx.compose.foundation.background
+import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -239,6 +240,7 @@ private fun GoalCard(
 ) {
     Surface(
         modifier = modifier.fillMaxWidth()
+            .animateContentSize()
             .springClick(EfinaCorners.menu, onClick = onEdit),
         shape = EfinaCorners.menu,
         color = MaterialTheme.colorScheme.surfaceContainerLow,

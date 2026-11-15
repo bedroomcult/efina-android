@@ -1,6 +1,7 @@
 package com.efina.app.ui.accounts
 
 import androidx.compose.foundation.background
+import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -193,6 +194,7 @@ private fun AccountRow(
     Surface(
         modifier = modifier
             .fillMaxWidth()
+            .animateContentSize()
             .springClick(EfinaCorners.menu, onClick = onClick),
         shape = EfinaCorners.menu,
         color = MaterialTheme.colorScheme.surfaceContainerLow

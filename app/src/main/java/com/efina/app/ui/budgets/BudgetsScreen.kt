@@ -1,6 +1,7 @@
 package com.efina.app.ui.budgets
 
 import androidx.compose.foundation.background
+import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -329,6 +330,7 @@ private fun BudgetCard(
 
     Surface(
         modifier = modifier.fillMaxWidth()
+            .animateContentSize()
             .springClick(EfinaCorners.menu, onClick = onOpen),
         shape = EfinaCorners.menu,
         color = MaterialTheme.colorScheme.surfaceContainerLow,

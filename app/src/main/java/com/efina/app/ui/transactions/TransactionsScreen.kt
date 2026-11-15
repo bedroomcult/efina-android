@@ -1,5 +1,6 @@
 package com.efina.app.ui.transactions
 
+import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -247,6 +248,7 @@ private fun TransactionRow(
     Surface(
         modifier = modifier
             .fillMaxWidth()
+            .animateContentSize()
             .springClick(EfinaCorners.menu, onClick = onClick),
         color = MaterialTheme.colorScheme.surfaceContainerLow,
         shape = EfinaCorners.menu
