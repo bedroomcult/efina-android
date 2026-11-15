@@ -1,12 +1,15 @@
 package com.efina.app.util
 
+import android.Manifest
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.os.Build
 import androidx.core.app.NotificationCompat
+import androidx.core.content.ContextCompat
 import androidx.core.app.NotificationManagerCompat
 import com.efina.app.MainActivity
 import com.efina.app.util.UpdateChecker.UpdateInfo
@@ -72,6 +75,16 @@ class NotificationHelper @Inject constructor(
             .setPriority(NotificationCompat.PRIORITY_DEFAULT)
             .build()
 
+        // POST_NOTIFICATIONS is granted at runtime on API 33+. Without this
+        // check the call throws SecurityException on new installs; lint flagged
+        // it, and it was previously masked because the lint step was allowed to
+        // fail.
+        if (ContextCompat.checkSelfPermission(
+                context, Manifest.permission.POST_NOTIFICATIONS
+            ) != PackageManager.PERMISSION_GRANTED
+        ) {
+            return
+        }
         notificationManager.notify(notificationId, notification)
     }
 }

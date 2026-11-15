@@ -103,9 +103,11 @@ jobs:
             **/build/outputs/logs/**
           if-no-files-found: ignore
 
+      # No continue-on-error: lint now disables only the detector that crashes on
+      # Kotlin 2.0, so the rest of its findings are real and should gate. A lint
+      # step that is allowed to fail reports nothing.
       - name: Lint
         run: ./gradlew lintDebug --no-daemon --stacktrace
-        continue-on-error: true
 
   device:
     name: Device tests

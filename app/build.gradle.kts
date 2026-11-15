@@ -88,10 +88,19 @@ android {
 
     lint {
         // Kotlin 2.0 + AGP lint crashes on NonNullableMutableLiveDataDetector
-        // (IncompatibleClassChangeError). Disable lint for release builds until
-        // AGP supports Kotlin 2.0.
+        // (IncompatibleClassChangeError). Disabling the whole task hides every
+        // other finding, so only the crashing detector is disabled and the rest
+        // still report.
+        disable += "NullSafeMutableLiveData"
+
+        // Release lint is skipped because lintVitalAnalyzeRelease crashes on the
+        // same detector during the vital pass, which cannot be filtered.
         checkReleaseBuilds = false
-        abortOnError = false
+
+        // Warnings do not fail the build, but errors do — that is what makes the
+        // Lint step meaningful instead of decorative.
+        abortOnError = true
+        warningsAsErrors = false
     }
 
 
