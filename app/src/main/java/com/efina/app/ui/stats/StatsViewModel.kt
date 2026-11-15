@@ -40,6 +40,8 @@ data class StatsUiState(
     val health: HealthScore? = null,
     val achievements: List<Achievement> = emptyList(),
     val leaderboard: List<LeaderboardEntry> = emptyList(),
+    val monthlyStats: List<MonthlyStat> = emptyList(),
+    val budgetVsActual: List<BudgetVsActual> = emptyList(),
     val error: String? = null,
     val timeRange: TimeRange = TimeRange.Days7,
     val chartPoints: List<CashFlowPoint> = emptyList()
@@ -59,7 +61,8 @@ data class CategorySlice(val name: String, val total: Double)
 @HiltViewModel
 class StatsViewModel @Inject constructor(
     private val transactionRepository: TransactionRepository,
-    private val insightsRepository: InsightsRepository
+    private val insightsRepository: InsightsRepository,
+    private val budgetRepository: BudgetRepository
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(StatsUiState())
@@ -81,6 +84,8 @@ class StatsViewModel @Inject constructor(
             val healthJob = async { insightsRepository.getHealthScore() }
             val achievementsJob = async { insightsRepository.getAchievements() }
             val leaderboardJob = async { insightsRepository.getLeaderboard(10) }
+            val monthlyJob = async { insightsRepository.getMonthlyStats(6) }
+            val budgetVsActualJob = async { budgetRepository.getBudgetVsActual() }
 
             val txPageResult = txJob.await()
             val transactions = txPageResult.getOrNull()?.transactions ?: emptyList()
@@ -103,6 +108,8 @@ class StatsViewModel @Inject constructor(
             val healthResult = healthJob.await()
             val achievementsResult = achievementsJob.await()
             val leaderboardResult = leaderboardJob.await()
+            val monthlyResult = monthlyJob.await()
+            val budgetVsActualResult = budgetVsActualJob.await()
 
             // Track which jobs failed so we can surface an error instead of silently
             // rendering empty lists.
@@ -111,7 +118,9 @@ class StatsViewModel @Inject constructor(
                 forecastJob to forecastResult,
                 healthJob to healthResult,
                 achievementsJob to achievementsResult,
-                leaderboardJob to leaderboardResult
+                leaderboardJob to leaderboardResult,
+                monthlyJob to monthlyResult,
+                budgetVsActualJob to budgetVsActualResult
             ).filter { (_, result) -> result.isFailure }
 
             val allFailed = txPageResult.isFailure && transactions.isEmpty() &&
@@ -127,6 +136,8 @@ class StatsViewModel @Inject constructor(
                 health = healthResult.getOrNull(),
                 achievements = achievementsResult.getOrDefault(emptyList()),
                 leaderboard = leaderboardResult.getOrDefault(emptyList()),
+                monthlyStats = monthlyResult.getOrDefault(emptyList()),
+                budgetVsActual = budgetVsActualResult.getOrDefault(emptyList()),
                 timeRange = range,
                 chartPoints = chartPoints,
                 error = if (allFailed) {

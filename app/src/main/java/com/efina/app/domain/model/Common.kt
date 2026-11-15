@@ -121,6 +121,21 @@ data class ForecastPoint(
     val predictedExpense: Double
 )
 
+data class MonthlyStat(
+    val month: String,
+    val income: Double,
+    val expense: Double,
+    val net: Double
+)
+
+data class BudgetVsActual(
+    val categoryId: Long,
+    val name: String,
+    val budget: Double,
+    val spent: Double,
+    val percentage: Double
+)
+
 data class ChatMessage(
     val role: String,
     val content: String

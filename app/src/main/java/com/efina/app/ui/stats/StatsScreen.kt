@@ -10,10 +10,12 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.efina.app.ui.components.charts.CashFlowLineChart
 import com.efina.app.ui.components.charts.CashFlowPoint
+import com.efina.app.ui.components.charts.MonthlyBarsChart
 import com.efina.app.ui.components.*
 import com.efina.app.ui.theme.EfinaCorners
 import com.efina.app.ui.theme.EfinaSemantic
@@ -74,13 +76,14 @@ fun StatsScreen(viewModel: StatsViewModel = hiltViewModel()) {
                     TimeRange.entries.forEachIndexed { index, range ->
                         val isSelected = index == selectedIndex
                         val accent = moneyColors[index]
+                        val onAccent = if (accent.luminance() > 0.5f) Color.Black else Color.White
                         SegmentedButton(
                             selected = isSelected,
                             onClick = { viewModel.load(TimeRange.entries[index]) },
                             shape = SegmentedButtonDefaults.itemShape(index, TimeRange.entries.size),
                             colors = SegmentedButtonDefaults.colors(
                                 activeContainerColor = accent,
-                                activeContentColor = Color.White,
+                                activeContentColor = onAccent,
                                 inactiveContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
                                 inactiveContentColor = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -88,7 +91,7 @@ fun StatsScreen(viewModel: StatsViewModel = hiltViewModel()) {
                             Text(
                                 text = range.label,
                                 style = MaterialTheme.typography.labelMedium,
-                                color = if (isSelected) Color.White else MaterialTheme.colorScheme.onSurfaceVariant
+                                color = if (isSelected) onAccent else MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
                     }
@@ -153,6 +156,24 @@ fun StatsScreen(viewModel: StatsViewModel = hiltViewModel()) {
                             points = state.chartPoints,
                             modifier = Modifier.fillMaxWidth().height(200.dp)
                         )
+                    }
+                }
+            }
+
+            if (state.monthlyStats.isNotEmpty()) {
+                item {
+                    Spacer(Modifier.height(12.dp))
+                    Surface(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = EfinaCorners.menu,
+                        color = MaterialTheme.colorScheme.surfaceContainerLow
+                    ) {
+                        Column(Modifier.padding(16.dp)) {
+                            Text("Last 6 months", style = MaterialTheme.typography.labelMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Spacer(Modifier.height(8.dp))
+                            MonthlyBarsChart(state.monthlyStats)
+                        }
                     }
                 }
             }
@@ -223,6 +244,42 @@ fun StatsScreen(viewModel: StatsViewModel = hiltViewModel()) {
                             progress = { (slice.total / max).toFloat().coerceIn(0f, 1f) },
                             modifier = Modifier.fillMaxWidth().height(6.dp),
                             color = MaterialTheme.colorScheme.primary,
+                            trackColor = MaterialTheme.colorScheme.surfaceContainerHighest,
+                            strokeCap = androidx.compose.ui.graphics.StrokeCap.Round
+                        )
+                    }
+                }
+            }
+
+            if (state.budgetVsActual.isNotEmpty()) {
+                item {
+                    Spacer(Modifier.height(12.dp))
+                    SectionHeader("Budget vs actual")
+                }
+                items(state.budgetVsActual, key = { it.categoryId }) { b ->
+                    Column(Modifier.fillMaxWidth().padding(vertical = 6.dp)) {
+                        Row {
+                            Text(
+                                b.name,
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurface,
+                                modifier = Modifier.weight(1f),
+                                maxLines = 1
+                            )
+                            Text(
+                                "${formatMoney(b.spent)} / ${formatMoney(b.budget)}",
+                                style = MaterialTheme.typography.labelMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                        Spacer(Modifier.height(4.dp))
+                        LinearProgressIndicator(
+                            progress = {
+                                (b.spent / b.budget.coerceAtLeast(1.0)).toFloat().coerceIn(0f, 1f)
+                            },
+                            modifier = Modifier.fillMaxWidth().height(6.dp),
+                            color = if (b.spent > b.budget) MaterialTheme.colorScheme.error
+                            else MaterialTheme.colorScheme.primary,
                             trackColor = MaterialTheme.colorScheme.surfaceContainerHighest,
                             strokeCap = androidx.compose.ui.graphics.StrokeCap.Round
                         )

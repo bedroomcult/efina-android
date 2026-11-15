@@ -292,6 +292,19 @@ class BudgetRepositoryImpl @Inject constructor(
         safeCall { api.updateBudgetSharing(id, UpdateBudgetSharingRequestDto(familyId)) }
             .announce(DataEvents.Domain.BUDGETS)
             .map { it.toDomain() }
+
+    override suspend fun getBudgetVsActual(): Result<List<BudgetVsActual>> =
+        safeCall { api.getBudgetVsActual() }.map { dto ->
+            dto.categories.map {
+                BudgetVsActual(
+                    categoryId = it.category_id,
+                    name = it.category_name ?: "Category",
+                    budget = it.budget,
+                    spent = it.spent,
+                    percentage = it.percentage
+                )
+            }
+        }
 }
 
 @Singleton
@@ -442,6 +455,11 @@ class InsightsRepositoryImpl @Inject constructor(
                     HealthFactor(f.score, f.value.toString(), f.label, f.recommendation)
                 }
             )
+        }
+
+    override suspend fun getMonthlyStats(months: Int): Result<List<MonthlyStat>> =
+        safeCall { api.getMonthlyStats(months) }.map { list ->
+            list.map { MonthlyStat(it.month, it.income, it.expense, it.net) }
         }
 }
 

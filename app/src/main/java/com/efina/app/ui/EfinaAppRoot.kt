@@ -5,7 +5,6 @@ import kotlinx.coroutines.flow.StateFlow
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
@@ -49,18 +48,12 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.efina.app.ui.components.DockItem
-import com.efina.app.ui.components.DockClearance
 import com.efina.app.ui.components.EfinaSideRail
 import com.efina.app.ui.components.FloatingDock
 import com.efina.app.ui.components.WIDE_LAYOUT_BREAKPOINT_DP
 import androidx.compose.animation.AnimatedVisibilityScope
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.SharedTransitionLayout
-import androidx.compose.animation.core.animateDpAsState
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
-import androidx.compose.ui.input.nestedscroll.NestedScrollSource
-import androidx.compose.ui.input.nestedscroll.nestedScroll
 import com.efina.app.ui.theme.EfinaMotion
 import com.efina.app.ui.theme.accountIconBounds
 import android.content.Intent
@@ -203,29 +196,6 @@ fun EfinaAppRoot(
         val currentRoute = navBackStackEntry?.destination?.route
         val showDock = bottomNavItems.any { it.screen.route == currentRoute }
 
-        // Hide the floating dock while scrolling down, return it on scroll up.
-        // A post-scroll hook keeps the screens unaware of the dock.
-        var dockHidden by remember { mutableStateOf(false) }
-        val dockScroll = remember {
-            object : NestedScrollConnection {
-                override fun onPostScroll(
-                    consumed: Offset,
-                    available: Offset,
-                    source: NestedScrollSource
-                ): Offset {
-                    when {
-                        consumed.y > 8f -> dockHidden = true
-                        consumed.y < -8f -> dockHidden = false
-                    }
-                    return Offset.Zero
-                }
-            }
-        }
-        val dockOffset by animateDpAsState(
-            targetValue = if (dockHidden) DockClearance else 0.dp,
-            animationSpec = EfinaMotion.spatial(),
-            label = "dockOffset"
-        )
         val onSelect: (DockItem) -> Unit = { item ->
             if (currentRoute != item.route) {
                 navController.navigate(item.route) {
@@ -246,7 +216,6 @@ fun EfinaAppRoot(
                     Modifier
                         .weight(1f)
                         .background(MaterialTheme.colorScheme.background)
-                        .nestedScroll(dockScroll)
                 ) {
                     // SharedTransitionLayout hosts the account-icon shared element for
                     // the list-to-detail flight. Tab switches fade-through; detail
@@ -464,7 +433,6 @@ fun EfinaAppRoot(
                     onSelect = onSelect,
                     modifier = Modifier
                         .align(Alignment.BottomCenter)
-                        .offset(y = dockOffset)
                 )
             }
         }

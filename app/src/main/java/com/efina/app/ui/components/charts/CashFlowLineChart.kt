@@ -3,11 +3,11 @@ package com.efina.app.ui.components.charts
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
@@ -42,6 +42,9 @@ fun CashFlowLineChart(
     val values = points.map { it.value }
     val minValue = values.minOrNull() ?: 0.0
     val maxValue = values.maxOrNull() ?: 0.0
+    val lineColor = MaterialTheme.colorScheme.primary
+    val labelColor = MaterialTheme.colorScheme.onSurfaceVariant
+    val zeroLineColor = MaterialTheme.colorScheme.outlineVariant
 
     LineChart(
         modifier = modifier.fillMaxWidth().height(200.dp),
@@ -49,13 +52,13 @@ fun CashFlowLineChart(
             Line(
                 label = "Net Flow",
                 values = values,
-                color = SolidColor(Color(0xFF10B981)),
+                color = SolidColor(lineColor),
                 dotProperties = DotProperties(
                     enabled = true,
                     radius = 4.dp,
-                    color = SolidColor(Color(0xFF10B981)),
+                    color = SolidColor(lineColor),
                     strokeWidth = 2.dp,
-                    strokeColor = SolidColor(Color(0xFF10B981))
+                    strokeColor = SolidColor(lineColor)
                 )
             )
         ),
@@ -63,12 +66,12 @@ fun CashFlowLineChart(
         labelProperties = LabelProperties(
             enabled = true,
             labels = points.map { it.displayDate },
-            textStyle = TextStyle.Default.copy(fontSize = 10.sp),
+            textStyle = TextStyle.Default.copy(fontSize = 10.sp, color = labelColor),
             padding = 8.dp
         ),
         zeroLineProperties = ZeroLineProperties(
             enabled = minValue < 0 && maxValue > 0,
-            color = SolidColor(Color(0xFF9CA3AF)),
+            color = SolidColor(zeroLineColor),
             thickness = 1.dp
         ),
         maxValue = if (maxValue == minValue) maxValue + 1.0 else maxValue,

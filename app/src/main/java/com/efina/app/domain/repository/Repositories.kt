@@ -75,6 +75,7 @@ interface BudgetRepository {
     suspend fun deleteBudget(id: Long): Result<Unit>
     /** Share with a family, or pass null to make it personal again. */
     suspend fun setBudgetSharing(id: Long, familyId: Long?): Result<Budget>
+    suspend fun getBudgetVsActual(): Result<List<BudgetVsActual>>
 }
 
 interface GoalRepository {
@@ -110,6 +111,7 @@ interface InsightsRepository {
     suspend fun getLeaderboard(limit: Int = 20): Result<List<LeaderboardEntry>>
     suspend fun getForecast(): Result<Forecast>
     suspend fun getHealthScore(): Result<HealthScore>
+    suspend fun getMonthlyStats(months: Int = 6): Result<List<MonthlyStat>>
 }
 
 interface FamilyRepository {
