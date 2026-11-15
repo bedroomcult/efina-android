@@ -39,25 +39,29 @@ class UpdateChecker @Inject constructor(
         }
     }
 
-    private suspend fun checkGitHubRelease(currentVersion: String): UpdateInfo? {
-        val client = OkHttpClient()
-        val request = Request.Builder()
-            .url("https://api.github.com/repos/bedroomcult/efina-android/releases/latest")
-            .header("Accept", "application/vnd.github.v3+json")
-            .header("User-Agent", "efina-android")
-            .build()
+    private suspend fun checkGitHubRelease(currentVersion: String): UpdateInfo? =
+        withContext(Dispatchers.IO) {
+            val client = OkHttpClient()
+            val request = Request.Builder()
+                .url("https://api.github.com/repos/bedroomcult/efina-android/releases/latest")
+                .header("Accept", "application/vnd.github.v3+json")
+                .header("User-Agent", "efina-android")
+                .build()
 
-        val response = client.newCall(request).execute()
-        val body = response.body?.string() ?: return null
+            // Must be off the main thread: execute() is blocking, and on Android it
+            // throws NetworkOnMainThreadException, which the caller swallowed.
+            client.newCall(request).execute().use { response ->
+                if (!response.isSuccessful) return@withContext null
+                val body = response.body?.string() ?: return@withContext null
 
-        val json = Json { ignoreUnknownKeys = true }
-        val release = json.decodeFromString<GitHubRelease>(body)
+                val json = Json { ignoreUnknownKeys = true }
+                val release = json.decodeFromString<GitHubRelease>(body)
 
-        if (isNewer(release.tagName, currentVersion)) {
-            return UpdateInfo(release.tagName, release.htmlUrl)
+                if (isNewer(release.tagName, currentVersion)) {
+                    UpdateInfo(release.tagName, release.htmlUrl)
+                } else null
+            }
         }
-        return null
-    }
 
     /** Compares semantic versions like "v1.0.28" vs "1.0.27". */
     private fun isNewer(remote: String, local: String): Boolean {
