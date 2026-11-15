@@ -72,31 +72,36 @@ object EfinaMotion {
     /** Duration that collapses to zero when animations are disabled. */
     private fun duration(millis: Int): Int = if (enabled) millis else 0
 
+    /** Slower, softer spring for full-screen navigation; press feedback stays snappy. */
+    private fun <T> navSpatial(): FiniteAnimationSpec<T> = spec(
+        spring(dampingRatio = 0.82f, stiffness = Spring.StiffnessLow)
+    )
+
     /** Tab switch: fade-through with a slight scale-in, per motion-and-assets.md §1.3. */
     fun tabEnter(): EnterTransition =
-        fadeIn(tween(duration(180))) + scaleIn(
-            animationSpec = effects(),
+        fadeIn(tween(duration(260))) + scaleIn(
+            animationSpec = tween(duration(260)),
             initialScale = 0.98f
         )
 
-    fun tabExit(): ExitTransition = fadeOut(tween(duration(180)))
+    fun tabExit(): ExitTransition = fadeOut(tween(duration(220)))
 
     /** Detail screens slide in from the right; pop reverses the direction. */
     fun detailEnter(): EnterTransition =
-        slideInHorizontally(animationSpec = spatial()) { it / 4 } +
-            fadeIn(tween(duration(120)))
+        slideInHorizontally(animationSpec = navSpatial()) { it / 4 } +
+            fadeIn(tween(duration(180)))
 
     fun detailExit(): ExitTransition =
-        slideOutHorizontally(animationSpec = spatial()) { -it / 4 } +
-            fadeOut(tween(duration(120)))
+        slideOutHorizontally(animationSpec = navSpatial()) { -it / 4 } +
+            fadeOut(tween(duration(180)))
 
     fun detailPopEnter(): EnterTransition =
-        slideInHorizontally(animationSpec = spatial()) { -it / 4 } +
-            fadeIn(tween(duration(120)))
+        slideInHorizontally(animationSpec = navSpatial()) { -it / 4 } +
+            fadeIn(tween(duration(180)))
 
     fun detailPopExit(): ExitTransition =
-        slideOutHorizontally(animationSpec = spatial()) { it / 4 } +
-            fadeOut(tween(duration(120)))
+        slideOutHorizontally(animationSpec = navSpatial()) { it / 4 } +
+            fadeOut(tween(duration(180)))
 }
 
 /**
