@@ -147,27 +147,19 @@ class SyncEngine @Inject constructor(
     }
 
     private suspend fun replay(mutation: PendingMutationEntity, isRetry: Boolean = false): ReplayResult {
-        val url = baseUrl.trimEnd('/') + "/" + mutation.path.trimStart('/')
-        val body = if (mutation.method == "DELETE") {
-            "".toRequestBody("application/json".toMediaType())
-        } else {
-            mutation.payloadJson.toRequestBody("application/json".toMediaType())
-        }
-
-        val builder = Request.Builder()
-            .url(url)
-            .method(mutation.method, body)
-            .header("Content-Type", "application/json")
-            // Generated once when the mutation was queued and reused on every
-            // retry: that is what stops a timed-out create from duplicating.
-            .header("Idempotency-Key", mutation.idempotencyKey)
-
-        tokenManager.getToken()?.let { builder.header("Authorization", "Bearer $it") }
-        tokenManager.getCsrfToken()?.let { builder.header("X-CSRF-Token", it) }
-        mutation.baseSyncSeq?.let { builder.header("X-Base-Sync-Seq", it.toString()) }
+        val request = ReplayRequest.build(
+            baseUrl = baseUrl,
+            method = mutation.method,
+            path = mutation.path,
+            payloadJson = mutation.payloadJson,
+            idempotencyKey = mutation.idempotencyKey,
+            token = tokenManager.getToken(),
+            csrfToken = tokenManager.getCsrfToken(),
+            baseSyncSeq = mutation.baseSyncSeq,
+        )
 
         val response = try {
-            client.newCall(builder.build()).execute()
+            client.newCall(request).execute()
         } catch (e: Exception) {
             return ReplayResult.Retry(e.message ?: "network error")
         }
