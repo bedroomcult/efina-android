@@ -159,15 +159,13 @@ already applies them atomically in a `DB.batch`: `createTransfer`,
 
 ## What is not built yet
 
-Only one thing, and it is not code:
+Nothing on the offline path. What remains is coverage, not code:
 
-- **Nothing has been run on a device.** Everything here is proven by the
-  compiler, by 5 Android test classes and by 72 backend tests against real
-  SQLite, plus an end-to-end run against the deployed backend (one
-  Idempotency-Key, two POSTs, one row, for six entities). No one has installed
-  the APK and gone offline. Treat the first device run as the real acceptance
-  test, particularly for SQLCipher key retrieval in the background worker and
-  for the first-launch full sync.
+- **Verified on an emulator, not a physical handset.** CI boots an API 33
+  emulator and runs `connectedDebugAndroidTest`, so the app does execute on an
+  Android runtime and SQLCipher is proven to load and encrypt there. A run on a
+  real phone is still worth doing before wide release, mainly for keystore
+  behaviour on vendor ROMs.
 
 Deliberately out of scope:
 
