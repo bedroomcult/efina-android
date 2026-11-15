@@ -399,7 +399,12 @@ fun EfinaAppRoot(
                         onNavigateToCreate = { navController.navigate(Screen.TransactionForm.route(null)) },
                         onNavigateToEdit = { id ->
                             navController.navigate(Screen.TransactionForm.route(id))
-                        }
+                        },
+                        // The chip is useless without these: defaults would render
+                        // nothing and the pending count would never appear.
+                        pendingCount = syncState.pendingCount,
+                        syncing = syncState.syncing,
+                        onOpenSyncSettings = { navController.navigate(Screen.Settings.route) },
                     )
                 }
 
