@@ -119,7 +119,7 @@ fun AccountsScreen(
                 itemsIndexed(state.accounts, key = { _, a -> a.id }) { index, account ->
                     AccountRow(
                         account = account,
-                        modifier = revealModifier(index),
+                        modifier = revealModifier(index).animateItem(),
                         iconModifier = sharedIconModifier(account.id),
                         onClick = { onNavigateToEdit(account.id) },
                         onShare = { onNavigateToShare(account.id) },

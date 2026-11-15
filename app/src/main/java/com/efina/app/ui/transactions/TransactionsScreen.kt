@@ -139,7 +139,7 @@ fun TransactionsScreen(
                     itemsIndexed(state.transactions, key = { _, t -> t.id }) { index, tx ->
                         TransactionRow(
                             tx = tx,
-                            modifier = revealModifier(index),
+                            modifier = revealModifier(index).animateItem(),
                             // Tap opens the detail sheet rather than the edit form: most
                             // taps are "what was this?", and jumping into the form made
                             // looking cost an accidental edit.

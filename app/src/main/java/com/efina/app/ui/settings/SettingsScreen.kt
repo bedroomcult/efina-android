@@ -16,6 +16,7 @@ import com.efina.app.domain.model.User
 import com.efina.app.ui.components.*
 import com.efina.app.ui.theme.EfinaCorners
 import com.efina.app.ui.theme.EfinaType
+import com.efina.app.ui.theme.EfinaMotion
 import com.efina.app.ui.components.ContentWidth
 import com.efina.app.ui.components.WidthCapped
 import com.efina.app.ui.theme.Haptic
@@ -165,6 +166,38 @@ fun SettingsScreen(
                     Switch(
                         checked = state.updateNotifications,
                         onCheckedChange = { viewModel.setUpdateNotifications(it) }
+                    )
+                }
+
+                HorizontalDivider()
+
+                Text("Motion", style = MaterialTheme.typography.labelLarge)
+                Row(
+                    Modifier.fillMaxWidth().padding(vertical = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(Modifier.weight(1f)) {
+                        Text(
+                            "Disable animations",
+                            style = MaterialTheme.typography.titleSmall,
+                        )
+                        Text(
+                            "Turn off transitions and motion effects",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            maxLines = 2,
+                        )
+                    }
+                    Switch(
+                        checked = settings.animationLevel == "disabled",
+                        onCheckedChange = { disabled ->
+                            EfinaMotion.enabled = !disabled
+                            viewModel.update(
+                                UpdateSettingsRequest(
+                                    animationLevel = if (disabled) "disabled" else "full"
+                                )
+                            )
+                        }
                     )
                 }
 

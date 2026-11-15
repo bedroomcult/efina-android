@@ -191,6 +191,7 @@ fun HomeScreen(
                             val b = data.budgets[i]
                             Surface(
                                 modifier = Modifier.fillMaxWidth()
+                                    .animateItem()
                                     .springClick(EfinaCorners.menu, onClick = onNavigateToBudgets),
                                 shape = EfinaCorners.menu,
                                 color = MaterialTheme.colorScheme.surfaceContainerLow,
@@ -233,6 +234,7 @@ fun HomeScreen(
                             val g = data.goals[i]
                             Surface(
                                 modifier = Modifier.fillMaxWidth()
+                                    .animateItem()
                                     .springClick(EfinaCorners.menu, onClick = onNavigateToGoals),
                                 shape = EfinaCorners.menu,
                                 color = MaterialTheme.colorScheme.surfaceContainerLow,
@@ -278,6 +280,7 @@ fun HomeScreen(
                                 tx = data.recentTransactions[i],
                                 currency = currencyByAccount[data.recentTransactions[i].accountId]
                                     ?: "IDR",
+                                modifier = Modifier.animateItem(),
                                 onClick = onNavigateToTransactions
                             )
                         }
@@ -367,9 +370,14 @@ private fun HealthCard(health: com.efina.app.domain.model.HealthScore) {
 }
 
 @Composable
-private fun RecentRow(tx: Transaction, currency: String, onClick: () -> Unit) {
+private fun RecentRow(
+    tx: Transaction,
+    currency: String,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit
+) {
     Surface(
-        modifier = Modifier.fillMaxWidth()
+        modifier = modifier.fillMaxWidth()
             .springClick(EfinaCorners.menu, onClick = onClick),
         shape = EfinaCorners.groupInner,
         color = MaterialTheme.colorScheme.surfaceContainerLow,

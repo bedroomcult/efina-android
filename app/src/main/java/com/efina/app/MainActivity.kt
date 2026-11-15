@@ -18,6 +18,7 @@ import com.efina.app.ui.routeForUri
 import com.efina.app.util.NotificationHelper
 import com.efina.app.util.PreferencesManager
 import com.efina.app.util.UpdateChecker
+import com.efina.app.ui.theme.EfinaMotion
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -79,6 +80,13 @@ class MainActivity : ComponentActivity() {
         // light theme the icons stay light-on-light and vanish. EfinaAppRoot re-applies
         // the correct style once the theme is known (see SyncSystemBars there).
         enableEdgeToEdge()
+
+        // Restore the motion preference before the first screen composes. The
+        // server value is applied again when Settings loads; this keeps the
+        // cold-start frame consistent with the last saved choice.
+        lifecycleScope.launch {
+            EfinaMotion.enabled = preferences.animationsEnabled.first()
+        }
 
         // Check for updates on startup if notifications are enabled
         lifecycleScope.launch {

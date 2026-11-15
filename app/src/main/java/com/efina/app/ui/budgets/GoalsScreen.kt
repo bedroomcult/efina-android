@@ -100,7 +100,7 @@ fun GoalsScreen(viewModel: GoalsViewModel = hiltViewModel()) {
                 itemsIndexed(state.goals, key = { _, g -> g.id }) { index, goal ->
                     GoalCard(
                         goal = goal,
-                        modifier = revealModifier(index),
+                        modifier = revealModifier(index).animateItem(),
                         onFund = { funding = goal },
                         onDelete = { pendingDelete = goal },
                         onEdit = {
