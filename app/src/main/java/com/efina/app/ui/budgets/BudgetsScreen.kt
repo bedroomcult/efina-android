@@ -111,7 +111,7 @@ fun BudgetsScreen(
                 itemsIndexed(state.budgets, key = { _, b -> b.id }) { index, budget ->
                     BudgetCard(
                         budget = budget,
-                        modifier = revealModifier(index).efinaAnimateItem(),
+                        modifier = efinaAnimateItem(revealModifier(index)),
                         onDelete = { pendingDelete = budget },
                         onToggleSharing = { viewModel.toggleSharing(budget) },
                         onOpen = {

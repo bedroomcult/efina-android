@@ -192,7 +192,7 @@ fun HomeScreen(
                             val b = data.budgets[i]
                             Surface(
                                 modifier = Modifier.fillMaxWidth()
-                                    .efinaAnimateItem()
+                                    .then(efinaAnimateItem())
                                     .springClick(EfinaCorners.menu, onClick = onNavigateToBudgets),
                                 shape = EfinaCorners.menu,
                                 color = MaterialTheme.colorScheme.surfaceContainerLow,
@@ -235,7 +235,7 @@ fun HomeScreen(
                             val g = data.goals[i]
                             Surface(
                                 modifier = Modifier.fillMaxWidth()
-                                    .efinaAnimateItem()
+                                    .then(efinaAnimateItem())
                                     .springClick(EfinaCorners.menu, onClick = onNavigateToGoals),
                                 shape = EfinaCorners.menu,
                                 color = MaterialTheme.colorScheme.surfaceContainerLow,
@@ -281,7 +281,7 @@ fun HomeScreen(
                                 tx = data.recentTransactions[i],
                                 currency = currencyByAccount[data.recentTransactions[i].accountId]
                                     ?: "IDR",
-                                modifier = Modifier.efinaAnimateItem(),
+                                modifier = Modifier.then(efinaAnimateItem()),
                                 onClick = onNavigateToTransactions
                             )
                         }

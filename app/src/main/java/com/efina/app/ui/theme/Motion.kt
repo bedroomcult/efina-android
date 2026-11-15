@@ -126,7 +126,7 @@ fun SharedTransitionScope.accountIconBounds(
  * passing null for all three is what actually turns the add/remove/placement
  * animation off.
  */
-fun LazyItemScope.efinaAnimateItem(): Modifier = Modifier.animateItem(
+fun LazyItemScope.efinaAnimateItem(modifier: Modifier = Modifier): Modifier = modifier.animateItem(
     fadeInSpec = if (EfinaMotion.enabled) EfinaMotion.effects() else null,
     placementSpec = if (EfinaMotion.enabled) EfinaMotion.spatial() else null,
     fadeOutSpec = if (EfinaMotion.enabled) EfinaMotion.effects() else null
