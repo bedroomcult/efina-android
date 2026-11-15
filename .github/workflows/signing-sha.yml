@@ -1,0 +1,40 @@
+name: Signing SHA
+
+# One-off helper: prints the release signing certificate fingerprints so the
+# Android OAuth client can be registered in Google Cloud Console.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  sha:
+    name: Release certificate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Restore keystore
+        env:
+          KEYSTORE_CONTENT: ${{ secrets.ANDROID_KEYSTORE_CONTENT }}
+        run: |
+          if [ -z "$KEYSTORE_CONTENT" ]; then
+            echo "::error::ANDROID_KEYSTORE_CONTENT is not set"
+            exit 1
+          fi
+          echo "$KEYSTORE_CONTENT" | base64 -d > "$RUNNER_TEMP/release.p12"
+
+      - name: Print certificate fingerprints
+        env:
+          STORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+        run: |
+          keytool -list -v \
+            -keystore "$RUNNER_TEMP/release.p12" \
+            -storepass "$STORE_PASSWORD" \
+            -alias "$KEY_ALIAS" \
+            -storetype PKCS12 | grep -E "Alias|Owner|SHA1|SHA256"
