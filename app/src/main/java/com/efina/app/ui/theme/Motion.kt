@@ -1,9 +1,20 @@
 package com.efina.app.ui.theme
 
+import androidx.compose.animation.AnimatedVisibilityScope
+import androidx.compose.animation.ExperimentalSharedTransitionApi
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
+import androidx.compose.animation.SharedTransitionScope
+import androidx.compose.animation.rememberSharedContentState
 import androidx.compose.animation.core.FiniteAnimationSpec
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -57,7 +68,56 @@ object EfinaMotion {
     /** Staggered entrance: 45ms per item, first 9 items only, per design.md. */
     fun staggerDelay(index: Int): Int =
         if (!enabled || index >= 9) 0 else index * 45
+
+    /** Duration that collapses to zero when animations are disabled. */
+    private fun duration(millis: Int): Int = if (enabled) millis else 0
+
+    /** Tab switch: fade-through with a slight scale-in, per motion-and-assets.md §1.3. */
+    fun tabEnter(): EnterTransition =
+        fadeIn(tween(duration(180))) + scaleIn(
+            animationSpec = effects(),
+            initialScale = 0.98f
+        )
+
+    fun tabExit(): ExitTransition = fadeOut(tween(duration(120)))
+
+    /** Detail screens slide in from the right; pop reverses the direction. */
+    fun detailEnter(): EnterTransition =
+        slideInHorizontally(animationSpec = spatial()) { it / 4 } +
+            fadeIn(tween(duration(120)))
+
+    fun detailExit(): ExitTransition =
+        slideOutHorizontally(animationSpec = spatial()) { -it / 4 } +
+            fadeOut(tween(duration(120)))
+
+    fun detailPopEnter(): EnterTransition =
+        slideInHorizontally(animationSpec = spatial()) { -it / 4 } +
+            fadeIn(tween(duration(120)))
+
+    fun detailPopExit(): ExitTransition =
+        slideOutHorizontally(animationSpec = spatial()) { it / 4 } +
+            fadeOut(tween(duration(120)))
 }
+
+/**
+ * Shared-element bounds for an account icon, keyed by account id.
+ *
+ * Call inside a [SharedTransitionLayout] and pass the composable's own
+ * [AnimatedVisibilityScope]. The same key must be used on the list row and the
+ * detail header for the icon to fly between them.
+ */
+@OptIn(ExperimentalSharedTransitionApi::class)
+@Composable
+fun SharedTransitionScope.accountIconBounds(
+    accountId: Long,
+    animatedVisibilityScope: AnimatedVisibilityScope
+): Modifier = sharedBounds(
+    sharedContentState = rememberSharedContentState(key = "account-icon-$accountId"),
+    animatedVisibilityScope = animatedVisibilityScope,
+    enter = fadeIn(tween(if (EfinaMotion.enabled) 120 else 0)),
+    exit = fadeOut(tween(if (EfinaMotion.enabled) 120 else 0)),
+    boundsTransform = { _, _ -> EfinaMotion.spatial() }
+)
 
 /**
  * design.md's `springClick` (0.94 press scale) is NOT implemented.

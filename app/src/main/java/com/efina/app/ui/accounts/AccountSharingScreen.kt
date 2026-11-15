@@ -32,6 +32,7 @@ import com.efina.app.ui.components.BadgeTone
 fun AccountSharingScreen(
     accountId: Long,
     onNavigateBack: () -> Unit,
+    sharedIconModifier: @Composable (Long) -> Modifier = { Modifier },
     viewModel: AccountsViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsState()
@@ -56,7 +57,19 @@ fun AccountSharingScreen(
         snackbarHost = { BadgeToastHost(badge, BadgeTone.Error) { badge = null } },
         topBar = {
             TopAppBar(
-                title = { Text("Sharing", style = com.efina.app.ui.theme.EfinaType.titleLargeEmphasized) },
+                title = {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        if (account != null) {
+                            AccountIconTile(
+                                account = account,
+                                modifier = sharedIconModifier(account.id),
+                                size = 32
+                            )
+                            Spacer(Modifier.width(10.dp))
+                        }
+                        Text("Sharing", style = com.efina.app.ui.theme.EfinaType.titleLargeEmphasized)
+                    }
+                },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(Icons.Default.ArrowBack, contentDescription = "Back")

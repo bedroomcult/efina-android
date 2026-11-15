@@ -4,6 +4,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
@@ -47,11 +48,19 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.efina.app.ui.components.DockItem
+import com.efina.app.ui.components.DockClearance
 import com.efina.app.ui.components.EfinaSideRail
 import com.efina.app.ui.components.FloatingDock
 import com.efina.app.ui.components.WIDE_LAYOUT_BREAKPOINT_DP
-import androidx.compose.animation.EnterTransition
-import androidx.compose.animation.ExitTransition
+import androidx.compose.animation.AnimatedVisibilityScope
+import androidx.compose.animation.ExperimentalSharedTransitionApi
+import androidx.compose.animation.SharedTransitionLayout
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
+import androidx.compose.ui.input.nestedscroll.NestedScrollSource
+import androidx.compose.ui.input.nestedscroll.nestedScroll
+import com.efina.app.ui.theme.EfinaMotion
 import android.content.Intent
 import android.net.Uri
 import com.efina.app.ui.theme.SyncSystemBars
@@ -124,6 +133,11 @@ private val dockItems: List<DockItem> = bottomNavItems.map {
     DockItem(route = it.screen.route, icon = it.icon, label = it.label)
 }
 
+/** True for the five tab routes, which use the fade-through transition. */
+private fun isTabRoute(route: String?): Boolean =
+    bottomNavItems.any { it.screen.route == route }
+
+@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 fun EfinaAppRoot(
     navController: NavHostController = rememberNavController(),
@@ -186,6 +200,30 @@ fun EfinaAppRoot(
         val navBackStackEntry by navController.currentBackStackEntryAsState()
         val currentRoute = navBackStackEntry?.destination?.route
         val showDock = bottomNavItems.any { it.screen.route == currentRoute }
+
+        // Hide the floating dock while scrolling down, return it on scroll up.
+        // A post-scroll hook keeps the screens unaware of the dock.
+        var dockHidden by remember { mutableStateOf(false) }
+        val dockScroll = remember {
+            object : NestedScrollConnection {
+                override fun onPostScroll(
+                    consumed: Offset,
+                    available: Offset,
+                    source: NestedScrollSource
+                ): Offset {
+                    when {
+                        consumed.y > 8f -> dockHidden = true
+                        consumed.y < -8f -> dockHidden = false
+                    }
+                    return Offset.Zero
+                }
+            }
+        }
+        val dockOffset by animateDpAsState(
+            targetValue = if (dockHidden) DockClearance else 0.dp,
+            animationSpec = EfinaMotion.spatial(),
+            label = "dockOffset"
+        )
         val onSelect: (DockItem) -> Unit = { item ->
             if (currentRoute != item.route) {
                 navController.navigate(item.route) {
@@ -202,18 +240,41 @@ fun EfinaAppRoot(
                 if (wide && showDock) {
                     EfinaSideRail(dockItems, currentRoute, onSelect)
                 }
-                Box(Modifier.weight(1f)) {
-                    // No cross-fade on tab changes. The default NavHost fade reads as a
-                    // flash on a light background, and a tab switch in a finance app
-                    // should feel instant rather than cinematic.
+                Box(
+                    Modifier
+                        .weight(1f)
+                        .nestedScroll(dockScroll)
+                ) {
+                    // SharedTransitionLayout hosts the account-icon shared element for
+                    // the list-to-detail flight. Tab switches fade-through; detail
+                    // screens slide in expressively. Both collapse when animations
+                    // are disabled via EfinaMotion.
+                    SharedTransitionLayout(Modifier.fillMaxSize()) {
+                    val sharedScope = this
                     NavHost(
                         navController = navController,
                         startDestination = startDestination,
                         modifier = Modifier.fillMaxSize(),
-                        enterTransition = { EnterTransition.None },
-                        exitTransition = { ExitTransition.None },
-                        popEnterTransition = { EnterTransition.None },
-                        popExitTransition = { ExitTransition.None }
+                        enterTransition = {
+                            if (isTabRoute(initialState.destination.route) &&
+                                isTabRoute(targetState.destination.route)
+                            ) EfinaMotion.tabEnter() else EfinaMotion.detailEnter()
+                        },
+                        exitTransition = {
+                            if (isTabRoute(initialState.destination.route) &&
+                                isTabRoute(targetState.destination.route)
+                            ) EfinaMotion.tabExit() else EfinaMotion.detailExit()
+                        },
+                        popEnterTransition = {
+                            if (isTabRoute(initialState.destination.route) &&
+                                isTabRoute(targetState.destination.route)
+                            ) EfinaMotion.tabEnter() else EfinaMotion.detailPopEnter()
+                        },
+                        popExitTransition = {
+                            if (isTabRoute(initialState.destination.route) &&
+                                isTabRoute(targetState.destination.route)
+                            ) EfinaMotion.tabExit() else EfinaMotion.detailPopExit()
+                        }
                     ) {
                 composable(Screen.Login.route) {
                     LoginScreen(
@@ -240,6 +301,7 @@ fun EfinaAppRoot(
                 }
 
                 composable(Screen.Accounts.route) {
+                    val visibilityScope = this
                     val accVm: AccountsViewModel = hiltViewModel()
                     ReloadOnChange(DataEvents.Domain.ACCOUNTS) { accVm.load() }
                     AccountsScreen(
@@ -247,6 +309,9 @@ fun EfinaAppRoot(
                         onNavigateToEdit = { id -> navController.navigate(Screen.AccountForm.route(id)) },
                         onNavigateToShare = { id ->
                             navController.navigate(Screen.AccountSharing.route(id))
+                        },
+                        sharedIconModifier = { id ->
+                            sharedScope.accountIconBounds(id, visibilityScope)
                         }
                     )
                 }
@@ -260,8 +325,14 @@ fun EfinaAppRoot(
                         }
                     )
                 ) { entry ->
+                    val visibilityScope = this
                     val id = entry.arguments?.getLong("accountId")?.takeIf { it > 0 }
-                    val accountsVm: AccountsViewModel = hiltViewModel()
+                    // Share the list's ViewModel so the account is already loaded when
+                    // the form enters; otherwise the shared icon has no target.
+                    val parentEntry = remember(entry) {
+                        navController.getBackStackEntry(Screen.Accounts.route)
+                    }
+                    val accountsVm: AccountsViewModel = hiltViewModel(parentEntry)
                     val accountsState by accountsVm.state.collectAsState()
                     val existing = accountsState.accounts.firstOrNull { it.id == id }
                     // Fetch once so edit mode has the row before first composition.
@@ -271,6 +342,9 @@ fun EfinaAppRoot(
                         account = existing,
                         onNavigateBack = { navController.popBackStack() },
                         onSaved = { navController.popBackStack() },
+                        sharedIconModifier = { accountId ->
+                            sharedScope.accountIconBounds(accountId, visibilityScope)
+                        },
                         viewModel = accountsVm
                     )
                 }
@@ -279,10 +353,19 @@ fun EfinaAppRoot(
                     route = Screen.AccountSharing.route,
                     arguments = listOf(navArgument("accountId") { type = NavType.LongType })
                 ) { entry ->
+                    val visibilityScope = this
                     val id = entry.arguments?.getLong("accountId") ?: return@composable
+                    val parentEntry = remember(entry) {
+                        navController.getBackStackEntry(Screen.Accounts.route)
+                    }
+                    val accountsVm: AccountsViewModel = hiltViewModel(parentEntry)
                     AccountSharingScreen(
                         accountId = id,
-                        onNavigateBack = { navController.popBackStack() }
+                        onNavigateBack = { navController.popBackStack() },
+                        sharedIconModifier = { accountId ->
+                            sharedScope.accountIconBounds(accountId, visibilityScope)
+                        },
+                        viewModel = accountsVm
                     )
                 }
 
@@ -366,6 +449,7 @@ fun EfinaAppRoot(
                     ScheduledScreen(onNavigateBack = { navController.popBackStack() })
                 }
                     }
+                    }
                 }
             }
             if (!wide && showDock) {
@@ -373,7 +457,9 @@ fun EfinaAppRoot(
                     items = dockItems,
                     currentRoute = currentRoute,
                     onSelect = onSelect,
-                    modifier = Modifier.align(Alignment.BottomCenter)
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter)
+                        .offset(y = dockOffset)
                 )
             }
         }

@@ -39,6 +39,7 @@ fun AccountsScreen(
     onNavigateToCreate: () -> Unit,
     onNavigateToEdit: (Long) -> Unit,
     onNavigateToShare: (Long) -> Unit = {},
+    sharedIconModifier: @Composable (Long) -> Modifier = { Modifier },
     viewModel: AccountsViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsState()
@@ -119,6 +120,7 @@ fun AccountsScreen(
                     AccountRow(
                         account = account,
                         modifier = revealModifier(index),
+                        iconModifier = sharedIconModifier(account.id),
                         onClick = { onNavigateToEdit(account.id) },
                         onShare = { onNavigateToShare(account.id) },
                         onDelete = { pendingDelete = account }
@@ -178,6 +180,7 @@ private fun TotalCard(total: Double, currency: String) {
 private fun AccountRow(
     account: Account,
     modifier: Modifier = Modifier,
+    iconModifier: Modifier = Modifier,
     onClick: () -> Unit,
     onShare: () -> Unit,
     onDelete: () -> Unit
@@ -197,7 +200,7 @@ private fun AccountRow(
             Modifier.padding(14.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            AccountIconTile(account)
+            AccountIconTile(account, modifier = iconModifier)
             Spacer(Modifier.width(12.dp))
             Column(Modifier.weight(1f)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {

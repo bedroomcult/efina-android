@@ -18,6 +18,7 @@ import com.efina.app.domain.model.AccountType
 import com.efina.app.domain.model.CreateAccountRequest
 import com.efina.app.domain.model.UpdateAccountRequest
 import com.efina.app.ui.components.ErrorState
+import com.efina.app.ui.components.AccountIconTile
 import com.efina.app.ui.theme.EfinaCorners
 import com.efina.app.ui.theme.EfinaType
 import com.efina.app.ui.components.ContentWidth
@@ -35,6 +36,7 @@ fun AccountFormScreen(
     account: Account?,
     onNavigateBack: () -> Unit,
     onSaved: () -> Unit,
+    sharedIconModifier: @Composable (Long) -> Modifier = { Modifier },
     viewModel: AccountsViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsState()
@@ -60,10 +62,20 @@ fun AccountFormScreen(
         topBar = {
             TopAppBar(
                 title = {
-                    Text(
-                        if (isEdit) "Edit account" else "New account",
-                        style = EfinaType.titleLargeEmphasized
-                    )
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        if (account != null) {
+                            AccountIconTile(
+                                account = account,
+                                modifier = sharedIconModifier(account.id),
+                                size = 32
+                            )
+                            Spacer(Modifier.width(10.dp))
+                        }
+                        Text(
+                            if (isEdit) "Edit account" else "New account",
+                            style = EfinaType.titleLargeEmphasized
+                        )
+                    }
                 },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {

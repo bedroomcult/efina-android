@@ -1,6 +1,7 @@
 package com.efina.app.ui.components
 
 import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -24,11 +25,14 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.efina.app.ui.theme.EfinaCorners
 import com.efina.app.ui.theme.EfinaMotion
+import com.efina.app.ui.theme.Haptic
+import com.efina.app.ui.theme.rememberHaptics
 
 /** One tab in the dock or rail. */
 data class DockItem(val route: String, val icon: ImageVector, val label: String)
@@ -97,6 +101,13 @@ private fun RowScope.DockTab(item: DockItem, selected: Boolean, onClick: () -> U
         animationSpec = EfinaMotion.spatial(),
         label = "dockCapsuleWidth"
     )
+    // Selected icon pops from 0.7 to 1.0, per motion-and-assets.md §1.2.
+    val iconScale by animateFloatAsState(
+        targetValue = if (selected) 1f else 0.7f,
+        animationSpec = EfinaMotion.spatial(),
+        label = "dockIconScale"
+    )
+    val tick = rememberHaptics()
 
     Box(
         modifier = Modifier
@@ -107,7 +118,10 @@ private fun RowScope.DockTab(item: DockItem, selected: Boolean, onClick: () -> U
                 if (selected) MaterialTheme.colorScheme.secondaryContainer
                 else MaterialTheme.colorScheme.surfaceContainerHigh
             )
-            .clickable(onClick = onClick),
+            .clickable {
+                tick(Haptic.Selection)
+                onClick()
+            },
         contentAlignment = Alignment.Center
     ) {
         Row(
@@ -119,7 +133,11 @@ private fun RowScope.DockTab(item: DockItem, selected: Boolean, onClick: () -> U
                 imageVector = item.icon,
                 contentDescription = item.label,
                 tint = if (selected) MaterialTheme.colorScheme.onSecondaryContainer
-                else MaterialTheme.colorScheme.onSurfaceVariant
+                else MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.graphicsLayer {
+                    scaleX = iconScale
+                    scaleY = iconScale
+                }
             )
             if (selected) {
                 Spacer4()
