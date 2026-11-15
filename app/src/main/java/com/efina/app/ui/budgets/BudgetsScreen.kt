@@ -24,6 +24,7 @@ import com.efina.app.ui.components.*
 import com.efina.app.ui.theme.EfinaCorners
 import com.efina.app.ui.theme.EfinaType
 import com.efina.app.ui.theme.revealModifier
+import com.efina.app.ui.theme.efinaAnimateItem
 import com.efina.app.ui.components.ContentWidth
 import com.efina.app.ui.components.WidthCapped
 import com.efina.app.ui.theme.RevealLatch
@@ -110,7 +111,7 @@ fun BudgetsScreen(
                 itemsIndexed(state.budgets, key = { _, b -> b.id }) { index, budget ->
                     BudgetCard(
                         budget = budget,
-                        modifier = revealModifier(index).animateItem(),
+                        modifier = revealModifier(index).efinaAnimateItem(),
                         onDelete = { pendingDelete = budget },
                         onToggleSharing = { viewModel.toggleSharing(budget) },
                         onOpen = {

@@ -22,6 +22,7 @@ import com.efina.app.ui.components.*
 import com.efina.app.ui.theme.EfinaCorners
 import com.efina.app.ui.theme.EfinaType
 import com.efina.app.ui.theme.revealModifier
+import com.efina.app.ui.theme.efinaAnimateItem
 import com.efina.app.ui.theme.springClick
 import com.efina.app.ui.components.ContentWidth
 import com.efina.app.ui.components.WidthCapped
@@ -139,7 +140,7 @@ fun TransactionsScreen(
                     itemsIndexed(state.transactions, key = { _, t -> t.id }) { index, tx ->
                         TransactionRow(
                             tx = tx,
-                            modifier = revealModifier(index).animateItem(),
+                            modifier = revealModifier(index).efinaAnimateItem(),
                             // Tap opens the detail sheet rather than the edit form: most
                             // taps are "what was this?", and jumping into the form made
                             // looking cost an accidental edit.

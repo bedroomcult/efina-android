@@ -14,6 +14,7 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.foundation.lazy.LazyItemScope
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -116,6 +117,13 @@ fun SharedTransitionScope.accountIconBounds(
     enter = fadeIn(tween(if (EfinaMotion.enabled) 120 else 0)),
     exit = fadeOut(tween(if (EfinaMotion.enabled) 120 else 0)),
     boundsTransform = { _, _ -> EfinaMotion.spatial() }
+)
+
+/**
+fun LazyItemScope.efinaAnimateItem(): Modifier = Modifier.animateItem(
+    fadeInSpec = if (EfinaMotion.enabled) EfinaMotion.effects() else null,
+    placementSpec = if (EfinaMotion.enabled) EfinaMotion.spatial() else null,
+    fadeOutSpec = if (EfinaMotion.enabled) EfinaMotion.effects() else null
 )
 
 /**

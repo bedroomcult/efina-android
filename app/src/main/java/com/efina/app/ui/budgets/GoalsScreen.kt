@@ -24,6 +24,7 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 import com.efina.app.ui.theme.revealModifier
+import com.efina.app.ui.theme.efinaAnimateItem
 import com.efina.app.ui.components.ContentWidth
 import com.efina.app.ui.components.WidthCapped
 import com.efina.app.ui.theme.RevealLatch
@@ -100,7 +101,7 @@ fun GoalsScreen(viewModel: GoalsViewModel = hiltViewModel()) {
                 itemsIndexed(state.goals, key = { _, g -> g.id }) { index, goal ->
                     GoalCard(
                         goal = goal,
-                        modifier = revealModifier(index).animateItem(),
+                        modifier = revealModifier(index).efinaAnimateItem(),
                         onFund = { funding = goal },
                         onDelete = { pendingDelete = goal },
                         onEdit = {

@@ -19,6 +19,7 @@ import com.efina.app.ui.components.*
 import com.efina.app.ui.theme.EfinaCorners
 import com.efina.app.ui.theme.EfinaType
 import com.efina.app.ui.theme.revealModifier
+import com.efina.app.ui.theme.efinaAnimateItem
 import com.efina.app.ui.theme.springClick
 import com.efina.app.ui.components.ContentWidth
 import com.efina.app.ui.components.WidthCapped
@@ -119,7 +120,7 @@ fun AccountsScreen(
                 itemsIndexed(state.accounts, key = { _, a -> a.id }) { index, account ->
                     AccountRow(
                         account = account,
-                        modifier = revealModifier(index).animateItem(),
+                        modifier = revealModifier(index).efinaAnimateItem(),
                         iconModifier = sharedIconModifier(account.id),
                         onClick = { onNavigateToEdit(account.id) },
                         onShare = { onNavigateToShare(account.id) },

@@ -25,6 +25,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.runBlocking
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.launch
 
@@ -83,10 +84,10 @@ class MainActivity : ComponentActivity() {
 
         // Restore the motion preference before the first screen composes. The
         // server value is applied again when Settings loads; this keeps the
-        // cold-start frame consistent with the last saved choice.
-        lifecycleScope.launch {
-            EfinaMotion.enabled = preferences.animationsEnabled.first()
-        }
+        // cold-start frame consistent with the last saved choice. A single small
+        // DataStore read is worth blocking here: an async read would let the first
+        // frames animate after the user disabled motion.
+        EfinaMotion.enabled = runBlocking { preferences.animationsEnabled.first() }
 
         // Check for updates on startup if notifications are enabled
         lifecycleScope.launch {

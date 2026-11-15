@@ -22,6 +22,7 @@ import com.efina.app.ui.components.ContentWidth
 import com.efina.app.ui.components.WidthCapped
 import com.efina.app.ui.theme.RevealLatch
 import com.efina.app.ui.theme.springClick
+import com.efina.app.ui.theme.efinaAnimateItem
 import androidx.compose.foundation.lazy.rememberLazyListState
 import com.efina.app.ui.components.ScrollToTopFab
 import androidx.compose.foundation.layout.size
@@ -191,7 +192,7 @@ fun HomeScreen(
                             val b = data.budgets[i]
                             Surface(
                                 modifier = Modifier.fillMaxWidth()
-                                    .animateItem()
+                                    .efinaAnimateItem()
                                     .springClick(EfinaCorners.menu, onClick = onNavigateToBudgets),
                                 shape = EfinaCorners.menu,
                                 color = MaterialTheme.colorScheme.surfaceContainerLow,
@@ -234,7 +235,7 @@ fun HomeScreen(
                             val g = data.goals[i]
                             Surface(
                                 modifier = Modifier.fillMaxWidth()
-                                    .animateItem()
+                                    .efinaAnimateItem()
                                     .springClick(EfinaCorners.menu, onClick = onNavigateToGoals),
                                 shape = EfinaCorners.menu,
                                 color = MaterialTheme.colorScheme.surfaceContainerLow,
@@ -280,7 +281,7 @@ fun HomeScreen(
                                 tx = data.recentTransactions[i],
                                 currency = currencyByAccount[data.recentTransactions[i].accountId]
                                     ?: "IDR",
-                                modifier = Modifier.animateItem(),
+                                modifier = Modifier.efinaAnimateItem(),
                                 onClick = onNavigateToTransactions
                             )
                         }
