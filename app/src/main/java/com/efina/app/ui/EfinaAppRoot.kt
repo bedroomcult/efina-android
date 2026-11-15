@@ -61,6 +61,7 @@ import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import com.efina.app.ui.theme.EfinaMotion
+import com.efina.app.ui.theme.accountIconBounds
 import android.content.Intent
 import android.net.Uri
 import com.efina.app.ui.theme.SyncSystemBars
