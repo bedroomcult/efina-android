@@ -140,7 +140,19 @@ fun TransactionsScreen(
                     contentPadding = PaddingValues(16.dp, 0.dp, 16.dp, 96.dp),
                     verticalArrangement = Arrangement.spacedBy(2.dp)
                 ) {
-                    itemsIndexed(pagedItems.itemSnapshotList.items, key = { _, t -> t.id }) { index, tx ->
+                    // `items(itemCount)` + `pagedItems[index]` is what actually
+                    // drives Paging: reading by index is how LazyPagingItems
+                    // learns it should fetch the next page. Iterating a snapshot
+                    // list would show the first page and stop.
+                    items(count = pagedItems.itemCount, key = { index -> pagedItems.peek(index)?.id ?: index }) { index ->
+                        val tx = pagedItems[index]
+                        if (tx == null) {
+                            // Placeholder while the next page loads.
+                            Box(
+                                Modifier.fillMaxWidth().padding(8.dp),
+                                contentAlignment = Alignment.Center
+                            ) { CircularProgressIndicator(Modifier.size(20.dp), strokeWidth = 2.dp) }
+                        } else {
                         TransactionRow(
                             tx = tx,
                             modifier = efinaAnimateItem(revealModifier(index)),
@@ -151,6 +163,7 @@ fun TransactionsScreen(
                             onLongClick = { pendingDelete = tx },
                             currentUserId = state.currentUserId
                         )
+                        }
                     }
                     item {
                         Text(
