@@ -174,6 +174,21 @@ fun EfinaAppRoot(
         return
     }
 
+    // First launch after install or update: the mirror is empty, so every screen
+    // would be blank until the first pull lands. Gate on the first completed
+    // sync, and only while online so an offline start is not a dead end.
+    if (authState.isLoggedIn && syncState.online && syncState.lastSyncedAt == null) {
+        EfinaTheme(themeName = themeName, darkTheme = darkTheme) {
+            com.efina.app.ui.sync.FullSyncScreen(
+                syncing = syncState.syncing,
+                error = null,
+                onRetry = { syncViewModel.syncNow() },
+            )
+        }
+        LaunchedEffect(Unit) { syncViewModel.syncNow() }
+        return
+    }
+
     val startDestination = if (authState.isLoggedIn) Screen.Home.route else Screen.Login.route
 
     // A 401 anywhere clears the session. The NavHost's startDestination is only

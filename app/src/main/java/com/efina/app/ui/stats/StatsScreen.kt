@@ -64,6 +64,20 @@ fun StatsScreen(viewModel: StatsViewModel = hiltViewModel()) {
                 .background(MaterialTheme.colorScheme.background),
             contentPadding = PaddingValues(16.dp, 16.dp, 16.dp, 96.dp),
         ) {
+            // These figures are computed server-side, so offline they are a
+            // snapshot. Saying when it was taken is the difference between
+            // "this is old" and "this is wrong".
+            item {
+                val updated = state.lastUpdatedAt
+                if (updated != null) {
+                    Text(
+                        text = "Insights updated ${relativeAge(updated)}",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(top = 4.dp)
+                    )
+                }
+            }
             // Time-range segmented button filter (pill style matching expense|income|transfer)
             item {
                 val selectedIndex = TimeRange.entries.indexOf(state.timeRange)
@@ -383,5 +397,17 @@ private fun StatTile(
             color = MaterialTheme.colorScheme.onSurfaceVariant)
         Spacer(Modifier.height(4.dp))
         AnimatedMoney(amount = amount, style = EfinaType.amountSmall, color = contentColor)
+    }
+}
+
+
+/** "just now", "5 min ago", "3 h ago", "2 d ago". */
+private fun relativeAge(at: Long): String {
+    val secs = ((System.currentTimeMillis() - at) / 1000).coerceAtLeast(0)
+    return when {
+        secs < 60 -> "just now"
+        secs < 3600 -> "${secs / 60} min ago"
+        secs < 86_400 -> "${secs / 3600} h ago"
+        else -> "${secs / 86_400} d ago"
     }
 }

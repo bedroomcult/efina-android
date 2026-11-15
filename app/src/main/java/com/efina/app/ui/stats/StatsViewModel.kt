@@ -45,7 +45,9 @@ data class StatsUiState(
     val error: String? = null,
     val fatalError: Boolean = false,
     val timeRange: TimeRange = TimeRange.Days7,
-    val chartPoints: List<CashFlowPoint> = emptyList()
+    val chartPoints: List<CashFlowPoint> = emptyList(),
+    /** When the server-computed figures below were last fetched. */
+    val lastUpdatedAt: Long? = null
 ) {
     val net: Double get() = income - expense
     val savingsRate: Float
@@ -165,6 +167,7 @@ class StatsViewModel @Inject constructor(
                 byCategory = byCategory,
                 forecast = forecastResult.getOrNull(),
                 health = healthResult.getOrNull(),
+                lastUpdatedAt = System.currentTimeMillis(),
                 achievements = achievementsResult.getOrDefault(emptyList()),
                 leaderboard = leaderboardResult.getOrDefault(emptyList()),
                 monthlyStats = monthlyStats,
