@@ -46,9 +46,9 @@ fun StatsScreen(viewModel: StatsViewModel = hiltViewModel()) {
             )
         },
     ) { padding ->
-        if (state.error != null) {
+        if (state.fatalError) {
             Column(Modifier.fillMaxSize().padding(16.dp)) {
-                ErrorState(message = state.error!!, onRetry = { viewModel.load(state.timeRange) })
+                ErrorState(message = state.error ?: "Could not load statistics.", onRetry = { viewModel.load(state.timeRange) })
             }
             return@Scaffold
         }

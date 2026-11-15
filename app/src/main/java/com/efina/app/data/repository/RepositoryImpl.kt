@@ -456,11 +456,6 @@ class InsightsRepositoryImpl @Inject constructor(
                 }
             )
         }
-
-    override suspend fun getMonthlyStats(months: Int): Result<List<MonthlyStat>> =
-        safeCall { api.getMonthlyStats(months) }.map { list ->
-            list.map { MonthlyStat(it.month, it.income, it.expense, it.net) }
-        }
 }
 
 @Singleton

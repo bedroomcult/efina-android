@@ -111,7 +111,6 @@ interface InsightsRepository {
     suspend fun getLeaderboard(limit: Int = 20): Result<List<LeaderboardEntry>>
     suspend fun getForecast(): Result<Forecast>
     suspend fun getHealthScore(): Result<HealthScore>
-    suspend fun getMonthlyStats(months: Int = 6): Result<List<MonthlyStat>>
 }
 
 interface FamilyRepository {

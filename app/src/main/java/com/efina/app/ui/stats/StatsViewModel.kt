@@ -43,6 +43,7 @@ data class StatsUiState(
     val monthlyStats: List<MonthlyStat> = emptyList(),
     val budgetVsActual: List<BudgetVsActual> = emptyList(),
     val error: String? = null,
+    val fatalError: Boolean = false,
     val timeRange: TimeRange = TimeRange.Days7,
     val chartPoints: List<CashFlowPoint> = emptyList()
 ) {
@@ -84,8 +85,27 @@ class StatsViewModel @Inject constructor(
             val healthJob = async { insightsRepository.getHealthScore() }
             val achievementsJob = async { insightsRepository.getAchievements() }
             val leaderboardJob = async { insightsRepository.getLeaderboard(10) }
-            val monthlyJob = async { insightsRepository.getMonthlyStats(6) }
             val budgetVsActualJob = async { budgetRepository.getBudgetVsActual() }
+
+            // The backend's monthly-stats route is a one-month recap, not a series.
+            // Group a six-month transaction fetch client-side instead of sending an
+            // invalid `months` query the handler rejects with 400.
+            val sixMonthEnd = Calendar.getInstance()
+            val sixMonthStart = (sixMonthEnd.clone() as Calendar).apply {
+                add(Calendar.MONTH, -5)
+                set(Calendar.DAY_OF_MONTH, 1)
+            }
+            val dateFmt = SimpleDateFormat("yyyy-MM-dd", Locale.US)
+            val monthlyTxJob = async {
+                transactionRepository.getTransactions(
+                    TransactionFilter(
+                        limit = 1000,
+                        offset = 0,
+                        startDate = "${dateFmt.format(sixMonthStart.time)}T00:00:00",
+                        endDate = "${dateFmt.format(sixMonthEnd.time)}T23:59:59"
+                    )
+                )
+            }
 
             val txPageResult = txJob.await()
             val transactions = txPageResult.getOrNull()?.transactions ?: emptyList()
@@ -108,8 +128,19 @@ class StatsViewModel @Inject constructor(
             val healthResult = healthJob.await()
             val achievementsResult = achievementsJob.await()
             val leaderboardResult = leaderboardJob.await()
-            val monthlyResult = monthlyJob.await()
+            val monthlyTxResult = monthlyTxJob.await()
             val budgetVsActualResult = budgetVsActualJob.await()
+
+            val monthlyStats = (monthlyTxResult.getOrNull()?.transactions ?: emptyList())
+                .groupBy { it.date.take(7) }
+                .toSortedMap()
+                .map { (month, list) ->
+                    val monthIncome = list.filter { it.type == TransactionType.INCOME }
+                        .sumOf { it.amount }
+                    val monthExpense = list.filter { it.type == TransactionType.EXPENSE }
+                        .sumOf { it.amount }
+                    MonthlyStat(month, monthIncome, monthExpense, monthIncome - monthExpense)
+                }
 
             // Track which jobs failed so we can surface an error instead of silently
             // rendering empty lists.
@@ -119,7 +150,7 @@ class StatsViewModel @Inject constructor(
                 healthJob to healthResult,
                 achievementsJob to achievementsResult,
                 leaderboardJob to leaderboardResult,
-                monthlyJob to monthlyResult,
+                monthlyTxJob to monthlyTxResult,
                 budgetVsActualJob to budgetVsActualResult
             ).filter { (_, result) -> result.isFailure }
 
@@ -136,18 +167,15 @@ class StatsViewModel @Inject constructor(
                 health = healthResult.getOrNull(),
                 achievements = achievementsResult.getOrDefault(emptyList()),
                 leaderboard = leaderboardResult.getOrDefault(emptyList()),
-                monthlyStats = monthlyResult.getOrDefault(emptyList()),
+                monthlyStats = monthlyStats,
                 budgetVsActual = budgetVsActualResult.getOrDefault(emptyList()),
                 timeRange = range,
                 chartPoints = chartPoints,
+                fatalError = allFailed,
                 error = if (allFailed) {
                     failedJobs.firstOrNull()?.let { (_, result) ->
                         result.exceptionOrNull()?.message
                     } ?: "Could not load statistics."
-                } else if (failedJobs.isNotEmpty()) {
-                    failedJobs.firstOrNull()?.let { (_, result) ->
-                        result.exceptionOrNull()?.message
-                    } ?: null
                 } else null
             )
         }
