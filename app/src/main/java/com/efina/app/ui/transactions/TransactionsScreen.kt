@@ -43,13 +43,18 @@ import com.efina.app.ui.theme.LocalMoneyPalette
 import com.efina.app.ui.components.BadgeToastHost
 import com.efina.app.ui.components.BadgeTone
 import com.efina.app.ui.components.DockClearance
+import com.efina.app.ui.components.PendingBadge
+import com.efina.app.ui.components.SyncChip
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TransactionsScreen(
     onNavigateToCreate: () -> Unit,
     onNavigateToEdit: (Long) -> Unit,
-    viewModel: TransactionsViewModel = hiltViewModel()
+    viewModel: TransactionsViewModel = hiltViewModel(),
+    pendingCount: Int = 0,
+    syncing: Boolean = false,
+    onOpenSyncSettings: () -> Unit = {}
 ) {
     val state by viewModel.state.collectAsState()
     val pagedItems = viewModel.paged.collectAsLazyPagingItems()
@@ -107,6 +112,15 @@ fun TransactionsScreen(
                 TopAppBar(
                     title = { Text("Transactions", style = EfinaType.titleLargeEmphasized) },
                     actions = {
+                        // The user asked for a top-bar chip alongside the offline
+                        // strip, so the pending count is visible from the list
+                        // without opening Settings.
+                        SyncChip(
+                            pendingCount = pendingCount,
+                            syncing = syncing,
+                            onClick = onOpenSyncSettings,
+                            modifier = Modifier.padding(end = 4.dp),
+                        )
                         IconButton(onClick = { searchOpen = true }) {
                             Icon(Icons.Default.Search, contentDescription = "Search")
                         }
@@ -286,6 +300,12 @@ private fun TransactionRow(
                     MaterialTheme.colorScheme.surfaceContainerHighest,
                     Icons.Default.Add
                 )
+            }
+            // The user asked to see which rows have not reached the server.
+            // Without this the list looks identical online and offline, and a
+            // queued write is only discoverable in Settings.
+            if (tx.pending) {
+                PendingBadge(pending = true, modifier = Modifier.padding(end = 6.dp))
             }
             Box(
                 Modifier

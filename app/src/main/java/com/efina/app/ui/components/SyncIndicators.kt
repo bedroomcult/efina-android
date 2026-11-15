@@ -207,24 +207,5 @@ fun PendingBadge(
     }
 }
 
-/** A small dot for a row whose state is better shown than labelled. */
-@Composable
-fun PendingDot(color: Color, modifier: Modifier = Modifier) {
-    Box(
-        modifier = modifier
-            .size(6.dp)
-            .background(color, CircleShape)
-    )
-}
 
-/** Spacer used where a badge would be, so rows keep their alignment. */
-@Composable
-fun BadgeSpacer(modifier: Modifier = Modifier) {
-    Spacer(modifier.size(16.dp))
-}
 
-/** Kept for callers that need the chip's width without the chip. */
-@Composable
-fun ChipSpacer(width: Int = 8, modifier: Modifier = Modifier) {
-    Spacer(modifier.width(width.dp))
-}

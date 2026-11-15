@@ -145,6 +145,7 @@ fun TransactionEntity.toDomain(): Transaction = Transaction(
     creatorUserId = creatorUserId,
     creatorName = creatorName,
     createdAt = createdAt,
+    pending = pendingState != PendingState.SYNCED,
 )
 
 fun BudgetDto.toEntity(): BudgetEntity = BudgetEntity(

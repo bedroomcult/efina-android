@@ -114,7 +114,14 @@ data class Transaction(
     val creatorUserId: Long? = null,
     /** Resolved name of the creator (from the users table). */
     val creatorName: String? = null,
-    val createdAt: String?
+    val createdAt: String?,
+    /**
+     * True while this row has a queued write that has not reached the server.
+     *
+     * Surfaced on the domain model because the list badges it per row: the user
+     * needs to know which of their changes are still only on this device.
+     */
+    val pending: Boolean = false
 )
 
 enum class TransactionType(val value: String) {
