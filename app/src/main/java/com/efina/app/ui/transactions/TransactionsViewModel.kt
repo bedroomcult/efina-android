@@ -62,51 +62,50 @@ class TransactionsViewModel @Inject constructor(
     private fun List<com.efina.app.domain.model.Transaction>.withCurrency() =
         map { tx -> tx.copy(currency = currencyByAccount[tx.accountId] ?: tx.currency) }
 
-    init { load() }
+    init {
+        // Room is the source of truth. The list redraws the moment a write lands
+        // locally and is populated offline; the network refresh only feeds the
+        // mirror, so its failure is not something the user needs to see.
+        viewModelScope.launch {
+            repository.observeTransactions().collect { rows ->
+                _state.value = _state.value.copy(
+                    loading = false,
+                    transactions = rows.withCurrency(),
+                    total = rows.size,
+                )
+            }
+        }
+        refresh()
+    }
 
-    fun load() {
-        _state.value = _state.value.copy(loading = true, error = null)
+    /** Pull the mirror up to date. Failure is silent: the mirror still has data. */
+    fun refresh() {
         viewModelScope.launch {
             if (currencyByAccount.isEmpty()) loadCurrencies()
             repository.getTransactions(_state.value.filter.copy(offset = 0))
-                .onSuccess { page ->
-                    _state.value = _state.value.copy(
-                        loading = false,
-                        transactions = page.transactions.withCurrency(),
-                        total = page.total,
-                        page = page
-                    )
-                }
                 .onFailure {
-                    _state.value = _state.value.copy(loading = false, error = it.message)
+                    if (_state.value.transactions.isEmpty()) {
+                        _state.value = _state.value.copy(loading = false, error = it.message)
+                    }
                 }
         }
     }
 
-    /** Appends the next page. The backend returns an envelope with `total`. */
-    fun loadMore() {
-        val current = _state.value
-        if (current.loadingMore || !current.hasMore) return
-        _state.value = current.copy(loadingMore = true)
-        viewModelScope.launch {
-            repository.getTransactions(
-                current.filter.copy(offset = current.transactions.size)
-            ).onSuccess { page ->
-                _state.value = _state.value.copy(
-                    loadingMore = false,
-                    transactions = _state.value.transactions + page.transactions.withCurrency(),
-                    total = page.total,
-                    page = page
-                )
-            }.onFailure {
-                _state.value = _state.value.copy(loadingMore = false, error = it.message)
-            }
-        }
-    }
+    /** Kept for callers that used to force a reload. */
+    fun load() = refresh()
+
+    /**
+     * No-op now.
+     *
+     * The mirror already holds the whole 12-month window, so there is no next
+     * page to fetch. Kept so the screen's scroll listener still compiles; the
+     * list simply stops asking for more.
+     */
+    fun loadMore() = Unit
 
     fun applyFilter(filter: TransactionFilter) {
         _state.value = _state.value.copy(filter = filter.copy(offset = 0))
-        load()
+        refresh()
     }
 
     fun setType(type: TransactionType?) {
@@ -123,7 +122,6 @@ class TransactionsViewModel @Inject constructor(
             repository.createTransaction(request)
                 .onSuccess {
                     _state.value = _state.value.copy(saving = false)
-                    load()
                     onDone()
                 }
                 .onFailure { _state.value = _state.value.copy(saving = false, error = it.message) }
@@ -136,7 +134,6 @@ class TransactionsViewModel @Inject constructor(
             repository.updateTransaction(id, request)
                 .onSuccess {
                     _state.value = _state.value.copy(saving = false)
-                    load()
                     onDone()
                 }
                 .onFailure { _state.value = _state.value.copy(saving = false, error = it.message) }
@@ -146,7 +143,7 @@ class TransactionsViewModel @Inject constructor(
     fun delete(id: Long) {
         viewModelScope.launch {
             repository.deleteTransaction(id)
-                .onSuccess { load() }
+                .onSuccess { }
                 .onFailure { _state.value = _state.value.copy(error = it.message) }
         }
     }
@@ -157,7 +154,6 @@ class TransactionsViewModel @Inject constructor(
             repository.createTransfer(request)
                 .onSuccess {
                     _state.value = _state.value.copy(saving = false)
-                    load()
                     onDone()
                 }
                 .onFailure { _state.value = _state.value.copy(saving = false, error = it.message) }

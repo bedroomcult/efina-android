@@ -28,16 +28,30 @@ class CategoriesViewModel @Inject constructor(
     private val _state = MutableStateFlow(CategoriesUiState())
     val state: StateFlow<CategoriesUiState> = _state.asStateFlow()
 
-    init { load() }
-
-    fun load() {
-        _state.value = _state.value.copy(loading = true, error = null)
+    init {
+        // Room is the source of truth: the list redraws when a write lands and
+        // is populated offline. The refresh only feeds the mirror.
         viewModelScope.launch {
-            repository.getCategories()
-                .onSuccess { _state.value = _state.value.copy(loading = false, categories = it) }
-                .onFailure { _state.value = _state.value.copy(loading = false, error = it.message) }
+            repository.observeCategories().collect { categories ->
+                _state.value = _state.value.copy(loading = false, categories = categories)
+            }
+        }
+        refresh()
+    }
+
+    /** Pull the mirror up to date. Failure is silent: the mirror still has data. */
+    fun refresh() {
+        viewModelScope.launch {
+            repository.getCategories().onFailure {
+                if (_state.value.categories.isEmpty()) {
+                    _state.value = _state.value.copy(loading = false, error = it.message)
+                }
+            }
         }
     }
+
+    /** Kept for callers that used to force a reload. */
+    fun load() = refresh()
 
     fun create(request: CreateCategoryRequest, onDone: () -> Unit) {
         _state.value = _state.value.copy(saving = true, error = null)

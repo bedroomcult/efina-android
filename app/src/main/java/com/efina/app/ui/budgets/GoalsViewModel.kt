@@ -33,21 +33,36 @@ class GoalsViewModel @Inject constructor(
     private val _state = MutableStateFlow(GoalsUiState())
     val state: StateFlow<GoalsUiState> = _state.asStateFlow()
 
-    init { load() }
-
-    fun load() {
-        _state.value = _state.value.copy(loading = true, error = null)
+    init {
+        // Room is the source of truth for both lists, so the screen is populated
+        // offline and redraws when a write lands.
         viewModelScope.launch {
-            val accounts = accountRepository.getAccounts().getOrDefault(emptyList())
-            repository.getGoals()
-                .onSuccess {
-                    _state.value = _state.value.copy(loading = false, goals = it, accounts = accounts)
+            repository.observeGoals().collect { goals ->
+                _state.value = _state.value.copy(loading = false, goals = goals)
+            }
+        }
+        viewModelScope.launch {
+            accountRepository.observeAccounts().collect { accounts ->
+                _state.value = _state.value.copy(accounts = accounts)
+            }
+        }
+        refresh()
+    }
+
+    /** Pull the mirror up to date. Failure is silent: the mirror still has data. */
+    fun refresh() {
+        viewModelScope.launch {
+            repository.getGoals().onFailure {
+                if (_state.value.goals.isEmpty()) {
+                    _state.value = _state.value.copy(loading = false, error = it.message)
                 }
-                .onFailure {
-                    _state.value = _state.value.copy(loading = false, accounts = accounts, error = it.message)
-                }
+            }
+            accountRepository.getAccounts()
         }
     }
+
+    /** Kept for callers that used to force a reload. */
+    fun load() = refresh()
 
     fun create(request: CreateGoalRequest, onDone: () -> Unit) {
         _state.value = _state.value.copy(saving = true, error = null)

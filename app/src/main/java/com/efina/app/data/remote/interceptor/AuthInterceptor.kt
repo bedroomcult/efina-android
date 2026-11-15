@@ -109,5 +109,24 @@ class TokenManager @Inject constructor(
 
     fun isLoggedIn(): Boolean = !getToken().isNullOrBlank()
 
+    /**
+     * The SQLCipher passphrase for the local mirror.
+     *
+     * Stored base64 in the same encrypted store as the session, so a background
+     * worker can open the database without the Activity being alive.
+     */
+    fun getDbPassphrase(): ByteArray? =
+        store.getString(Constants.KEY_DB_PASSPHRASE, null)
+            ?.let { runCatching { android.util.Base64.decode(it, android.util.Base64.NO_WRAP) }.getOrNull() }
+
+    fun saveDbPassphrase(passphrase: ByteArray) {
+        store.edit()
+            .putString(
+                Constants.KEY_DB_PASSPHRASE,
+                android.util.Base64.encodeToString(passphrase, android.util.Base64.NO_WRAP)
+            )
+            .apply()
+    }
+
     fun clearAll() = store.edit().clear().apply()
 }

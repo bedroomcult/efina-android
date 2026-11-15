@@ -86,7 +86,15 @@ for (const file of files) {
 const fileFqns = new Set();
 const packages = new Set();
 for (const file of files) {
-  const fqn = path.relative(SRC, file).replace(/\.kt$/, '').replace(/\//g, '.');
+  // Normalise separators first: path.relative returns backslashes on Windows,
+  // and without this every FQN is 'com\efina\app\...' so no import ever
+  // matches and the check fails on a clean tree. CI runs on Linux, where this
+  // is a no-op, so the two agree.
+  const fqn = path
+    .relative(SRC, file)
+    .split(path.sep)
+    .join('.')
+    .replace(/\.kt$/, '');
   fileFqns.add(fqn);
   const parts = fqn.split('.');
   for (let i = 1; i <= parts.length; i++) packages.add(parts.slice(0, i).join('.'));

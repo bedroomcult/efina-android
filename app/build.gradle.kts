@@ -149,7 +149,24 @@ dependencies {
     // Room Database
     implementation("androidx.room:room-runtime:2.6.1")
     implementation("androidx.room:room-ktx:2.6.1")
+    implementation("androidx.room:room-paging:2.6.1")
     ksp("androidx.room:room-compiler:2.6.1")
+
+    // Encrypted at rest. The local mirror is the user's whole ledger, so it is
+    // not left as a plain SQLite file that any backup or rooted shell can read.
+    implementation("net.zetetic:android-database-sqlcipher:4.5.4")
+    implementation("androidx.sqlite:sqlite-ktx:2.4.0")
+
+    // Offline sync: a queued write must survive the app being killed, so the
+    // flush runs as WorkManager work rather than a coroutine tied to a screen.
+    implementation("androidx.work:work-runtime-ktx:2.9.1")
+    implementation("androidx.hilt:hilt-work:1.2.0")
+    ksp("androidx.hilt:hilt-compiler:1.2.0")
+
+    // Paging over the local mirror: the transaction list is paginated and
+    // filtered, and a plain Flow<List> would load the whole window at once.
+    implementation("androidx.paging:paging-runtime-ktx:3.3.2")
+    implementation("androidx.paging:paging-compose:3.3.2")
     
     // DataStore Preferences
     implementation("androidx.datastore:datastore-preferences:1.1.1")
@@ -163,6 +180,9 @@ dependencies {
     // Testing
     testImplementation("junit:junit:4.13.2")
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.8.0")
+    testImplementation("androidx.room:room-testing:2.6.1")
+    testImplementation("androidx.work:work-testing:2.9.1")
+    testImplementation("com.squareup.okhttp3:mockwebserver:4.12.0")
     testImplementation("io.mockk:mockk:1.13.9")
     testImplementation("androidx.arch.core:core-testing:2.2.0")
     

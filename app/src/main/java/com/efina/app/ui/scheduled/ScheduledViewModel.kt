@@ -34,29 +34,36 @@ class ScheduledViewModel @Inject constructor(
     private val _state = MutableStateFlow(ScheduledUiState())
     val state: StateFlow<ScheduledUiState> = _state.asStateFlow()
 
-    init { load() }
-
-    fun load() {
-        _state.value = _state.value.copy(loading = true, error = null)
+    init {
+        // Room is the source of truth for both lists, so the screen is populated
+        // offline and redraws when a write lands.
         viewModelScope.launch {
-            val accountsResult = accountRepository.getAccounts()
-            val accounts = accountsResult.getOrNull() ?: emptyList()
-            if (accountsResult.exceptionOrNull() != null) {
-                _state.value = _state.value.copy(
-                    loading = false, accounts = accounts,
-                    error = accountsResult.exceptionOrNull()?.message
-                )
-                return@launch
+            repository.observeScheduled().collect { rows ->
+                _state.value = _state.value.copy(loading = false, scheduled = rows)
             }
-            repository.getScheduled()
-                .onSuccess {
-                    _state.value = _state.value.copy(loading = false, scheduled = it, accounts = accounts)
+        }
+        viewModelScope.launch {
+            accountRepository.observeAccounts().collect { accounts ->
+                _state.value = _state.value.copy(accounts = accounts)
+            }
+        }
+        refresh()
+    }
+
+    /** Pull the mirror up to date. Failure is silent: the mirror still has data. */
+    fun refresh() {
+        viewModelScope.launch {
+            repository.getScheduled().onFailure {
+                if (_state.value.scheduled.isEmpty()) {
+                    _state.value = _state.value.copy(loading = false, error = it.message)
                 }
-                .onFailure {
-                    _state.value = _state.value.copy(loading = false, accounts = accounts, error = it.message)
-                }
+            }
+            accountRepository.getAccounts()
         }
     }
+
+    /** Kept for callers that used to force a reload. */
+    fun load() = refresh()
 
     fun create(request: CreateScheduledRequest, onDone: () -> Unit) {
         _state.value = _state.value.copy(saving = true, error = null)

@@ -1,7 +1,7 @@
 {
   "generatedFrom": "bedroomcult/efina functions/api",
   "note": "Regenerate with: node tools/check-api-contract.mjs --emit-manifest",
-  "count": 139,
+  "count": 140,
   "routes": {
     "DELETE /api/accounts/:id": true,
     "DELETE /api/accounts/:id/members": true,
@@ -60,6 +60,7 @@
     "GET /api/sales/analytics": true,
     "GET /api/scheduled": true,
     "GET /api/settings": true,
+    "GET /api/sync": true,
     "GET /api/telegram/link": true,
     "GET /api/transactions": true,
     "GET /api/transactions/anomalies": true,

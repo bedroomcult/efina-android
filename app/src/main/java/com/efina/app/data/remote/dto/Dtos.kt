@@ -108,7 +108,10 @@ data class AccountDto(
     val is_shared: Int = 0,
     /** 'admin' | 'member' | 'viewer' — computed per caller by the API. */
     val account_role: String? = null,
-    val member_count: Int = 0
+    val member_count: Int = 0,
+
+    /** Server version, for the offline delta and conflict checks. */
+    val sync_seq: Long = 0
 )
 
 @Serializable
@@ -214,7 +217,10 @@ data class TransactionDto(
     /** The user who originally created this row. Stays unchanged on ownership transfer. */
     val creator_user_id: Long? = null,
     /** Resolved name of the creator (from the users table). */
-    val creator_name: String? = null
+    val creator_name: String? = null,
+
+    /** Server version, for the offline delta and conflict checks. */
+    val sync_seq: Long = 0
 )
 
 /**
@@ -293,7 +299,10 @@ data class CategoryDto(
     @Serializable(with = LenientBoolean::class)
     val is_shared: Boolean = false,
     /** GET categories returns roots with their children nested one level deep. */
-    val subcategories: List<CategoryDto> = emptyList()
+    val subcategories: List<CategoryDto> = emptyList(),
+
+    /** Server version, for the offline delta and conflict checks. */
+    val sync_seq: Long = 0
 )
 
 @Serializable
@@ -339,7 +348,10 @@ data class BudgetDto(
      * AccountDto.is_shared: D1 returns the raw SQLite integer, and LenientBoolean would
      * only be needed if this were a Boolean.
      */
-    val is_shared: Int = 0
+    val is_shared: Int = 0,
+
+    /** Server version, for the offline delta and conflict checks. */
+    val sync_seq: Long = 0
 )
 
 /**
@@ -405,7 +417,10 @@ data class GoalDto(
     val start_date: String? = null,
     val period_type: String? = null,
     /** The backend joins accounts and returns this; it was being dropped. */
-    val account_name: String? = null
+    val account_name: String? = null,
+
+    /** Server version, for the offline delta and conflict checks. */
+    val sync_seq: Long = 0
 )
 
 @Serializable
@@ -474,7 +489,10 @@ data class DebtDto(
     val status: String = "active",
     val notes: String? = null,
     val created_at: String? = null,
-    val updated_at: String? = null
+    val updated_at: String? = null,
+
+    /** Server version, for the offline delta and conflict checks. */
+    val sync_seq: Long = 0
 )
 
 @Serializable
@@ -535,7 +553,10 @@ data class ScheduledDto(
     val is_recurring: Int = 1,
     val total_occurrences: Int? = null,
     val completed_occurrences: Int = 0,
-    val created_at: String? = null
+    val created_at: String? = null,
+
+    /** Server version, for the offline delta and conflict checks. */
+    val sync_seq: Long = 0
 )
 
 @Serializable

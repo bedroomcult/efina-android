@@ -2,6 +2,7 @@ package com.efina.app.domain.repository
 
 import com.efina.app.domain.model.*
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flow
 
 /**
  * Repository contracts. Each maps 1:1 onto endpoints that exist in
@@ -29,6 +30,15 @@ interface AuthRepository {
 
 interface AccountRepository {
     suspend fun getAccounts(): Result<List<Account>>
+
+    /**
+     * The local mirror, as a stream.
+     *
+     * Room is the source of truth, so a screen observes this instead of calling
+     * [getAccounts] and holding the result. The default keeps any other
+     * implementation working; the real one reads the database.
+     */
+    fun observeAccounts(): Flow<List<Account>> = flow { emit(getAccounts().getOrDefault(emptyList())) }
     suspend fun createAccount(request: CreateAccountRequest): Result<Account>
     suspend fun updateAccount(id: Long, request: UpdateAccountRequest): Result<Account>
     suspend fun deleteAccount(id: Long): Result<Unit>
@@ -46,6 +56,10 @@ data class AccountMembers(
 
 interface TransactionRepository {
     suspend fun getTransactions(filter: TransactionFilter): Result<TransactionPage>
+
+    /** The local mirror, as a stream. See [AccountRepository.observeAccounts]. */
+    fun observeTransactions(): Flow<List<Transaction>> =
+        flow { emit(getTransactions(TransactionFilter(limit = 500)).getOrNull()?.transactions ?: emptyList()) }
     suspend fun createTransaction(request: CreateTransactionRequest): Result<Transaction>
     suspend fun updateTransaction(id: Long, request: UpdateTransactionRequest): Result<Transaction>
     suspend fun deleteTransaction(id: Long): Result<Unit>
@@ -63,6 +77,9 @@ data class TransactionPage(
 
 interface CategoryRepository {
     suspend fun getCategories(): Result<List<Category>>
+
+    /** The local mirror, as a stream. See [AccountRepository.observeAccounts]. */
+    fun observeCategories(): Flow<List<Category>> = flow { emit(getCategories().getOrDefault(emptyList())) }
     suspend fun createCategory(request: CreateCategoryRequest): Result<Category>
     suspend fun updateCategory(id: Long, request: UpdateCategoryRequest): Result<Category>
     suspend fun deleteCategory(id: Long): Result<Unit>
@@ -70,6 +87,9 @@ interface CategoryRepository {
 
 interface BudgetRepository {
     suspend fun getBudgets(): Result<List<Budget>>
+
+    /** The local mirror, as a stream. See [AccountRepository.observeAccounts]. */
+    fun observeBudgets(): Flow<List<Budget>> = flow { emit(getBudgets().getOrDefault(emptyList())) }
     suspend fun createBudget(request: CreateBudgetRequest): Result<Budget>
     suspend fun updateBudget(id: Long, request: UpdateBudgetRequest): Result<Budget>
     suspend fun deleteBudget(id: Long): Result<Unit>
@@ -80,6 +100,9 @@ interface BudgetRepository {
 
 interface GoalRepository {
     suspend fun getGoals(): Result<List<Goal>>
+
+    /** The local mirror, as a stream. See [AccountRepository.observeAccounts]. */
+    fun observeGoals(): Flow<List<Goal>> = flow { emit(getGoals().getOrDefault(emptyList())) }
     suspend fun createGoal(request: CreateGoalRequest): Result<Goal>
     suspend fun updateGoal(id: Long, request: UpdateGoalRequest): Result<Goal>
     suspend fun deleteGoal(id: Long): Result<Unit>
@@ -88,6 +111,9 @@ interface GoalRepository {
 
 interface DebtRepository {
     suspend fun getDebts(): Result<List<Debt>>
+
+    /** The local mirror, as a stream. See [AccountRepository.observeAccounts]. */
+    fun observeDebts(): Flow<List<Debt>> = flow { emit(getDebts().getOrDefault(emptyList())) }
     suspend fun createDebt(request: CreateDebtRequest): Result<Debt>
     suspend fun updateDebt(id: Long, request: UpdateDebtRequest): Result<Debt>
     suspend fun deleteDebt(id: Long): Result<Unit>
@@ -96,6 +122,10 @@ interface DebtRepository {
 
 interface ScheduledRepository {
     suspend fun getScheduled(): Result<List<ScheduledTransaction>>
+
+    /** The local mirror, as a stream. See [AccountRepository.observeAccounts]. */
+    fun observeScheduled(): Flow<List<ScheduledTransaction>> =
+        flow { emit(getScheduled().getOrDefault(emptyList())) }
     suspend fun createScheduled(request: CreateScheduledRequest): Result<ScheduledTransaction>
     suspend fun deleteScheduled(id: Long): Result<Unit>
 }

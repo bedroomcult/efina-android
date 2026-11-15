@@ -44,12 +44,16 @@ import com.efina.app.data.remote.DataEvents
 import com.efina.app.ui.theme.EfinaTheme
 import com.efina.app.ui.theme.ThemePreference
 import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.efina.app.ui.components.DockItem
 import com.efina.app.ui.components.EfinaSideRail
 import com.efina.app.ui.components.FloatingDock
+import com.efina.app.ui.components.OfflineBanner
+import com.efina.app.ui.components.ReauthBanner
+import com.efina.app.ui.sync.SyncStatusViewModel
 import com.efina.app.ui.components.WIDE_LAYOUT_BREAKPOINT_DP
 import androidx.compose.animation.AnimatedVisibilityScope
 import androidx.compose.animation.ExperimentalSharedTransitionApi
@@ -145,6 +149,12 @@ fun EfinaAppRoot(
     val authState by authViewModel.state.collectAsState()
     val update by updateAvailable.collectAsState()
 
+    // Sync state for the shell: the offline strip, the re-auth strip and the
+    // pending count. Collected here rather than per screen so every screen shows
+    // the same thing without knowing sync exists.
+    val syncViewModel: SyncStatusViewModel = hiltViewModel()
+    val syncState by syncViewModel.state.collectAsState()
+
     // Wait for the stored session to be read before deciding the start screen,
     // otherwise a logged-in user sees a flash of the login form.
     val (themeName, darkTheme) = ThemePreference.current()
@@ -217,6 +227,25 @@ fun EfinaAppRoot(
                         .weight(1f)
                         .background(MaterialTheme.colorScheme.background)
                 ) {
+                    // The offline and re-auth strips sit above the NavHost so they
+                    // are present on every screen without each one having to know
+                    // about sync. They are inside the theme and above the content,
+                    // so they push the screen down rather than covering it.
+                    Column(Modifier.fillMaxSize()) {
+                        OfflineBanner(
+                            visible = syncState.showOfflineBanner,
+                            pendingCount = syncState.pendingCount,
+                        )
+                        ReauthBanner(
+                            visible = syncState.showReauthBanner,
+                            pendingCount = syncState.pendingCount,
+                            onSignIn = {
+                                navController.navigate(Screen.Login.route) {
+                                    popUpTo(0) { inclusive = true }
+                                }
+                            },
+                        )
+                        Box(Modifier.weight(1f)) {
                     // SharedTransitionLayout hosts the account-icon shared element for
                     // the list-to-detail flight. Tab switches fade-through; detail
                     // screens slide in expressively. Both collapse when animations
@@ -423,6 +452,8 @@ fun EfinaAppRoot(
                     ScheduledScreen(onNavigateBack = { navController.popBackStack() })
                 }
                     }
+                    }
+                        }
                     }
                 }
             }

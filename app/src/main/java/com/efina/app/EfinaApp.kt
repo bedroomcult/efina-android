@@ -1,6 +1,8 @@
 package com.efina.app
 
 import android.app.Application
+import androidx.hilt.work.HiltWorkerFactory
+import androidx.work.Configuration
 import com.efina.app.util.CrashReporter
 import com.efina.app.ui.theme.ThemePreference
 import kotlinx.coroutines.flow.first
@@ -9,10 +11,24 @@ import dagger.hilt.android.HiltAndroidApp
 import javax.inject.Inject
 
 @HiltAndroidApp
-class EfinaApp : Application() {
+class EfinaApp : Application(), Configuration.Provider {
 
     @Inject
     lateinit var preferences: com.efina.app.util.PreferencesManager
+
+    /**
+     * WorkManager builds its workers through this factory, which is what lets
+     * [com.efina.app.data.sync.SyncWorker] receive the sync engine. The default
+     * initializer is removed in the manifest, so without this the worker would
+     * be constructed with no dependencies and fail at runtime.
+     */
+    @Inject
+    lateinit var workerFactory: HiltWorkerFactory
+
+    override val workManagerConfiguration: Configuration
+        get() = Configuration.Builder()
+            .setWorkerFactory(workerFactory)
+            .build()
 
     override fun onCreate() {
         super.onCreate()

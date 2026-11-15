@@ -53,26 +53,35 @@ class BudgetsViewModel @Inject constructor(
                 _state.value = _state.value.copy(currentUserId = user?.id)
             }
         }
-        load()
+        // Room is the source of truth for both lists, so the screen is populated
+        // offline and redraws when a write lands.
+        viewModelScope.launch {
+            repository.observeBudgets().collect { budgets ->
+                _state.value = _state.value.copy(loading = false, budgets = budgets)
+            }
+        }
+        viewModelScope.launch {
+            categoryRepository.observeCategories().collect { categories ->
+                _state.value = _state.value.copy(categories = categories)
+            }
+        }
+        refresh()
     }
 
-    fun load() {
-        _state.value = _state.value.copy(loading = true, error = null)
+    /** Pull the mirror up to date. Failure is silent: the mirror still has data. */
+    fun refresh() {
         viewModelScope.launch {
-            val categories = categoryRepository.getCategories().getOrDefault(emptyList())
-            repository.getBudgets()
-                .onSuccess {
-                    _state.value = _state.value.copy(
-                        loading = false, budgets = it, categories = categories
-                    )
+            repository.getBudgets().onFailure {
+                if (_state.value.budgets.isEmpty()) {
+                    _state.value = _state.value.copy(loading = false, error = it.message)
                 }
-                .onFailure {
-                    _state.value = _state.value.copy(
-                        loading = false, categories = categories, error = it.message
-                    )
-                }
+            }
+            categoryRepository.getCategories()
         }
     }
+
+    /** Kept for callers that used to force a reload. */
+    fun load() = refresh()
 
     fun create(request: CreateBudgetRequest, onDone: () -> Unit) {
         _state.value = _state.value.copy(saving = true, error = null)

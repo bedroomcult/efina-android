@@ -32,16 +32,31 @@ class AccountsViewModel @Inject constructor(
     private val _state = MutableStateFlow(AccountsUiState())
     val state: StateFlow<AccountsUiState> = _state.asStateFlow()
 
-    init { load() }
-
-    fun load() {
-        _state.value = _state.value.copy(loading = true, error = null)
+    init {
+        // Room is the source of truth: the list redraws the moment a write lands
+        // locally, and it is populated offline. The network refresh below only
+        // feeds the mirror, so its failure is not an error the user needs to see.
         viewModelScope.launch {
-            repository.getAccounts()
-                .onSuccess { _state.value = _state.value.copy(loading = false, accounts = it) }
-                .onFailure { _state.value = _state.value.copy(loading = false, error = it.message) }
+            repository.observeAccounts().collect { accounts ->
+                _state.value = _state.value.copy(loading = false, accounts = accounts)
+            }
+        }
+        refresh()
+    }
+
+    /** Pull the mirror up to date. Failure is silent: the mirror still has data. */
+    fun refresh() {
+        viewModelScope.launch {
+            repository.getAccounts().onFailure {
+                if (_state.value.accounts.isEmpty()) {
+                    _state.value = _state.value.copy(loading = false, error = it.message)
+                }
+            }
         }
     }
+
+    /** Kept for callers that used to force a reload. */
+    fun load() = refresh()
 
     fun create(request: CreateAccountRequest, onDone: () -> Unit) {
         _state.value = _state.value.copy(saving = true, error = null)
@@ -49,7 +64,6 @@ class AccountsViewModel @Inject constructor(
             repository.createAccount(request)
                 .onSuccess {
                     _state.value = _state.value.copy(saving = false)
-                    load()
                     onDone()
                 }
                 .onFailure { _state.value = _state.value.copy(saving = false, error = it.message) }
@@ -62,7 +76,6 @@ class AccountsViewModel @Inject constructor(
             repository.updateAccount(id, request)
                 .onSuccess {
                     _state.value = _state.value.copy(saving = false)
-                    load()
                     onDone()
                 }
                 .onFailure { _state.value = _state.value.copy(saving = false, error = it.message) }
@@ -72,7 +85,7 @@ class AccountsViewModel @Inject constructor(
     fun delete(id: Long) {
         viewModelScope.launch {
             repository.deleteAccount(id)
-                .onSuccess { load() }
+                .onSuccess { }
                 .onFailure { _state.value = _state.value.copy(error = it.message) }
         }
     }
@@ -80,7 +93,7 @@ class AccountsViewModel @Inject constructor(
     fun setShared(id: Long, familyId: Long?) {
         viewModelScope.launch {
             repository.setShared(id, familyId)
-                .onSuccess { load() }
+                .onSuccess { refresh() }
                 .onFailure { _state.value = _state.value.copy(error = it.message) }
         }
     }

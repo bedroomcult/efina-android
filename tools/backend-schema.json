@@ -95,6 +95,9 @@
     "created_by_user_id": [
       "INTEGER"
     ],
+    "creator_user_id": [
+      "INTEGER"
+    ],
     "currency": [
       "TEXT"
     ],
@@ -131,6 +134,9 @@
     ],
     "default_unit_price": [
       "REAL"
+    ],
+    "deleted_at": [
+      "DATETIME"
     ],
     "description": [
       "TEXT"
@@ -358,6 +364,9 @@
     "message": [
       "TEXT"
     ],
+    "method": [
+      "TEXT"
+    ],
     "minimum_payment": [
       "REAL"
     ],
@@ -416,6 +425,9 @@
       "INTEGER"
     ],
     "password_hash": [
+      "TEXT"
+    ],
+    "path": [
       "TEXT"
     ],
     "pending_action": [
@@ -494,8 +506,14 @@
     "requires_confirmation": [
       "INTEGER"
     ],
+    "response_body": [
+      "TEXT"
+    ],
     "role": [
       "TEXT"
+    ],
+    "row_id": [
+      "INTEGER"
     ],
     "sale_date": [
       "DATETIME"
@@ -528,6 +546,13 @@
       "TEXT"
     ],
     "status": [
+      "INTEGER",
+      "TEXT"
+    ],
+    "sync_seq": [
+      "INTEGER"
+    ],
+    "table_name": [
       "TEXT"
     ],
     "target_amount": [
@@ -626,6 +651,12 @@
     "username": [
       "TEXT"
     ],
+    "value": [
+      "INTEGER"
+    ],
+    "version": [
+      "INTEGER"
+    ],
     "wallet_id": [
       "INTEGER"
     ],
@@ -645,9 +676,6 @@
       "INTEGER"
     ],
     "xp_to_next_level": [
-      "INTEGER"
-    ],
-    "creator_user_id": [
       "INTEGER"
     ]
   }

@@ -4,6 +4,8 @@ object Constants {
     // Secure Storage Keys
     const val KEY_AUTH_TOKEN = "auth_token"
     const val KEY_CSRF_TOKEN = "csrf_token"
+    /** SQLCipher passphrase for the local mirror, base64. */
+    const val KEY_DB_PASSPHRASE = "db_passphrase"
     const val KEY_USER_ID = "user_id"
     const val KEY_USER_EMAIL = "user_email"
     const val KEY_USER_PIN = "user_pin"

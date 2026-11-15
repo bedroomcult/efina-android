@@ -358,4 +358,19 @@ interface EfinaApi {
 
     @POST("user/change-password")
     suspend fun changePassword(@Body request: ChangePasswordRequestDto): Response<Unit>
+
+    // ============ Offline sync ============
+
+    /**
+     * The delta since [since]. Returns every row whose sync_seq is higher, plus
+     * the tombstones for rows deleted in the meantime.
+     *
+     * [limit] bounds each table; `hasMore` in the response says whether another
+     * call is needed.
+     */
+    @GET("sync")
+    suspend fun sync(
+        @Query("since") since: Long,
+        @Query("limit") limit: Int = 500
+    ): Response<com.efina.app.data.remote.dto.SyncResponseDto>
 }
