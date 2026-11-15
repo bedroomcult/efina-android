@@ -93,6 +93,29 @@ jobs:
             -PversionCode=${{ steps.version.outputs.code }} \
             -PversionName=${{ steps.version.outputs.version }}
 
+      # SQLCipher's native library resolves SQLiteDatabase.mNativeHandle by name
+      # through JNI. R8 renames it in a minified build, and the lookup then
+      # aborts the process inside System.loadLibrary — before any Java exception
+      # can be caught. v2.0.0 shipped with exactly that crash because the keep
+      # rules were missing. This refuses to publish an APK whose dex has lost
+      # the field.
+      - name: Verify SQLCipher survives R8
+        run: |
+          set -euo pipefail
+          APK=$(find app/build/outputs/apk/release -name "*.apk" | head -1)
+          DEXDUMP="$ANDROID_HOME/build-tools/$(ls "$ANDROID_HOME/build-tools" | sort -V | tail -1)/dexdump"
+          rm -rf /tmp/apkcheck && mkdir -p /tmp/apkcheck
+          unzip -o -q "$APK" -d /tmp/apkcheck
+          found=0
+          for d in /tmp/apkcheck/classes*.dex; do
+            if "$DEXDUMP" -d "$d" 2>/dev/null | grep -q "mNativeHandle"; then found=1; fi
+          done
+          if [ "$found" != "1" ]; then
+            echo "::error::mNativeHandle is missing from the release dex; SQLCipher will abort at loadLibs"
+            exit 1
+          fi
+          echo "SQLCipher field mNativeHandle present in the release dex"
+
       - name: Locate artifacts
         id: artifacts
         run: |

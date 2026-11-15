@@ -54,3 +54,17 @@
 -keep class * extends androidx.room.RoomDatabase
 -keep @androidx.room.Entity class *
 -dontwarn androidx.room.paging.**
+
+# SQLCipher.
+#
+# Its native library resolves Java fields by name through JNI — notably
+# SQLiteDatabase.mNativeHandle. R8 renames those fields in a release build, and
+# the lookup then fails with
+#   NoSuchFieldError: no "J" field "mNativeHandle" in class
+#   "Lnet/sqlcipher/database/SQLiteDatabase;"
+# which aborts the process inside System.loadLibrary, before any Java exception
+# can be caught. The debug build is not minified, so this only ever appears in
+# a release APK.
+-keep class net.sqlcipher.** { *; }
+-keepclassmembers class net.sqlcipher.** { *; }
+-dontwarn net.sqlcipher.**

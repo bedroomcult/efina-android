@@ -168,7 +168,9 @@ dependencies {
     // Encrypted at rest. The local mirror is the user's whole ledger, so it is
     // not left as a plain SQLite file that any backup or rooted shell can read.
     implementation("net.zetetic:android-database-sqlcipher:4.5.4")
-    implementation("androidx.sqlite:sqlite-ktx:2.4.0")
+    // No explicit androidx.sqlite dependency: nothing in this app imports it, and
+    // pinning sqlite-ktx 2.4.0 dragged sqlite-framework up from Room's 2.3.0 for
+    // no benefit. Room brings what it needs.
 
     // Offline sync: a queued write must survive the app being killed, so the
     // flush runs as WorkManager work rather than a coroutine tied to a screen.
