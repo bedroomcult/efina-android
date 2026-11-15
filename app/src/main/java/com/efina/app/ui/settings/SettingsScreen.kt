@@ -12,6 +12,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.compose.material3.Switch
+import androidx.compose.material3.Button
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.runtime.LaunchedEffect
 import com.efina.app.ui.sync.SyncStatusViewModel
 import com.efina.app.domain.model.UpdateSettingsRequest
@@ -245,11 +247,35 @@ fun SettingsScreen(
                             syncState.syncing -> "Syncing now"
                             syncState.pendingCount > 0 ->
                                 "${syncState.pendingCount} change${if (syncState.pendingCount == 1) "" else "s"} waiting to sync"
-                            syncState.lastSyncedAt != null -> "All changes synced"
                             else -> "Nothing waiting"
                         },
                         onClick = { syncViewModel.syncNow() }
                     )
+                    SettingRow(
+                        title = "Last synced",
+                        subtitle = syncState.lastSyncedAt
+                            ?.let { relativeAge(it) }
+                            ?: if (syncState.needsReauth) "Sign in again to sync" else "Never",
+                        onClick = { syncViewModel.syncNow() }
+                    )
+                    Row(
+                        Modifier.fillMaxWidth().padding(vertical = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column(Modifier.weight(1f)) {
+                            Text("Sync now", style = MaterialTheme.typography.titleSmall)
+                            Text(
+                                if (syncState.syncing) "Syncing…"
+                                else "Send queued changes and fetch the latest",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                        Button(
+                            onClick = { syncViewModel.syncNow() },
+                            enabled = !syncState.syncing
+                        ) { Text("Sync") }
+                    }
                     Row(
                         Modifier.fillMaxWidth().padding(vertical = 12.dp),
                         verticalAlignment = Alignment.CenterVertically
@@ -751,5 +777,16 @@ private fun ProfileCard(
             }
 
         }
+    }
+}
+
+/** "just now", "5 min ago", "3 h ago", "2 d ago". */
+private fun relativeAge(at: Long): String {
+    val secs = ((System.currentTimeMillis() - at) / 1000).coerceAtLeast(0)
+    return when {
+        secs < 60 -> "just now"
+        secs < 3600 -> "${'$'}{secs / 60} min ago"
+        secs < 86_400 -> "${'$'}{secs / 3600} h ago"
+        else -> "${'$'}{secs / 86_400} d ago"
     }
 }

@@ -181,7 +181,10 @@ fun EfinaAppRoot(
         EfinaTheme(themeName = themeName, darkTheme = darkTheme) {
             com.efina.app.ui.sync.FullSyncScreen(
                 syncing = syncState.syncing,
-                error = null,
+                // Passing null here made the retry unreachable: the gate below
+                // keys on lastSyncedAt == null, so a failed first pull left the
+                // user on "Preparing your data" with no way out.
+                error = syncState.lastError,
                 onRetry = { syncViewModel.syncNow() },
             )
         }

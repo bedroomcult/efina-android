@@ -31,9 +31,14 @@ data class SyncUiState(
     val conflictCount: Int = 0,
     val needsReauth: Boolean = false,
     val lastSyncedAt: Long? = null,
+    /** Why the last attempt failed, if it did. Drives the retry UI. */
+    val lastError: String? = null,
 ) {
     val showOfflineBanner: Boolean get() = !online
     val showReauthBanner: Boolean get() = needsReauth && pendingCount > 0
+
+    /** The first sync has not landed and the last attempt failed. */
+    val firstSyncFailed: Boolean get() = lastSyncedAt == null && lastError != null
 }
 
 @HiltViewModel
@@ -46,21 +51,30 @@ class SyncStatusViewModel @Inject constructor(
 ) : ViewModel() {
 
     private val syncing = MutableStateFlow(false)
+    private val lastError = MutableStateFlow<String?>(null)
+
+    // Combined in two steps: Kotlin's combine has typed overloads only up to
+    // five flows, and the outer one already needs four.
+    private val liveState = combine(
+        connectivity.observe(),
+        syncing,
+        lastError,
+    ) { online, isSyncing, error -> Triple(online, isSyncing, error) }
 
     val state: StateFlow<SyncUiState> = combine(
-        connectivity.observe(),
+        liveState,
         db.pendingMutationDao().observeCount(),
         db.conflictDao().observeCount(),
         db.syncStateDao().observe(),
-        syncing,
-    ) { online, pending, conflicts, syncState, isSyncing ->
+    ) { live, pending, conflicts, syncState ->
         SyncUiState(
-            online = online,
-            syncing = isSyncing,
+            online = live.first,
+            syncing = live.second,
             pendingCount = pending,
             conflictCount = conflicts,
             needsReauth = syncState?.needsReauth == true,
             lastSyncedAt = syncState?.lastSyncedAt,
+            lastError = live.third,
         )
     }.stateIn(
         scope = viewModelScope,
@@ -79,8 +93,21 @@ class SyncStatusViewModel @Inject constructor(
         if (syncing.value) return
         viewModelScope.launch {
             syncing.value = true
+            lastError.value = null
             try {
-                engine.sync()
+                // The outcome was previously discarded, which made the first-sync
+                // retry unreachable: lastSyncedAt stayed null and nothing ever
+                // set an error, so the screen sat on "Preparing your data".
+                val outcome = engine.sync()
+                lastError.value = when {
+                    outcome.disabled -> "Sync is paused. Turn it on in Settings."
+                    outcome.needsReauth -> "Your session expired. Sign in again to sync."
+                    outcome.error != null -> outcome.error
+                    outcome.retryLater -> "Could not reach the server. Check your connection."
+                    else -> null
+                }
+            } catch (e: Exception) {
+                lastError.value = e.message ?: "Could not sync"
             } finally {
                 syncing.value = false
             }
