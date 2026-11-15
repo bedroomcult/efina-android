@@ -120,6 +120,12 @@ fun SharedTransitionScope.accountIconBounds(
 )
 
 /**
+ * Lazy-list item motion that obeys the "Disable animations" setting.
+ *
+ * `animateItem()` falls back to its own spring specs when a spec is null, so
+ * passing null for all three is what actually turns the add/remove/placement
+ * animation off.
+ */
 fun LazyItemScope.efinaAnimateItem(): Modifier = Modifier.animateItem(
     fadeInSpec = if (EfinaMotion.enabled) EfinaMotion.effects() else null,
     placementSpec = if (EfinaMotion.enabled) EfinaMotion.spatial() else null,
