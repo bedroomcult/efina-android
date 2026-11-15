@@ -42,6 +42,7 @@ class SyncEngine @Inject constructor(
     private val client: OkHttpClient,
     private val db: EfinaDatabase,
     private val tokenManager: TokenManager,
+    private val preferences: com.efina.app.util.PreferencesManager,
     private val baseUrl: String,
 ) {
     private val json = Json { ignoreUnknownKeys = true; encodeDefaults = true }
@@ -51,6 +52,7 @@ class SyncEngine @Inject constructor(
         val conflicts: Int = 0,
         val pulled: Int = 0,
         val needsReauth: Boolean = false,
+        val disabled: Boolean = false,
         val retryLater: Boolean = false,
         val error: String? = null,
     )
@@ -58,6 +60,12 @@ class SyncEngine @Inject constructor(
     suspend fun sync(): Outcome = withContext(Dispatchers.IO) {
         if (!tokenManager.isLoggedIn()) {
             return@withContext Outcome(needsReauth = true)
+        }
+
+        // The kill switch stops the flush and the pull but never drops the
+        // queue: queued writes are the user's data.
+        if (!preferences.offlineSyncEnabledNow()) {
+            return@withContext Outcome(disabled = true)
         }
 
         var flushed = 0

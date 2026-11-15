@@ -42,6 +42,7 @@ class SyncStatusViewModel @Inject constructor(
     private val db: EfinaDatabase,
     private val connectivity: ConnectivityObserver,
     private val engine: SyncEngine,
+    private val preferences: com.efina.app.util.PreferencesManager,
 ) : ViewModel() {
 
     private val syncing = MutableStateFlow(false)
@@ -83,6 +84,19 @@ class SyncStatusViewModel @Inject constructor(
             } finally {
                 syncing.value = false
             }
+        }
+    }
+
+    /**
+     * The kill switch.
+     *
+     * Stopping sync does not touch the queue. Queued writes are the user's data,
+     * and a switch labelled "sync" must not be the thing that deletes them.
+     */
+    fun setEnabled(enabled: Boolean) {
+        viewModelScope.launch {
+            preferences.setOfflineSyncEnabled(enabled)
+            if (enabled) SyncWorker.enqueue(context)
         }
     }
 

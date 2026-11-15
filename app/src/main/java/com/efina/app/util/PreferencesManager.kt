@@ -67,6 +67,23 @@ class PreferencesManager @Inject constructor(
     suspend fun setAnimationsEnabled(enabled: Boolean) {
         dataStore.edit { prefs -> prefs[KEY_ANIMATIONS_ENABLED] = enabled }
     }
+
+    /**
+     * Kill switch for offline sync.
+     *
+     * Turning it off stops the flush and the pull. It does NOT drop the queue:
+     * queued writes are the user's data, and a switch labelled "sync" must not
+     * be the thing that silently deletes them.
+     */
+    val offlineSyncEnabled: Flow<Boolean> = dataStore.data.map { prefs ->
+        prefs[KEY_OFFLINE_SYNC_ENABLED] ?: true
+    }
+
+    suspend fun setOfflineSyncEnabled(enabled: Boolean) {
+        dataStore.edit { prefs -> prefs[KEY_OFFLINE_SYNC_ENABLED] = enabled }
+    }
+
+    suspend fun offlineSyncEnabledNow(): Boolean = offlineSyncEnabled.first()
     
     val lastNotifiedVersion: Flow<String?> = dataStore.data.map { prefs ->
         prefs[KEY_LAST_NOTIFIED_VERSION]
@@ -92,6 +109,8 @@ class PreferencesManager @Inject constructor(
         private val KEY_BIOMETRIC_ENABLED = booleanPreferencesKey(Constants.PREFS_BIOMETRIC_ENABLED)
         private val KEY_UPDATE_NOTIFICATIONS = booleanPreferencesKey(Constants.PREFS_UPDATE_NOTIFICATIONS)
         private val KEY_ANIMATIONS_ENABLED = booleanPreferencesKey("animations_enabled")
+
+private val KEY_OFFLINE_SYNC_ENABLED = booleanPreferencesKey("offline_sync_enabled")
         private val KEY_LAST_NOTIFIED_VERSION = stringPreferencesKey(Constants.PREFS_LAST_NOTIFIED_VERSION)
     }
 }

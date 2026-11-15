@@ -54,6 +54,7 @@ import com.efina.app.ui.components.FloatingDock
 import com.efina.app.ui.components.OfflineBanner
 import com.efina.app.ui.components.ReauthBanner
 import com.efina.app.ui.sync.SyncStatusViewModel
+import com.efina.app.ui.conflicts.ConflictsScreen
 import com.efina.app.ui.components.WIDE_LAYOUT_BREAKPOINT_DP
 import androidx.compose.animation.AnimatedVisibilityScope
 import androidx.compose.animation.ExperimentalSharedTransitionApi
@@ -115,6 +116,7 @@ sealed class Screen(val route: String) {
     data object Family : Screen("family")
     data object Debts : Screen("debts")
     data object Scheduled : Screen("scheduled")
+    data object Conflicts : Screen("conflicts")
 }
 
 private data class NavItem(val screen: Screen, val icon: ImageVector, val label: String)
@@ -422,6 +424,7 @@ fun EfinaAppRoot(
 
                 composable(Screen.Settings.route) {
                     SettingsScreen(
+                        onNavigateToConflicts = { navController.navigate(Screen.Conflicts.route) },
                         onNavigateBack = { navController.popBackStack() },
                         onNavigateToCategories = { navController.navigate(Screen.Categories.route) },
                         onNavigateToFamily = { navController.navigate(Screen.Family.route) },
@@ -450,6 +453,10 @@ fun EfinaAppRoot(
 
                 composable(Screen.Scheduled.route) {
                     ScheduledScreen(onNavigateBack = { navController.popBackStack() })
+                }
+
+                composable(Screen.Conflicts.route) {
+                    ConflictsScreen(onNavigateBack = { navController.popBackStack() })
                 }
                     }
                     }

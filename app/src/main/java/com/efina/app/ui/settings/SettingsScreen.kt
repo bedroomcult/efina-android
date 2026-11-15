@@ -11,6 +11,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.compose.material3.Switch
+import androidx.compose.runtime.LaunchedEffect
+import com.efina.app.ui.sync.SyncStatusViewModel
 import com.efina.app.domain.model.UpdateSettingsRequest
 import com.efina.app.domain.model.User
 import com.efina.app.ui.components.*
@@ -63,9 +66,14 @@ fun SettingsScreen(
     onNavigateToFamily: () -> Unit,
     onNavigateToDebts: () -> Unit = {},
     onNavigateToScheduled: () -> Unit = {},
+    onNavigateToConflicts: () -> Unit = {},
     onLogout: () -> Unit,
-    viewModel: SettingsViewModel = hiltViewModel()
+    viewModel: SettingsViewModel = hiltViewModel(),
+    syncViewModel: SyncStatusViewModel = hiltViewModel()
 ) {
+    val syncState by syncViewModel.state.collectAsState()
+    var offlineSync by remember { mutableStateOf(true) }
+    LaunchedEffect(syncState) { offlineSync = !syncState.needsReauth && offlineSync }
     val state by viewModel.state.collectAsState()
     // Short badge instead of a snackbar: one phrase, self-dismissing.
     var badge by remember { mutableStateOf<String?>(null) }
@@ -215,6 +223,54 @@ fun SettingsScreen(
                         onClick = onNavigateToScheduled)
                     SettingRow("Family", "Share accounts with your household",
                         last = true, onClick = onNavigateToFamily)
+                }
+
+                HorizontalDivider()
+
+                Text("Sync", style = MaterialTheme.typography.titleMedium)
+                SegmentedColumn {
+                    SettingRow(
+                        title = "Conflicts",
+                        subtitle = if (syncState.conflictCount > 0) {
+                            "${syncState.conflictCount} change${if (syncState.conflictCount == 1) "" else "s"} need your review"
+                        } else {
+                            "Changes that collided with a newer edit"
+                        },
+                        first = true,
+                        onClick = onNavigateToConflicts
+                    )
+                    SettingRow(
+                        title = "Pending",
+                        subtitle = when {
+                            syncState.syncing -> "Syncing now"
+                            syncState.pendingCount > 0 ->
+                                "${syncState.pendingCount} change${if (syncState.pendingCount == 1) "" else "s"} waiting to sync"
+                            syncState.lastSyncedAt != null -> "All changes synced"
+                            else -> "Nothing waiting"
+                        },
+                        onClick = { syncViewModel.syncNow() }
+                    )
+                    Row(
+                        Modifier.fillMaxWidth().padding(vertical = 12.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column(Modifier.weight(1f)) {
+                            Text("Offline sync", style = MaterialTheme.typography.titleSmall)
+                            Text(
+                                if (offlineSync) "Changes are saved on the device and synced"
+                                else "Paused. Saved changes are kept and will sync when re-enabled",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                        Switch(
+                            checked = offlineSync,
+                            onCheckedChange = { enabled ->
+                                offlineSync = enabled
+                                syncViewModel.setEnabled(enabled)
+                            }
+                        )
+                    }
                 }
 
 
