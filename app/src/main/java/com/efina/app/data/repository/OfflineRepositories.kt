@@ -23,6 +23,7 @@ import com.efina.app.domain.repository.AccountRepository
 import com.efina.app.domain.repository.TransactionPage
 import com.efina.app.domain.repository.TransactionRepository
 import kotlinx.coroutines.flow.Flow
+import androidx.paging.map
 import kotlinx.coroutines.flow.map
 import kotlinx.serialization.json.Json
 import javax.inject.Inject
