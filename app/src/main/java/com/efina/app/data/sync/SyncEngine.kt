@@ -174,15 +174,15 @@ class SyncEngine @Inject constructor(
 
         response.use { res ->
             val text = res.body?.string().orEmpty()
-            return when {
-                res.isSuccessful -> {
+            return when (SyncClassifier.classify(res.code, mutation.method, text, isRetry)) {
+                SyncAction.Done -> {
                     adoptServerRow(mutation, text)
                     ReplayResult.Done(text)
                 }
-                res.code == 409 -> ReplayResult.Conflict(text)
-                res.code == 404 && mutation.method != "POST" -> ReplayResult.Gone
-                res.code == 401 -> ReplayResult.NeedsReauth
-                res.code == 403 && text.contains("CSRF", ignoreCase = true) && !isRetry -> {
+                SyncAction.Conflict -> ReplayResult.Conflict(text)
+                SyncAction.Gone -> ReplayResult.Gone
+                SyncAction.NeedsReauth -> ReplayResult.NeedsReauth
+                SyncAction.RefreshCsrf -> {
                     // The CSRF JWT expires in 24h while the session lasts 7 days,
                     // so a queue flushed after a day would 403 on every write.
                     val refreshed = api.refreshCsrfToken()
@@ -193,8 +193,7 @@ class SyncEngine @Inject constructor(
                         ReplayResult.NeedsReauth
                     }
                 }
-                res.code in 500..599 -> ReplayResult.Retry("server error ${res.code}")
-                else -> ReplayResult.Conflict(text)
+                SyncAction.Retry -> ReplayResult.Retry("server error ${res.code}")
             }
         }
     }
