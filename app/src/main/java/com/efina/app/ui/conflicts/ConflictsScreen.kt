@@ -125,7 +125,7 @@ private fun ConflictCard(
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
                     text = row.title,
-                    style = EfinaType.titleSmallEmphasized,
+                    style = EfinaType.titleMediumEmphasized,
                     color = MaterialTheme.colorScheme.onSurface,
                     modifier = Modifier.weight(1f),
                 )
