@@ -29,6 +29,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Logout
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
@@ -111,7 +112,8 @@ fun SettingsScreen(
             state.user?.let { user ->
                 ProfileCard(
                     user = user,
-                    onClick = { /* open profile edit screen when wired */ }
+                    onClick = { /* open profile edit screen when wired */ },
+                    onLogout = { confirmLogout = true }
                 )
             }
 
@@ -610,7 +612,8 @@ private fun Swatch(color: androidx.compose.ui.graphics.Color?) {
 @Composable
 private fun ProfileCard(
     user: User,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    onLogout: () -> Unit
 ) {
     val initials = user.name
         .split(" ")
@@ -681,6 +684,14 @@ private fun ProfileCard(
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
+            }
+
+            IconButton(onClick = onLogout) {
+                Icon(
+                    Icons.Default.Logout,
+                    contentDescription = "Sign out",
+                    tint = MaterialTheme.colorScheme.error
+                )
             }
 
         }

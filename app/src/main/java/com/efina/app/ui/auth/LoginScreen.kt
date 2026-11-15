@@ -19,6 +19,7 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.credentials.CredentialManager
 import androidx.credentials.GetCredentialRequest
@@ -26,6 +27,7 @@ import androidx.credentials.exceptions.GetCredentialException
 import com.google.android.libraries.identity.googleid.GetGoogleIdOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import com.efina.app.BuildConfig
+import com.efina.app.R
 import kotlinx.coroutines.launch
 import com.efina.app.ui.theme.EfinaCorners
 import com.efina.app.ui.theme.EfinaType
@@ -248,7 +250,15 @@ fun LoginScreen(
                         strokeWidth = 2.dp
                     )
                 } else {
-                    Text("Continue with Google", fontWeight = FontWeight.SemiBold)
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            painter = painterResource(R.drawable.ic_google),
+                            contentDescription = null,
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Spacer(Modifier.width(8.dp))
+                        Text("Continue with Google", fontWeight = FontWeight.SemiBold)
+                    }
                 }
             }
 
