@@ -1,7 +1,9 @@
 package com.efina.app.data.sync
 
+import android.content.Context
 import com.efina.app.data.local.EfinaDatabase
 import com.efina.app.data.local.PendingMutationEntity
+import dagger.hilt.android.qualifiers.ApplicationContext
 import java.util.UUID
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -20,6 +22,7 @@ import javax.inject.Singleton
  */
 @Singleton
 class MutationQueue @Inject constructor(
+    @ApplicationContext private val context: Context,
     private val db: EfinaDatabase,
 ) {
     private val counter = java.util.concurrent.atomic.AtomicLong(System.currentTimeMillis())
@@ -59,6 +62,12 @@ class MutationQueue @Inject constructor(
                 createdAt = System.currentTimeMillis(),
             )
         )
+
+        // Kick a flush. Without this a queued write sat at PENDING_* until the
+        // user opened Settings and tapped "Sync now": nothing else triggers a
+        // sync on a write, so a transaction created with a perfectly good
+        // connection still showed the pending badge.
+        SyncWorker.enqueue(context)
     }
 
     /** Keep a later mutation pointing at the row a create will become. */

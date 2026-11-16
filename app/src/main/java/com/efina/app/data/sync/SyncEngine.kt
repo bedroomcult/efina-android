@@ -72,7 +72,15 @@ class SyncEngine @Inject constructor(
         var conflicts = 0
 
         // ---- 1. flush ------------------------------------------------------
-        for (mutation in db.pendingMutationDao().all()) {
+        // Drain until the queue is empty. A write can be queued while this run
+        // is in flight, and the worker is enqueued with KEEP, so no second run
+        // will start to pick it up — this loop is what makes a write made
+        // during a flush actually reach the server.
+        var rounds = 0
+        while (rounds < 10) {
+        val batch = db.pendingMutationDao().all()
+        if (batch.isEmpty()) break
+        for (mutation in batch) {
             when (val result = replay(mutation)) {
                 is ReplayResult.Done -> {
                     flushed++
@@ -107,6 +115,8 @@ class SyncEngine @Inject constructor(
                     )
                 }
             }
+        }
+        rounds++
         }
 
         // ---- 2. pull -------------------------------------------------------
