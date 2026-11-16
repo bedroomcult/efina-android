@@ -18,7 +18,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CloudOff
 import androidx.compose.material.icons.filled.CloudQueue
-import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.Sync
 import androidx.compose.material.icons.filled.WarningAmber
 import androidx.compose.material3.Icon
@@ -176,36 +175,6 @@ fun SyncChip(
     }
 }
 
-/**
- * Marks a row that has not reached the server yet.
- *
- * A clock for "queued", a warning for "the server refused it". The second is
- * deliberately louder: a queued write will land on its own, a rejected one needs
- * the user.
- */
-@Composable
-fun PendingBadge(
-    pending: Boolean,
-    failed: Boolean = false,
-    modifier: Modifier = Modifier,
-) {
-    if (!pending && !failed) return
-    val tint = if (failed) EfinaSemantic.danger else EfinaSemantic.caution
-    val description = if (failed) "Not saved: needs your review" else "Waiting to sync"
-    Box(
-        modifier = modifier
-            .size(16.dp)
-            .semantics { contentDescription = description },
-        contentAlignment = Alignment.Center,
-    ) {
-        Icon(
-            imageVector = if (failed) Icons.Default.WarningAmber else Icons.Default.Schedule,
-            contentDescription = null,
-            tint = tint,
-            modifier = Modifier.size(14.dp),
-        )
-    }
-}
 
 
 

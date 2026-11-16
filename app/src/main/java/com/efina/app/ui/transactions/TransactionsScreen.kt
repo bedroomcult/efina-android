@@ -1,6 +1,14 @@
 package com.efina.app.ui.transactions
 
 import androidx.compose.animation.animateContentSize
+import com.efina.app.ui.theme.EfinaMotion
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.togetherWith
+import androidx.compose.animation.scaleOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -43,7 +51,6 @@ import com.efina.app.ui.theme.LocalMoneyPalette
 import com.efina.app.ui.components.BadgeToastHost
 import com.efina.app.ui.components.BadgeTone
 import com.efina.app.ui.components.DockClearance
-import com.efina.app.ui.components.PendingBadge
 import com.efina.app.ui.components.SyncChip
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -301,12 +308,10 @@ private fun TransactionRow(
                     Icons.Default.Add
                 )
             }
-            // The user asked to see which rows have not reached the server.
-            // Without this the list looks identical online and offline, and a
-            // queued write is only discoverable in Settings.
-            if (tx.pending) {
-                PendingBadge(pending = true, modifier = Modifier.padding(end = 6.dp))
-            }
+            // The circle carries both states: a spinner while the write is
+            // queued, morphing into the direction icon once it lands. One
+            // element, so the row needs no separate pending badge — and the
+            // pending state reads as "in flight" rather than as an error.
             Box(
                 Modifier
                     .padding(end = 12.dp)
@@ -314,18 +319,45 @@ private fun TransactionRow(
                     .background(container, CircleShape),
                 contentAlignment = Alignment.Center
             ) {
-                Icon(
-                    imageVector = glyph,
-                    contentDescription = when (tx.type) {
-                        TransactionType.INCOME -> "Income"
-                        TransactionType.EXPENSE -> "Expense"
-                        TransactionType.TRANSFER -> "Transfer"
-                        TransactionType.ADJUSTMENT -> "Adjustment"
-                        else -> throw IllegalStateException("Unknown transaction type: ${tx.type}")
-                    },
-                    tint = tint,
-                    modifier = Modifier.size(18.dp)
-                )
+                val description = when (tx.type) {
+                    TransactionType.INCOME -> "Income"
+                    TransactionType.EXPENSE -> "Expense"
+                    TransactionType.TRANSFER -> "Transfer"
+                    TransactionType.ADJUSTMENT -> "Adjustment"
+                    else -> throw IllegalStateException("Unknown transaction type: ${tx.type}")
+                }
+                val content: @Composable (Boolean) -> Unit = { pending ->
+                    if (pending) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(18.dp),
+                            strokeWidth = 2.dp,
+                            color = tint,
+                        )
+                    } else {
+                        Icon(
+                            imageVector = glyph,
+                            contentDescription = description,
+                            tint = tint,
+                            modifier = Modifier.size(18.dp)
+                        )
+                    }
+                }
+                if (EfinaMotion.enabled) {
+                    AnimatedContent(
+                        targetState = tx.pending,
+                        transitionSpec = {
+                            (fadeIn(tween(180)) +
+                                scaleIn(initialScale = 0.6f, animationSpec = tween(180)))
+                                .togetherWith(
+                                    fadeOut(tween(120)) +
+                                        scaleOut(targetScale = 0.6f, animationSpec = tween(120))
+                                )
+                        },
+                        label = "pendingMorph",
+                    ) { pending -> content(pending) }
+                } else {
+                    content(tx.pending)
+                }
             }
             Column(Modifier.weight(1f)) {
                 Text(
