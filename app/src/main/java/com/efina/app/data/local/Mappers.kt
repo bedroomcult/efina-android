@@ -136,7 +136,11 @@ fun TransactionEntity.toDomain(): Transaction = Transaction(
     toAccountId = toAccountId,
     toAccountName = toAccountName,
     amount = amount,
-    type = TransactionType.from(type),
+    // A transfer is stored as two rows (expense on the source account, income on
+    // the destination) linked by transferPairId; there is no 'transfer' type in
+    // the database. Deriving it here is what makes the row render with the swap
+    // icon and the blue amount instead of an ordinary up/down arrow.
+    type = if (transferPairId != null) TransactionType.TRANSFER else TransactionType.from(type),
     description = description,
     date = date,
     mood = mood,

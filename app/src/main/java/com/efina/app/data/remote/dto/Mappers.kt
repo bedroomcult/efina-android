@@ -44,7 +44,9 @@ fun TransactionDto.toDomain(): Transaction = Transaction(
     toAccountId = to_account_id,
     toAccountName = to_account_name,
     amount = amount,
-    type = TransactionType.from(type),
+    // Same derivation as the mirror mapper: a transfer is two rows linked by
+    // transfer_pair_id, so the type has to be inferred rather than read.
+    type = if (transfer_pair_id != null) TransactionType.TRANSFER else TransactionType.from(type),
     description = description,
     date = date,
     mood = mood,

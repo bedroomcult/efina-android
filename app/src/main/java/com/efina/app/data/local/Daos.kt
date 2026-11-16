@@ -79,7 +79,21 @@ interface CategoryDao {
 
 @Dao
 interface TransactionDao {
-    @Query("SELECT * FROM transactions ORDER BY date DESC, id DESC")
+    /**
+     * The whole mirror, one row per transfer.
+     *
+     * A transfer is two rows linked by transferPairId; showing both would make
+     * a single transfer look like two movements. The expense leg is kept, which
+     * is what the web app does (TransactionsList.jsx keeps the first row per
+     * transfer_pair_id) and which carries the destination account.
+     */
+    @Query(
+        """
+        SELECT * FROM transactions
+        WHERE (transferPairId IS NULL OR type = 'expense')
+        ORDER BY date DESC, id DESC
+        """
+    )
     fun observeAll(): Flow<List<TransactionEntity>>
 
     @Query("SELECT * FROM transactions WHERE id = :id")
@@ -107,11 +121,27 @@ interface TransactionDao {
      *
      * `search` is matched against description and category name, the same two
      * fields the server's LIKE covers.
+     *
+     * The two clauses below mirror the backend's semantics rather than
+     * simplifying them, because they are not the same thing:
+     *
+     *  - a transfer is two rows (expense + income) sharing a transferPairId, so
+     *    the list collapses it to the expense leg — otherwise every transfer
+     *    would appear twice
+     *  - `type = 'transfer'` means "has a pair", because no row is ever stored
+     *    with type 'transfer'
+     *  - `type = 'expense'` / `'income'` must EXCLUDE transfer legs, or filtering
+     *    by Expense would show the outgoing half of every transfer as spending
+     *
+     * Compare functions/api/transactions/index.js, which does exactly this.
      */
     @Query(
         """
         SELECT * FROM transactions
-        WHERE (:type IS NULL OR type = :type)
+        WHERE (transferPairId IS NULL OR type = 'expense')
+          AND (:type IS NULL
+               OR (:type = 'transfer' AND transferPairId IS NOT NULL)
+               OR (:type <> 'transfer' AND type = :type AND transferPairId IS NULL))
           AND (:accountId IS NULL OR accountId = :accountId OR toAccountId = :accountId)
           AND (:categoryId IS NULL OR categoryId = :categoryId)
           AND (:startDate IS NULL OR date >= :startDate)

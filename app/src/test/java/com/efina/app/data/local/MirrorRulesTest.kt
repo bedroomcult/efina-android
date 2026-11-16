@@ -3,6 +3,7 @@ package com.efina.app.data.local
 import android.content.Context
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
+import com.efina.app.domain.model.TransactionType
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.After
@@ -170,5 +171,92 @@ class MirrorRulesTest {
         val row = db.syncStateDao().get()
         assertEquals(120L, row?.cursor)
         assertEquals(3L, row?.visibilityVersion)
+    }
+
+    // ---- transfers ---------------------------------------------------------
+
+    /**
+     * A transfer is two rows (expense on the source account, income on the
+     * destination) sharing a transferPairId. There is no row with type
+     * 'transfer', so both the display type and the filter have to be derived.
+     */
+    private fun tx(
+        id: Long,
+        type: String,
+        transferPairId: String? = null,
+        amount: Double = 10.0,
+        date: String = "2026-11-01",
+    ) = TransactionEntity(
+        id = id, userId = 1, accountId = 1, accountName = "cash", accountRole = "admin",
+        currency = "IDR", categoryId = null, categoryName = null, categoryColor = null,
+        categoryIcon = null,
+        toAccountId = if (transferPairId != null) 2L else null,
+        toAccountName = if (transferPairId != null) "bank" else null,
+        amount = amount, type = type, description = null, date = date, mood = null,
+        transferPairId = transferPairId, familyId = null, creatorUserId = 1,
+        creatorName = null, createdAt = null,
+    )
+
+    private suspend fun loadPaged(type: String?): List<TransactionEntity> {
+        val source = db.transactionDao()
+            .pagingSource(type, null, null, null, null, null, false)
+        val result = source.load(
+            androidx.paging.PagingSource.LoadParams.Refresh(
+                key = null, loadSize = 50, placeholdersEnabled = false,
+            )
+        )
+        return (result as androidx.paging.PagingSource.LoadResult.Page).data
+    }
+
+    private suspend fun seedTransfers() {
+        db.transactionDao().upsert(tx(1, "expense", transferPairId = "pair-1"))
+        db.transactionDao().upsert(tx(2, "income", transferPairId = "pair-1"))
+        db.transactionDao().upsert(tx(3, "expense"))
+        db.transactionDao().upsert(tx(4, "income"))
+    }
+
+    @Test
+    fun `a transfer shows once, not as two movements`() = runTest {
+        seedTransfers()
+        val rows = db.transactionDao().observeAll().first()
+        assertEquals("one row per transfer plus the two plain rows", 3, rows.size)
+        assertEquals(1, rows.count { it.transferPairId != null })
+    }
+
+    @Test
+    fun `a transfer row maps to the TRANSFER type`() = runTest {
+        seedTransfers()
+        val transfer = db.transactionDao().observeAll().first()
+            .first { it.transferPairId != null }
+        // Without this the row renders with the expense arrow and a red amount.
+        assertEquals(TransactionType.TRANSFER, transfer.toDomain().type)
+    }
+
+    @Test
+    fun `the transfer filter returns the pair, once`() = runTest {
+        seedTransfers()
+        val rows = loadPaged("transfer")
+        assertEquals(1, rows.size)
+        assertEquals("pair-1", rows.first().transferPairId)
+    }
+
+    @Test
+    fun `expense and income filters exclude transfer legs`() = runTest {
+        seedTransfers()
+        // The outgoing half of a transfer is stored as an expense; counting it as
+        // spending is what the backend avoids with transfer_pair_id IS NULL.
+        val expenses = loadPaged("expense")
+        assertEquals(1, expenses.size)
+        assertNull(expenses.first().transferPairId)
+
+        val incomes = loadPaged("income")
+        assertEquals(1, incomes.size)
+        assertNull(incomes.first().transferPairId)
+    }
+
+    @Test
+    fun `no filter returns every row once`() = runTest {
+        seedTransfers()
+        assertEquals(3, loadPaged(null).size)
     }
 }
