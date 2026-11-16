@@ -8,6 +8,8 @@ import androidx.compose.animation.scaleOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.fadeIn
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.ui.graphics.Color
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -308,15 +310,21 @@ private fun TransactionRow(
                     Icons.Default.Add
                 )
             }
-            // The circle carries both states: a spinner while the write is
-            // queued, morphing into the direction icon once it lands. One
-            // element, so the row needs no separate pending badge — and the
-            // pending state reads as "in flight" rather than as an error.
+            // While the write is queued the ring itself is the circle: the
+            // filled disc fades out and a 36dp spinner takes its place, so the
+            // pending state reads as the circle loading rather than as a badge
+            // stuck on top of it. When the write lands the disc fades back in
+            // with the direction icon inside.
+            val discColor by animateColorAsState(
+                targetValue = if (tx.pending) Color.Transparent else container,
+                animationSpec = tween(if (EfinaMotion.enabled) 180 else 0),
+                label = "disc",
+            )
             Box(
                 Modifier
                     .padding(end = 12.dp)
                     .size(36.dp)
-                    .background(container, CircleShape),
+                    .background(discColor, CircleShape),
                 contentAlignment = Alignment.Center
             ) {
                 val description = when (tx.type) {
@@ -329,8 +337,8 @@ private fun TransactionRow(
                 val content: @Composable (Boolean) -> Unit = { pending ->
                     if (pending) {
                         CircularProgressIndicator(
-                            modifier = Modifier.size(18.dp),
-                            strokeWidth = 2.dp,
+                            modifier = Modifier.size(36.dp),
+                            strokeWidth = 2.5.dp,
                             color = tint,
                         )
                     } else {
